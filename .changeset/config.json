@@ -1,6 +1,6 @@
 {
 	"$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
-	"changelog": "@changesets/cli/changelog",
+	"changelog": ["@changesets/changelog-github", { "repo": "jtaw5649/waybar-marketplace" }],
 	"commit": false,
 	"fixed": [],
 	"linked": [],
