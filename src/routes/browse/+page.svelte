@@ -1,14 +1,19 @@
 <script lang="ts">
-	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
+	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
+	import ViewToggle from '$lib/components/ViewToggle.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { calculatePopularityScore, calculateTrendingScore } from '$lib/utils/popularity';
 	import { getBrowseCategories } from '$lib/constants/categories';
+	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
+	import { sidebarCollapsed } from '$lib/stores/sidebar';
+	import SidebarToggle from '$lib/components/SidebarToggle.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -39,12 +44,28 @@
 	const allModules = $derived(data.modules as Module[]);
 	const error = $derived(data.error ?? null);
 
-	let searchQuery = $state(data.initialQuery ?? '');
-	let selectedCategory = $state(data.initialCategory ?? '');
-	let selectedSort = $state(data.initialSort ?? 'popular');
-	let currentPage = $state(data.initialPage ?? 1);
+	let searchQuery = $state('');
+	let selectedCategory = $state('');
+	let selectedSort = $state('popular');
+	let currentPage = $state(1);
 
 	let mobileFiltersOpen = $state(false);
+	let currentViewMode = $state<ViewMode>('grid');
+	let isSidebarCollapsed = $state(false);
+
+	$effect(() => {
+		const unsubscribe = viewMode.subscribe((value) => {
+			currentViewMode = value;
+		});
+		return unsubscribe;
+	});
+
+	$effect(() => {
+		const unsubscribe = sidebarCollapsed.subscribe((value) => {
+			isSidebarCollapsed = value;
+		});
+		return unsubscribe;
+	});
 
 	$effect(() => {
 		const params = $page.url.searchParams;
@@ -98,7 +119,7 @@
 		filteredModules.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 	);
 
-	function updateUrl() {
+	function updateUrl(options: { replaceState?: boolean } = {}) {
 		const params = new SvelteURLSearchParams();
 		if (searchQuery) params.set('q', searchQuery);
 		if (selectedCategory) params.set('category', selectedCategory);
@@ -106,13 +127,17 @@
 		if (currentPage > 1) params.set('page', currentPage.toString());
 
 		const newUrl = params.toString() ? `/browse?${params.toString()}` : '/browse';
-		goto(newUrl, { replaceState: true, noScroll: true });
+		goto(newUrl, {
+			replaceState: options.replaceState ?? false,
+			noScroll: true,
+			keepFocus: true
+		});
 	}
 
 	function handleSearch(query: string) {
 		searchQuery = query;
 		currentPage = 1;
-		updateUrl();
+		updateUrl({ replaceState: true });
 	}
 
 	function handleCategoryChange(slug: string) {
@@ -172,20 +197,24 @@
 				<h1>Browse Modules</h1>
 				<p>Discover {filteredModules.length} community-created modules for Waybar</p>
 			</div>
-			<div class="browse-search">
-				<SearchInput
-					bind:value={searchQuery}
-					placeholder="Search modules..."
-					size="md"
-					debounce={300}
-					oninput={handleSearch}
-					onsubmit={handleSearch}
-				/>
+			<div class="browse-controls">
+				<div class="browse-search">
+					<SearchInput
+						bind:value={searchQuery}
+						placeholder="Search modules..."
+						size="md"
+						debounce={300}
+						oninput={handleSearch}
+						onsubmit={handleSearch}
+					/>
+				</div>
+				<ViewToggle />
+				<SidebarToggle />
 			</div>
 		</div>
 	</div>
 
-	<div class="browse-layout">
+	<div class="browse-layout" class:sidebar-collapsed={isSidebarCollapsed}>
 		<button
 			class="mobile-filter-toggle"
 			onclick={() => (mobileFiltersOpen = !mobileFiltersOpen)}
@@ -204,7 +233,12 @@
 			Filters
 		</button>
 
-		<aside class="filter-sidebar" class:open={mobileFiltersOpen}>
+		<aside
+			id="filter-sidebar"
+			class="filter-sidebar"
+			class:open={mobileFiltersOpen}
+			class:collapsed={isSidebarCollapsed}
+		>
 			<div class="filter-section">
 				<h3>Category</h3>
 				<div class="filter-options">
@@ -266,18 +300,35 @@
 					{/if}
 				</div>
 			{:else}
-				<div class="grid">
+				<div
+					class="module-container"
+					class:grid={currentViewMode === 'grid'}
+					class:list={currentViewMode === 'list'}
+				>
 					{#each paginatedModules as module, i (module.uuid)}
-						<ModuleCard
-							uuid={module.uuid}
-							name={module.name}
-							author={module.author}
-							description={module.description}
-							category={module.category}
-							downloads={module.downloads}
-							verified={module.verified_author}
-							delay={i * 30}
-						/>
+						{#if currentViewMode === 'grid'}
+							<ModuleCard
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 30}
+							/>
+						{:else}
+							<ModuleCardRow
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 15}
+							/>
+						{/if}
 					{/each}
 				</div>
 
@@ -380,6 +431,12 @@
 		font-size: 0.9rem;
 	}
 
+	.browse-controls {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+	}
+
 	.browse-search {
 		flex: 1;
 		max-width: 400px;
@@ -394,6 +451,11 @@
 		margin: 0 auto;
 		padding: var(--space-2xl);
 		width: 100%;
+		transition: grid-template-columns var(--duration-normal) var(--ease-out);
+	}
+
+	.browse-layout.sidebar-collapsed {
+		grid-template-columns: 48px 1fr;
 	}
 
 	.mobile-filter-toggle {
@@ -404,6 +466,23 @@
 		position: sticky;
 		top: 80px;
 		height: fit-content;
+		overflow: hidden;
+		transition: width var(--duration-normal) var(--ease-out);
+	}
+
+	.filter-sidebar.collapsed {
+		width: 48px;
+	}
+
+	.filter-sidebar.collapsed .filter-section h3,
+	.filter-sidebar.collapsed .filter-option,
+	.filter-sidebar.collapsed .sort-select {
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			opacity var(--duration-fast) var(--ease-out),
+			visibility var(--duration-fast) var(--ease-out);
 	}
 
 	.filter-section {
@@ -475,10 +554,20 @@
 		min-height: 400px;
 	}
 
-	.grid {
+	.module-container {
+		transition: gap var(--duration-normal) var(--ease-out);
+	}
+
+	.module-container.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: var(--space-lg);
+	}
+
+	.module-container.list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
 	}
 
 	.empty-state {
@@ -665,6 +754,16 @@
 
 		.grid {
 			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.browse-layout,
+		.filter-sidebar,
+		.filter-sidebar.collapsed .filter-section h3,
+		.filter-sidebar.collapsed .filter-option,
+		.filter-sidebar.collapsed .sort-select {
+			transition: none;
 		}
 	}
 </style>
