@@ -1,33 +1,15 @@
 <script lang="ts">
-	import { API_BASE_URL } from '$lib';
-	import type { PageData } from './$types';
-	import { marked } from 'marked';
+	import { enhance } from '$app/forms';
+	import type { PageData, ActionData } from './$types';
+	import { renderMarkdown } from '$lib/utils/markdown';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { getCategorySlugs, getCategoryName } from '$lib/constants/categories';
 
-	marked.setOptions({
-		gfm: true,
-		breaks: true
-	});
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let { data }: { data: PageData } = $props();
-
-	const categories = [
-		'system',
-		'hardware',
-		'network',
-		'audio',
-		'power',
-		'time',
-		'workspace',
-		'window',
-		'tray',
-		'weather',
-		'productivity',
-		'media',
-		'custom'
-	];
+	const categories = getCategorySlugs();
 
 	let name = $state('');
 	let description = $state('');
@@ -38,91 +20,35 @@
 	let changelog = $state('');
 
 	let loading = $state(false);
-	let error: string | null = $state(null);
 	let fileError: string | null = $state(null);
-	let success = $state(false);
 	let showPreview = $state(false);
+
+	const success = $derived(form?.success === true);
+
+	$effect(() => {
+		if (form?.success) {
+			toast.success('Module published successfully!');
+		} else if (form?.message) {
+			toast.error(form.message);
+		}
+	});
+
+	const hasUnsavedChanges = $derived(
+		!success && (name.trim() !== '' || description.trim() !== '' || packageFile !== null)
+	);
+
+	$effect(() => {
+		function handleBeforeUnload(e: BeforeUnloadEvent) {
+			if (hasUnsavedChanges) {
+				e.preventDefault();
+			}
+		}
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+	});
 
 	const MAX_FILE_SIZE = 10 * 1024 * 1024;
 	const ALLOWED_EXTENSIONS = ['.tar.gz', '.tgz'];
-
-	function generateUuid(): string {
-		const moduleName = name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-		const author =
-			data.session?.user?.name?.toLowerCase().replace(/[^a-z0-9-]/g, '-') || 'anonymous';
-		return `${moduleName}@${author}`;
-	}
-
-	async function handleSubmit(e: Event) {
-		e.preventDefault();
-		if (!packageFile) {
-			error = 'Please select a package file';
-			toast.error('Please select a package file');
-			return;
-		}
-
-		loading = true;
-		error = null;
-
-		try {
-			const uuid = generateUuid();
-
-			const createRes = await fetch(`${API_BASE_URL}/api/v1/modules`, {
-				method: 'POST',
-				credentials: 'include',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					uuid,
-					name,
-					description,
-					category,
-					repo_url: repoUrl
-				})
-			});
-
-			if (!createRes.ok) {
-				const text = await createRes.text();
-				throw new Error(text || 'Failed to create module');
-			}
-
-			const uploadRes = await fetch(
-				`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions/${version}/upload`,
-				{
-					method: 'POST',
-					credentials: 'include',
-					body: await packageFile.arrayBuffer()
-				}
-			);
-
-			if (!uploadRes.ok) {
-				const text = await uploadRes.text();
-				throw new Error(text || 'Failed to upload package');
-			}
-
-			const publishRes = await fetch(
-				`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions/${version}/publish`,
-				{
-					method: 'POST',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ changelog: changelog || null })
-				}
-			);
-
-			if (!publishRes.ok) {
-				const text = await publishRes.text();
-				throw new Error(text || 'Failed to publish version');
-			}
-
-			success = true;
-			toast.success('Module published successfully!');
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unknown error';
-			toast.error(error);
-		} finally {
-			loading = false;
-		}
-	}
 
 	function handleFileChange(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -210,30 +136,24 @@
 				</div>
 			</div>
 		{:else}
-			<form onsubmit={handleSubmit}>
-				{#if error}
-					<div class="error-banner">
-						<svg
-							viewBox="0 0 24 24"
-							width="20"
-							height="20"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<circle cx="12" cy="12" r="10" />
-							<line x1="12" y1="8" x2="12" y2="12" />
-							<line x1="12" y1="16" x2="12.01" y2="16" />
-						</svg>
-						{error}
-					</div>
-				{/if}
-
+			<form
+				method="POST"
+				action="?/upload"
+				enctype="multipart/form-data"
+				use:enhance={() => {
+					loading = true;
+					return async ({ update }) => {
+						await update();
+						loading = false;
+					};
+				}}
+			>
 				<div class="form-group">
 					<label for="name">Module Name</label>
 					<input
 						type="text"
 						id="name"
+						name="name"
 						bind:value={name}
 						placeholder="My Awesome Module"
 						required
@@ -255,14 +175,16 @@
 					{#if showPreview}
 						<div class="markdown-preview">
 							{#if description}
-								{@html marked.parse(description)}
+								{@html renderMarkdown(description)}
 							{:else}
 								<span class="placeholder">Preview will appear here...</span>
 							{/if}
 						</div>
+						<input type="hidden" name="description" value={description} />
 					{:else}
 						<textarea
 							id="description"
+							name="description"
 							bind:value={description}
 							placeholder="A brief description of what your module does...
 
@@ -281,9 +203,9 @@ Supports **Markdown** formatting:
 				<div class="form-row">
 					<div class="form-group">
 						<label for="category">Category</label>
-						<select id="category" bind:value={category}>
+						<select id="category" name="category" bind:value={category}>
 							{#each categories as cat (cat)}
-								<option value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+								<option value={cat}>{getCategoryName(cat)}</option>
 							{/each}
 						</select>
 					</div>
@@ -293,6 +215,7 @@ Supports **Markdown** formatting:
 						<input
 							type="text"
 							id="version"
+							name="version"
 							bind:value={version}
 							placeholder="1.0.0"
 							required
@@ -306,6 +229,7 @@ Supports **Markdown** formatting:
 					<input
 						type="url"
 						id="repoUrl"
+						name="repo_url"
 						bind:value={repoUrl}
 						placeholder="https://github.com/user/repo"
 						required
@@ -318,6 +242,7 @@ Supports **Markdown** formatting:
 						<input
 							type="file"
 							id="package"
+							name="package"
 							accept=".tar.gz,.tgz"
 							onchange={handleFileChange}
 							required
@@ -349,6 +274,7 @@ Supports **Markdown** formatting:
 					<label for="changelog">Changelog (optional)</label>
 					<textarea
 						id="changelog"
+						name="changelog"
 						bind:value={changelog}
 						placeholder="What's new in this version..."
 						rows="2"
@@ -648,18 +574,6 @@ Supports **Markdown** formatting:
 		font-size: 0.8125rem;
 		color: var(--color-error);
 		margin-top: var(--space-xs);
-	}
-
-	.error-banner {
-		display: flex;
-		align-items: center;
-		gap: var(--space-md);
-		padding: var(--space-md);
-		background-color: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.2);
-		border-radius: var(--radius-md);
-		color: var(--color-error);
-		font-size: 0.875rem;
 	}
 
 	.btn {

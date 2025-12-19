@@ -2,13 +2,13 @@
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { API_BASE_URL } from '$lib';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
-	import ModuleCardSkeleton from '$lib/components/ModuleCardSkeleton.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { calculatePopularityScore, calculateTrendingScore } from '$lib/utils/popularity';
+	import { getBrowseCategories } from '$lib/constants/categories';
 
 	let { data }: { data: PageData } = $props();
 
@@ -24,20 +24,11 @@
 		created_at: string;
 	}
 
-	const categories = [
-		{ name: 'All', slug: '' },
-		{ name: 'System', slug: 'system' },
-		{ name: 'Hardware', slug: 'hardware' },
-		{ name: 'Network', slug: 'network' },
-		{ name: 'Media', slug: 'media' },
-		{ name: 'Workspace', slug: 'workspace' },
-		{ name: 'Clock', slug: 'clock' },
-		{ name: 'Weather', slug: 'weather' },
-		{ name: 'Custom', slug: 'custom' }
-	];
+	const categories = getBrowseCategories();
 
 	const sortOptions = [
 		{ name: 'Most Popular', value: 'popular' },
+		{ name: 'Trending', value: 'trending' },
 		{ name: 'Recently Added', value: 'recent' },
 		{ name: 'Most Downloads', value: 'downloads' },
 		{ name: 'Alphabetical', value: 'alpha' }
@@ -45,34 +36,23 @@
 
 	const ITEMS_PER_PAGE = 12;
 
-	let allModules: Module[] = $state([]);
-	let loading = $state(true);
-	let error: string | null = $state(null);
+	const allModules = $derived(data.modules as Module[]);
+	const error = $derived(data.error ?? null);
 
-	let searchQuery = $state($page.url.searchParams.get('q') || '');
-	let selectedCategory = $state($page.url.searchParams.get('category') || '');
-	let selectedSort = $state($page.url.searchParams.get('sort') || 'popular');
-	let currentPage = $state(parseInt($page.url.searchParams.get('page') || '1'));
+	let searchQuery = $state(data.initialQuery ?? '');
+	let selectedCategory = $state(data.initialCategory ?? '');
+	let selectedSort = $state(data.initialSort ?? 'popular');
+	let currentPage = $state(data.initialPage ?? 1);
 
 	let mobileFiltersOpen = $state(false);
 
 	$effect(() => {
-		fetchModules();
+		const params = $page.url.searchParams;
+		searchQuery = params.get('q') || '';
+		selectedCategory = params.get('category') || '';
+		selectedSort = params.get('sort') || 'popular';
+		currentPage = parseInt(params.get('page') || '1');
 	});
-
-	async function fetchModules() {
-		loading = true;
-		try {
-			const res = await fetch(`${API_BASE_URL}/api/v1/index`);
-			if (!res.ok) throw new Error('Failed to fetch modules');
-			const data = await res.json();
-			allModules = data.modules || [];
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unknown error';
-		} finally {
-			loading = false;
-		}
-	}
 
 	const filteredModules = $derived.by(() => {
 		let result = [...allModules];
@@ -93,6 +73,11 @@
 
 		switch (selectedSort) {
 			case 'popular':
+				result.sort((a, b) => calculatePopularityScore(b) - calculatePopularityScore(a));
+				break;
+			case 'trending':
+				result.sort((a, b) => calculateTrendingScore(b) - calculateTrendingScore(a));
+				break;
 			case 'downloads':
 				result.sort((a, b) => b.downloads - a.downloads);
 				break;
@@ -246,16 +231,10 @@
 		</aside>
 
 		<section class="results">
-			{#if loading}
-				<div class="grid">
-					{#each Array(6) as _, i (i)}
-						<ModuleCardSkeleton />
-					{/each}
-				</div>
-			{:else if error}
+			{#if error}
 				<div class="empty-state">
 					<p class="error">{error}</p>
-					<button class="btn btn-primary" onclick={() => fetchModules()}>Try Again</button>
+					<a href="/browse" class="btn btn-primary">Refresh</a>
 				</div>
 			{:else if paginatedModules.length === 0}
 				<div class="empty-state">

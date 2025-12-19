@@ -40,11 +40,7 @@
 	let showRejectModal: number | null = $state(null);
 
 	$effect(() => {
-		if (data.session?.user) {
-			fetchAdminData();
-		} else {
-			loading = false;
-		}
+		fetchAdminData();
 	});
 
 	async function fetchAdminData() {
@@ -451,7 +447,7 @@
 		open={showRejectModal !== null}
 		title="Reject Submission"
 		size="sm"
-		on:close={() => (showRejectModal = null)}
+		onclose={() => (showRejectModal = null)}
 	>
 		<p class="modal-text">Please provide a reason for rejecting this submission:</p>
 		<textarea
