@@ -36,7 +36,7 @@
 					<line x1="9" y1="21" x2="9" y2="9" />
 				</svg>
 			</div>
-			<h1>Sign in to Waybar Modules</h1>
+			<h1>Sign in to Waybar Marketplace</h1>
 			<p>Sign in with your GitHub account to submit modules, write reviews, and more.</p>
 
 			<button class="github-btn" onclick={handleSignIn} disabled={loading}>

@@ -2,14 +2,15 @@
 	import type { Snippet } from 'svelte';
 	import '../app.css';
 	import Toast from '$lib/components/Toast.svelte';
-	import { focusSearchInput } from '$lib/stores/search';
+	import CommandPalette from '$lib/components/CommandPalette.svelte';
+	import { toggle } from '$lib/stores/commandPalette';
 
 	let { children }: { children: Snippet } = $props();
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
-			focusSearchInput();
+			toggle();
 		}
 	}
 </script>
@@ -17,7 +18,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Waybar Modules Marketplace</title>
+	<title>Waybar Marketplace</title>
 </svelte:head>
 
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -25,6 +26,7 @@
 	{@render children()}
 </div>
 <Toast />
+<CommandPalette />
 
 <style>
 	.app-wrapper {

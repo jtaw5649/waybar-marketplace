@@ -303,7 +303,7 @@
 				</div>
 
 				<div class="module-actions">
-					<div class="install-command">
+					<div class="download-command">
 						<code>waybar-mod install {module.uuid}</code>
 						<CopyButton text={`waybar-mod install ${module.uuid}`} />
 					</div>
@@ -648,7 +648,7 @@
 		align-items: center;
 	}
 
-	.install-command {
+	.download-command {
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
@@ -659,7 +659,7 @@
 		font-size: 0.875rem;
 	}
 
-	.install-command code {
+	.download-command code {
 		color: var(--color-text-normal);
 	}
 
@@ -1012,7 +1012,7 @@
 			width: 100%;
 		}
 
-		.install-command {
+		.download-command {
 			width: 100%;
 			justify-content: space-between;
 		}

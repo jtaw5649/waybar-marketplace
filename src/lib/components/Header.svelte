@@ -2,6 +2,7 @@
 	import { signOut } from '@auth/sveltekit/client';
 	import { page } from '$app/stores';
 	import type { Session } from '@auth/sveltekit';
+	import { open } from '$lib/stores/commandPalette';
 
 	interface Props {
 		session: Session | null;
@@ -43,7 +44,7 @@
 				<line x1="3" y1="9" x2="21" y2="9" />
 				<line x1="9" y1="21" x2="9" y2="9" />
 			</svg>
-			<span>Waybar Modules</span>
+			<span>Waybar Marketplace</span>
 		</a>
 
 		<nav class="desktop-nav" aria-label="Main navigation">
@@ -54,6 +55,16 @@
 		</nav>
 
 		<div class="header-actions desktop-actions">
+			<button class="search-trigger" onclick={open} aria-label="Search">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="11" cy="11" r="8" />
+					<line x1="21" y1="21" x2="16.65" y2="16.65" />
+				</svg>
+				<span class="search-text">Search</span>
+				<span class="search-shortcut">
+					<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
+				</span>
+			</button>
 			{#if session?.user}
 				<a href="/upload" class="btn btn-small">Upload</a>
 				<a href="/dashboard" class="user-link">
@@ -290,6 +301,55 @@
 		background-color: var(--color-bg-surface);
 		color: var(--color-text-normal);
 		border-color: transparent;
+	}
+
+	.search-trigger {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		padding: var(--space-xs) var(--space-md);
+		background-color: var(--color-bg-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		color: var(--color-text-muted);
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition: all var(--duration-fast) var(--ease-out);
+	}
+
+	.search-trigger:hover {
+		background-color: var(--color-bg-elevated);
+		border-color: var(--color-primary);
+		color: var(--color-text-normal);
+	}
+
+	.search-trigger:focus-visible {
+		box-shadow: var(--focus-ring);
+	}
+
+	.search-text {
+		color: var(--color-text-faint);
+	}
+
+	.search-shortcut {
+		display: flex;
+		gap: 2px;
+		margin-left: var(--space-sm);
+	}
+
+	.search-shortcut kbd {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 3px;
+		background-color: var(--color-bg-elevated);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		font-size: 0.65rem;
+		font-family: inherit;
+		color: var(--color-text-faint);
 	}
 
 	.mobile-menu-toggle {

@@ -6,7 +6,6 @@
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import ModuleCardSkeleton from '$lib/components/ModuleCardSkeleton.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
-	import Badge from '$lib/components/Badge.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -63,12 +62,11 @@
 <main id="main-content">
 	<section class="hero">
 		<div class="hero-content">
-			<Badge variant="info" size="sm">Open Source</Badge>
 			<h1>
 				Discover <span class="gradient-text">modules</span> for your Waybar
 			</h1>
 			<p>
-				Find community-created modules to enhance your Waybar experience. Install with a single
+				Find community-created modules to enhance your Waybar experience. Download with a single
 				click using Waybar Manager.
 			</p>
 			<div class="hero-search">

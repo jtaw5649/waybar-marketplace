@@ -33,6 +33,7 @@
 	"dependencies": {
 		"@auth/core": "^0.38.0",
 		"@auth/sveltekit": "^1.11.1",
+		"@leeoniya/ufuzzy": "^1.0.19",
 		"@types/marked": "^5.0.2",
 		"marked": "^17.0.1"
 	},
