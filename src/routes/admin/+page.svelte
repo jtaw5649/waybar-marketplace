@@ -714,7 +714,7 @@
 		border: none;
 		cursor: pointer;
 		text-decoration: none;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn:disabled {

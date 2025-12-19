@@ -940,7 +940,9 @@
 		color: var(--color-text-muted);
 		font-size: 0.875rem;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.review-pagination .pagination-btn:hover:not(:disabled) {
@@ -969,7 +971,10 @@
 		border: none;
 		cursor: pointer;
 		text-decoration: none;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn:disabled {

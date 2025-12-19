@@ -53,7 +53,9 @@
 		color: var(--color-text-faint);
 		cursor: pointer;
 		border-radius: var(--radius-sm);
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.star-favorite svg {

@@ -280,7 +280,10 @@
 		background-color: var(--color-bg-surface);
 		color: var(--color-text-muted);
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn:hover {

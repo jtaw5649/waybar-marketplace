@@ -261,7 +261,7 @@
 		border-radius: var(--radius-md);
 		font-weight: 500;
 		font-size: 1rem;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition: background-color var(--duration-fast) var(--ease-out);
 		text-decoration: none;
 		border: none;
 		cursor: pointer;
@@ -314,7 +314,10 @@
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out),
+			box-shadow var(--duration-fast) var(--ease-out);
 	}
 
 	.category-card:hover {

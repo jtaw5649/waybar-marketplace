@@ -336,7 +336,10 @@
 		border-radius: var(--radius-md);
 		font-weight: 500;
 		text-decoration: none;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn-primary {

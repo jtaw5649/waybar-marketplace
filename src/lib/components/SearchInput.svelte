@@ -173,7 +173,10 @@
 		border-radius: 9999px;
 		color: var(--color-text-normal);
 		font-size: 0.9rem;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
+			box-shadow var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.search-input::placeholder {

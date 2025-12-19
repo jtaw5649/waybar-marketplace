@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="static/screenshots/homepage.png" alt="Waybar Marketplace browse view" width="800">
+  <img src="static/og.png" alt="Waybar Marketplace" width="800">
 </p>
 
 ---

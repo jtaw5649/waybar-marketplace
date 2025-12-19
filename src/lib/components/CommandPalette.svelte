@@ -436,7 +436,10 @@
 		font-size: 0.8rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out),
+			box-shadow var(--duration-fast) var(--ease-out);
 	}
 
 	.chip:hover {
@@ -535,7 +538,9 @@
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-sm);
 		color: var(--color-text-muted);
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.result-content {
@@ -572,7 +577,9 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		font-weight: 500;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out);
 	}
 
 	.palette-footer {

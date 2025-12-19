@@ -502,7 +502,9 @@ Supports **Markdown** formatting:
 		border-radius: var(--radius-sm);
 		font-size: 0.75rem;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out);
 	}
 
 	.preview-toggle:hover {
@@ -627,7 +629,9 @@ Supports **Markdown** formatting:
 		border-radius: var(--radius-md);
 		background-color: var(--color-bg-base);
 		color: var(--color-text-muted);
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.file-input-wrapper:hover .file-input-display {
@@ -670,7 +674,10 @@ Supports **Markdown** formatting:
 		border: none;
 		cursor: pointer;
 		text-decoration: none;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn:disabled {

@@ -455,7 +455,9 @@
 		font-size: 0.9rem;
 		text-align: left;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.filter-option:hover {
@@ -541,7 +543,7 @@
 		text-decoration: none;
 		border: none;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn-primary {
@@ -584,7 +586,9 @@
 		color: var(--color-text-muted);
 		font-size: 0.875rem;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.pagination-btn:hover:not(:disabled) {
@@ -615,7 +619,9 @@
 		color: var(--color-text-muted);
 		font-size: 0.875rem;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.pagination-page:hover {

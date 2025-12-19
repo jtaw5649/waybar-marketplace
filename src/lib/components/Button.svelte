@@ -78,7 +78,11 @@
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out),
+			box-shadow var(--duration-fast) var(--ease-out);
 		position: relative;
 	}
 

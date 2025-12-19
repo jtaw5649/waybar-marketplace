@@ -123,7 +123,9 @@
 
 	.star {
 		color: var(--color-border);
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out);
 	}
 
 	.star.filled {

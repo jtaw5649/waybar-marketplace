@@ -381,7 +381,7 @@
 		text-decoration: none;
 		border: none;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.btn-primary {
@@ -478,7 +478,9 @@
 		border: none;
 		color: var(--color-text-muted);
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.nav-item:hover {
@@ -582,7 +584,9 @@
 		border-radius: var(--radius-lg);
 		text-decoration: none;
 		color: inherit;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.module-row:hover {

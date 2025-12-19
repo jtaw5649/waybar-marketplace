@@ -86,7 +86,10 @@
 		border-radius: var(--radius-md);
 		color: var(--color-text-muted);
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.theme-toggle:hover {

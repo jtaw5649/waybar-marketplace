@@ -136,7 +136,9 @@
 		font-size: 1rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out);
 	}
 
 	.github-btn:hover {
