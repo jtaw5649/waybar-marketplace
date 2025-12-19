@@ -21,17 +21,73 @@
 	}
 
 	const pages: PaletteItem[] = [
-		{ id: 'home', name: 'Home', description: 'Go to homepage', type: 'page', path: '/', icon: 'home' },
-		{ id: 'browse', name: 'Browse Modules', description: 'Explore all modules', type: 'page', path: '/browse', icon: 'grid' },
-		{ id: 'upload', name: 'Upload Module', description: 'Submit a new module', type: 'page', path: '/upload', icon: 'upload' },
-		{ id: 'dashboard', name: 'Dashboard', description: 'Your personal dashboard', type: 'page', path: '/dashboard', icon: 'dashboard' },
-		{ id: 'admin', name: 'Admin Panel', description: 'Administration settings', type: 'page', path: '/admin', icon: 'settings' },
-		{ id: 'login', name: 'Login', description: 'Sign in to your account', type: 'page', path: '/login', icon: 'login' }
+		{
+			id: 'home',
+			name: 'Home',
+			description: 'Go to homepage',
+			type: 'page',
+			path: '/',
+			icon: 'home'
+		},
+		{
+			id: 'browse',
+			name: 'Browse Modules',
+			description: 'Explore all modules',
+			type: 'page',
+			path: '/browse',
+			icon: 'grid'
+		},
+		{
+			id: 'upload',
+			name: 'Upload Module',
+			description: 'Submit a new module',
+			type: 'page',
+			path: '/upload',
+			icon: 'upload'
+		},
+		{
+			id: 'dashboard',
+			name: 'Dashboard',
+			description: 'Your personal dashboard',
+			type: 'page',
+			path: '/dashboard',
+			icon: 'dashboard'
+		},
+		{
+			id: 'admin',
+			name: 'Admin Panel',
+			description: 'Administration settings',
+			type: 'page',
+			path: '/admin',
+			icon: 'settings'
+		},
+		{
+			id: 'login',
+			name: 'Login',
+			description: 'Sign in to your account',
+			type: 'page',
+			path: '/login',
+			icon: 'login'
+		}
 	];
 
 	const commands: PaletteItem[] = [
-		{ id: 'copy-url', name: 'Copy Current URL', description: 'Copy page URL to clipboard', type: 'command', icon: 'copy', action: () => navigator.clipboard.writeText(window.location.href) },
-		{ id: 'refresh', name: 'Refresh Page', description: 'Reload the current page', type: 'command', icon: 'refresh', action: () => window.location.reload() }
+		{
+			id: 'copy-url',
+			name: 'Copy Current URL',
+			description: 'Copy page URL to clipboard',
+			type: 'command',
+			icon: 'copy',
+			action: () => navigator.clipboard.writeText(window.location.href)
+		},
+		{
+			id: 'refresh',
+			name: 'Refresh Page',
+			description: 'Reload the current page',
+			type: 'command',
+			icon: 'refresh',
+			action: () => window.location.reload()
+		}
 	];
 
 	let inputRef: HTMLInputElement | null = $state(null);
@@ -46,14 +102,16 @@
 	}
 
 	const moduleItems = $derived(
-		$modules.map((m: Module): PaletteItem => ({
-			id: m.uuid,
-			name: m.name,
-			description: m.description,
-			type: 'module' as const,
-			path: `/modules/${m.uuid}`,
-			icon: 'module'
-		}))
+		$modules.map(
+			(m: Module): PaletteItem => ({
+				id: m.uuid,
+				name: m.name,
+				description: m.description,
+				type: 'module' as const,
+				path: `/modules/${m.uuid}`,
+				icon: 'module'
+			})
+		)
 	);
 
 	const allItems = $derived([...moduleItems, ...pages, ...commands] as PaletteItem[]);
@@ -67,7 +125,8 @@
 
 	const results = $derived.by((): PaletteResult[] => {
 		const items = filteredByMode as (SearchableItem & PaletteItem)[];
-		if (!$query.trim()) return items.map((item: PaletteItem) => ({ item, score: 0, highlights: {} }));
+		if (!$query.trim())
+			return items.map((item: PaletteItem) => ({ item, score: 0, highlights: {} }));
 		return fuzzySearch(items, $query) as PaletteResult[];
 	});
 
@@ -131,7 +190,9 @@
 			e.preventDefault();
 			const modes: PaletteMode[] = ['all', 'modules', 'pages', 'commands'];
 			const currentIdx = modes.indexOf($mode);
-			const nextIdx = e.shiftKey ? (currentIdx - 1 + modes.length) % modes.length : (currentIdx + 1) % modes.length;
+			const nextIdx = e.shiftKey
+				? (currentIdx - 1 + modes.length) % modes.length
+				: (currentIdx + 1) % modes.length;
 			setMode(modes[nextIdx]);
 		}
 	}
@@ -159,11 +220,15 @@
 			home: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
 			grid: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
 			upload: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12',
-			dashboard: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-			settings: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-			login: 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1',
+			dashboard:
+				'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+			settings:
+				'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+			login:
+				'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1',
 			copy: 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z',
-			refresh: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+			refresh:
+				'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
 			module: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
 		};
 		return icons[icon || 'module'] || icons.module;
@@ -198,7 +263,15 @@
 		>
 			<div class="palette-header">
 				<div class="search-wrapper">
-					<svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg
+						class="search-icon"
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<circle cx="11" cy="11" r="8" />
 						<line x1="21" y1="21" x2="16.65" y2="16.65" />
 					</svg>
@@ -237,10 +310,17 @@
 							class:selected={i === selectedIndex}
 							data-index={i}
 							onclick={() => executeItem(result.item)}
-							onmouseenter={() => selectedIndex = i}
+							onmouseenter={() => (selectedIndex = i)}
 						>
 							<div class="result-icon">
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.5"
+								>
 									<path d={getIcon(result.item.icon)} />
 								</svg>
 							</div>

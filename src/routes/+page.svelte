@@ -31,7 +31,12 @@
 		{ name: 'Hardware', slug: 'hardware', icon: '/icons/category-hardware.svg', color: '#10b981' },
 		{ name: 'Network', slug: 'network', icon: '/icons/category-network.svg', color: '#f59e0b' },
 		{ name: 'Media', slug: 'media', icon: '/icons/category-media.svg', color: '#ec4899' },
-		{ name: 'Workspace', slug: 'workspace', icon: '/icons/category-workspace.svg', color: '#8b5cf6' },
+		{
+			name: 'Workspace',
+			slug: 'workspace',
+			icon: '/icons/category-workspace.svg',
+			color: '#8b5cf6'
+		},
 		{ name: 'Clock', slug: 'clock', icon: '/icons/category-clock.svg', color: '#06b6d4' }
 	];
 

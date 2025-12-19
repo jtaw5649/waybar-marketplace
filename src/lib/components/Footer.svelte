@@ -6,24 +6,40 @@
 	<div class="footer-content">
 		<div class="footer-main">
 			<div class="footer-brand">
-				<a href="https://github.com/jtaw5649/waybar-marketplace" target="_blank" rel="noopener" class="footer-logo">
-					<svg
-						width="24"
-						height="24"
-						viewBox="8 8 112 112"
-						fill="none"
-						aria-hidden="true"
-					>
+				<a
+					href="https://github.com/jtaw5649/waybar-marketplace"
+					target="_blank"
+					rel="noopener"
+					class="footer-logo"
+				>
+					<svg width="24" height="24" viewBox="8 8 112 112" fill="none" aria-hidden="true">
 						<defs>
 							<linearGradient id="footerLogoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
 								<stop offset="0%" stop-color="#617DFA" />
 								<stop offset="100%" stop-color="#8B5CF6" />
 							</linearGradient>
 						</defs>
-						<rect x="10" y="44" width="108" height="40" rx="12" fill="var(--color-bg-elevated)" stroke="url(#footerLogoGrad)" stroke-width="4" />
+						<rect
+							x="10"
+							y="44"
+							width="108"
+							height="40"
+							rx="12"
+							fill="var(--color-bg-elevated)"
+							stroke="url(#footerLogoGrad)"
+							stroke-width="4"
+						/>
 						<rect x="18" y="52" width="24" height="24" rx="6" fill="url(#footerLogoGrad)" />
 						<rect x="48" y="52" width="36" height="24" rx="6" fill="var(--color-border)" />
-						<rect x="90" y="52" width="20" height="24" rx="6" fill="var(--color-border)" fill-opacity="0.5" />
+						<rect
+							x="90"
+							y="52"
+							width="20"
+							height="24"
+							rx="6"
+							fill="var(--color-border)"
+							fill-opacity="0.5"
+						/>
 					</svg>
 					<span>Waybar Marketplace</span>
 				</a>
@@ -45,10 +61,25 @@
 					<h3>Resources</h3>
 					<ul>
 						<li>
-							<a href="https://github.com/Alexays/Waybar" target="_blank" rel="noopener" class="external-link">
+							<a
+								href="https://github.com/Alexays/Waybar"
+								target="_blank"
+								rel="noopener"
+								class="external-link"
+							>
 								Waybar Docs
-								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-									<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
+								<svg
+									width="12"
+									height="12"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									aria-hidden="true"
+								>
+									<path
+										d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
+									/>
 								</svg>
 							</a>
 						</li>

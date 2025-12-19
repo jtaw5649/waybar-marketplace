@@ -46,7 +46,12 @@
 	const hasError = $derived(!!error);
 </script>
 
-<div class="input-wrapper input-{size}" class:has-prefix={hasPrefix} class:has-suffix={hasSuffix} class:has-error={hasError}>
+<div
+	class="input-wrapper input-{size}"
+	class:has-prefix={hasPrefix}
+	class:has-suffix={hasSuffix}
+	class:has-error={hasError}
+>
 	{#if prefix}
 		<span class="input-prefix">
 			{@render prefix()}
@@ -94,7 +99,8 @@
 		border-radius: var(--radius-md);
 		background-color: var(--color-bg-base);
 		color: var(--color-text-normal);
-		transition: border-color var(--duration-fast) var(--ease-out),
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
 			box-shadow var(--duration-fast) var(--ease-out);
 	}
 

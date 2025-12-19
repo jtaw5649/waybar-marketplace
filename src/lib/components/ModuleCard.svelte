@@ -2,6 +2,7 @@
 	import { fly } from 'svelte/transition';
 	import Badge from './Badge.svelte';
 	import Tag from './Tag.svelte';
+	import StarFavorite from './StarFavorite.svelte';
 	import { getCategoryVariant, getCategoryColor } from '$lib/constants';
 
 	interface Props {
@@ -46,6 +47,9 @@
 	style="--card-color: {categoryColor}"
 	transition:fly={{ y: 20, duration: 300, delay }}
 >
+	<div class="favorite-action">
+		<StarFavorite {uuid} size="sm" />
+	</div>
 	<div class="card-content">
 		{#if icon}
 			<div class="card-icon">
@@ -114,6 +118,13 @@
 			transform var(--duration-fast) var(--ease-out),
 			border-color var(--duration-fast) var(--ease-out),
 			box-shadow var(--duration-fast) var(--ease-out);
+	}
+
+	.favorite-action {
+		position: absolute;
+		top: var(--space-sm);
+		right: var(--space-sm);
+		z-index: 1;
 	}
 
 	.card:hover {

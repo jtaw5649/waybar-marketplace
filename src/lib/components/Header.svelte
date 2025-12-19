@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import type { Session } from '@auth/sveltekit';
 	import { open } from '$lib/stores/commandPalette';
+	import ThemeToggle from './ThemeToggle.svelte';
 
 	interface Props {
 		session: Session | null;
@@ -25,29 +26,42 @@
 		signOut();
 	}
 
-	const loginUrl = $derived(`/login?redirectTo=${encodeURIComponent($page.url.pathname + $page.url.search)}`);
+	const loginUrl = $derived(
+		`/login?redirectTo=${encodeURIComponent($page.url.pathname + $page.url.search)}`
+	);
 </script>
 
 <header>
 	<div class="header-content">
 		<a href="/" class="logo" onclick={closeMobileMenu}>
-			<svg
-				width="28"
-				height="28"
-				viewBox="8 8 112 112"
-				fill="none"
-				aria-hidden="true"
-			>
+			<svg width="28" height="28" viewBox="8 8 112 112" fill="none" aria-hidden="true">
 				<defs>
 					<linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
 						<stop offset="0%" stop-color="#617DFA" />
 						<stop offset="100%" stop-color="#8B5CF6" />
 					</linearGradient>
 				</defs>
-				<rect x="10" y="44" width="108" height="40" rx="12" fill="var(--color-bg-elevated)" stroke="url(#logoGrad)" stroke-width="4" />
+				<rect
+					x="10"
+					y="44"
+					width="108"
+					height="40"
+					rx="12"
+					fill="var(--color-bg-elevated)"
+					stroke="url(#logoGrad)"
+					stroke-width="4"
+				/>
 				<rect x="18" y="52" width="24" height="24" rx="6" fill="url(#logoGrad)" />
 				<rect x="48" y="52" width="36" height="24" rx="6" fill="var(--color-border)" />
-				<rect x="90" y="52" width="20" height="24" rx="6" fill="var(--color-border)" fill-opacity="0.5" />
+				<rect
+					x="90"
+					y="52"
+					width="20"
+					height="24"
+					rx="6"
+					fill="var(--color-border)"
+					fill-opacity="0.5"
+				/>
 			</svg>
 			<span>Waybar Marketplace</span>
 		</a>
@@ -60,6 +74,7 @@
 		</nav>
 
 		<div class="header-actions desktop-actions">
+			<ThemeToggle />
 			<button class="search-trigger" onclick={open} aria-label="Search">
 				<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
 			</button>
@@ -305,16 +320,14 @@
 		display: flex;
 		align-items: center;
 		gap: 2px;
-		padding: var(--space-xs) var(--space-sm);
+		padding: 0;
 		background: none;
 		border: none;
 		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.search-trigger:hover {
-		background-color: var(--color-bg-surface);
 	}
 
 	.search-trigger:hover kbd {
@@ -330,16 +343,17 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 20px;
-		height: 20px;
-		padding: 0 4px;
+		width: 36px;
+		height: 36px;
+		padding: 0;
 		background-color: var(--color-bg-surface);
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		font-size: 0.7rem;
+		border-radius: var(--radius-md);
+		font-size: 1rem;
 		font-family: inherit;
 		color: var(--color-text-faint);
-		transition: border-color var(--duration-fast) var(--ease-out),
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
 			color var(--duration-fast) var(--ease-out);
 	}
 
