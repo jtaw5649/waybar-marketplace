@@ -1,11 +1,21 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { signOut } from '@auth/sveltekit/client';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 </script>
 
 <main>
 	<header>
 		<h1>Waybar Modules</h1>
-		<p>Browse, install, and share Waybar modules</p>
+		<div class="header-right">
+			{#if data.session?.user}
+				<span class="user-name">{data.session.user.name}</span>
+				<button class="btn btn-small" onclick={() => signOut()}>Sign Out</button>
+			{:else}
+				<a href="/login" class="btn btn-small">Sign In</a>
+			{/if}
+		</div>
 	</header>
 
 	<section class="hero">
@@ -17,7 +27,9 @@
 			</p>
 			<div class="hero-actions">
 				<a href="/browse" class="btn btn-primary">Browse Modules</a>
-				<a href="/login" class="btn btn-secondary">Sign In</a>
+				{#if !data.session?.user}
+					<a href="/login" class="btn btn-secondary">Sign In</a>
+				{/if}
 			</div>
 		</div>
 	</section>
@@ -31,18 +43,40 @@
 	}
 
 	header {
-		padding: var(--space-xl) var(--space-2xl);
+		padding: var(--space-lg) var(--space-2xl);
 		border-bottom: 1px solid var(--color-border);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 
 	header h1 {
-		font-size: 1.5rem;
+		font-size: 1.25rem;
 		font-weight: 600;
 	}
 
-	header p {
+	.header-right {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+	}
+
+	.user-name {
 		color: var(--color-text-muted);
 		font-size: 0.875rem;
+	}
+
+	.btn-small {
+		padding: var(--space-sm) var(--space-md);
+		font-size: 0.875rem;
+		background-color: var(--color-bg-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		color: var(--color-text-normal);
+	}
+
+	.btn-small:hover {
+		background-color: var(--color-bg-elevated);
 	}
 
 	.hero {
