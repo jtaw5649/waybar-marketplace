@@ -1,7 +1,10 @@
-export type SocialPlatform = 'github' | 'twitter';
+export type SocialPlatform = 'github' | 'twitter' | 'mastodon';
 
-const GITHUB_PROFILE_REGEX = /^https:\/\/github\.com\/([a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)\/?$/;
+const GITHUB_PROFILE_REGEX =
+	/^https:\/\/github\.com\/([a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)\/?$/;
 const TWITTER_PROFILE_REGEX = /^https:\/\/(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/?$/;
+const MASTODON_PROFILE_REGEX =
+	/^https:\/\/([a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,})\/(@[a-zA-Z0-9_]+)\/?$/;
 
 export function validateSocialUrl(platform: SocialPlatform, url: string): boolean {
 	if (!url) return true;
@@ -11,6 +14,8 @@ export function validateSocialUrl(platform: SocialPlatform, url: string): boolea
 			return GITHUB_PROFILE_REGEX.test(url);
 		case 'twitter':
 			return TWITTER_PROFILE_REGEX.test(url);
+		case 'mastodon':
+			return MASTODON_PROFILE_REGEX.test(url);
 		default:
 			return false;
 	}
@@ -27,6 +32,10 @@ export function extractSocialHandle(platform: SocialPlatform, url: string): stri
 		case 'twitter': {
 			const match = url.match(TWITTER_PROFILE_REGEX);
 			return match ? match[2] : '';
+		}
+		case 'mastodon': {
+			const match = url.match(MASTODON_PROFILE_REGEX);
+			return match ? `${match[2]}@${match[1]}` : '';
 		}
 		default:
 			return '';

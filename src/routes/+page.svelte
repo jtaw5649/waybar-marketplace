@@ -5,10 +5,39 @@
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { getHomepageCategories } from '$lib/constants/categories';
+	import { recentlyViewed, type RecentModule } from '$lib/stores/recentlyViewed';
 
 	let { data }: { data: PageData } = $props();
 
 	const categories = getHomepageCategories();
+
+	let recentModules = $state<RecentModule[]>([]);
+
+	$effect(() => {
+		const unsubscribe = recentlyViewed.subscribe((value) => {
+			recentModules = value;
+		});
+		return unsubscribe;
+	});
+
+	const recommendedModules = $derived.by(() => {
+		if (recentModules.length === 0 || !data.featuredData) return [];
+
+		const viewedCategories = [...new Set(recentModules.map((m) => m.category.toLowerCase()))];
+		const viewedUuids = new Set(recentModules.map((m) => m.uuid));
+
+		const allModules = [...(data.featuredData.popular || []), ...(data.featuredData.recent || [])];
+
+		const uniqueModules = allModules.filter(
+			(module, index, self) => self.findIndex((m) => m.uuid === module.uuid) === index
+		);
+
+		return uniqueModules
+			.filter(
+				(m) => viewedCategories.includes(m.category.toLowerCase()) && !viewedUuids.has(m.uuid)
+			)
+			.slice(0, 6);
+	});
 </script>
 
 <Header session={data.session} />
@@ -54,6 +83,46 @@
 			{/each}
 		</div>
 	</section>
+
+	{#if recommendedModules.length > 0}
+		<section class="modules-section recommended-section">
+			<div class="section-header">
+				<div>
+					<h2>
+						<svg
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path
+								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+							/>
+						</svg>
+						Recommended for You
+					</h2>
+					<p>Based on modules you've viewed</p>
+				</div>
+				<a href="/browse" class="see-all">Browse all →</a>
+			</div>
+			<div class="grid">
+				{#each recommendedModules as module, i (module.uuid)}
+					<ModuleCard
+						uuid={module.uuid}
+						name={module.name}
+						author={module.author}
+						description={module.description}
+						category={module.category}
+						downloads={module.downloads}
+						verified={module.verified_author}
+						delay={i * 50}
+					/>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
 	{#if data.error}
 		<section class="modules-section">
@@ -280,6 +349,22 @@
 		max-width: 1400px;
 		margin: 0 auto;
 		width: 100%;
+	}
+
+	.recommended-section {
+		background: linear-gradient(180deg, var(--color-bg-surface) 0%, var(--color-bg-base) 100%);
+		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.recommended-section .section-header h2 {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.recommended-section .section-header h2 svg {
+		color: var(--color-warning);
 	}
 
 	.section-header {

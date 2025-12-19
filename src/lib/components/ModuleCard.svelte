@@ -16,6 +16,7 @@
 		verified?: boolean;
 		icon?: string;
 		delay?: number;
+		createdAt?: string;
 	}
 
 	let {
@@ -28,8 +29,11 @@
 		version,
 		verified = false,
 		icon,
-		delay = 0
+		delay = 0,
+		createdAt
 	}: Props = $props();
+
+	const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 	function formatDownloads(n: number): string {
 		if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -39,6 +43,9 @@
 
 	const categoryVariant = $derived(getCategoryVariant(category));
 	const categoryColor = $derived(getCategoryColor(category));
+	const isNew = $derived(
+		createdAt ? Date.now() - new Date(createdAt).getTime() < SEVEN_DAYS_MS : false
+	);
 </script>
 
 <div class="card-wrapper" in:fly={{ y: 20, duration: 300, delay }}>
@@ -79,6 +86,16 @@
 					</svg>
 					{category}
 				</Tag>
+				{#if isNew}
+					<Tag variant="blue">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polygon
+								points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+							/>
+						</svg>
+						New
+					</Tag>
+				{/if}
 				{#if verified}
 					<Tag variant="green">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

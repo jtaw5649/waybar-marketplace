@@ -77,7 +77,8 @@
 					<line x1="3" y1="9" x2="21" y2="9" />
 					<line x1="9" y1="21" x2="9" y2="9" />
 				</svg>
-				{moduleCount} {moduleCount === 1 ? 'module' : 'modules'}
+				{moduleCount}
+				{moduleCount === 1 ? 'module' : 'modules'}
 			</span>
 			{#if websiteUrl}
 				<span class="meta-item">
