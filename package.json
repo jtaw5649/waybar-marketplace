@@ -36,5 +36,8 @@
 		"@types/marked": "^5.0.2",
 		"marked": "^17.0.1"
 	},
+	"overrides": {
+		"cookie": "^1.0.2"
+	},
 	"type": "module"
 }
