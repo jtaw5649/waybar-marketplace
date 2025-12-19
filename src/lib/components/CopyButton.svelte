@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { toast } from '$lib/stores/toast';
+
 	interface Props {
 		text: string;
 		class?: string;
@@ -6,24 +9,42 @@
 
 	let { text, class: className = '' }: Props = $props();
 	let copied = $state(false);
+	let failed = $state(false);
+	let timeoutRef: ReturnType<typeof setTimeout> | null = null;
+
+	onMount(() => {
+		return () => {
+			if (timeoutRef) clearTimeout(timeoutRef);
+		};
+	});
 
 	async function copy() {
-		await navigator.clipboard.writeText(text);
-		copied = true;
-		setTimeout(() => (copied = false), 1500);
+		failed = false;
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = true;
+			if (timeoutRef) clearTimeout(timeoutRef);
+			timeoutRef = setTimeout(() => (copied = false), 1500);
+		} catch {
+			failed = true;
+			toast.error('Failed to copy to clipboard');
+			if (timeoutRef) clearTimeout(timeoutRef);
+			timeoutRef = setTimeout(() => (failed = false), 1500);
+		}
 	}
 </script>
 
 <button
 	class="copy-btn {className}"
+	class:failed
 	onclick={copy}
-	aria-label={copied ? 'Copied' : 'Copy to clipboard'}
-	disabled={copied}
+	aria-label={copied ? 'Copied' : failed ? 'Copy failed' : 'Copy to clipboard'}
+	disabled={copied || failed}
 >
 	<span class="icon-container">
 		<svg
 			class="icon copy-icon"
-			class:hidden={copied}
+			class:hidden={copied || failed}
 			width="16"
 			height="16"
 			viewBox="0 0 24 24"
@@ -46,8 +67,21 @@
 		>
 			<polyline points="20 6 9 17 4 12" />
 		</svg>
+		<svg
+			class="icon error-icon"
+			class:visible={failed}
+			width="16"
+			height="16"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+		>
+			<line x1="18" y1="6" x2="6" y2="18" />
+			<line x1="6" y1="6" x2="18" y2="18" />
+		</svg>
 	</span>
-	<span class="label">{copied ? 'Copied!' : 'Copy'}</span>
+	<span class="label">{copied ? 'Copied!' : failed ? 'Failed' : 'Copy'}</span>
 </button>
 
 <style>
@@ -66,7 +100,7 @@
 	}
 
 	.copy-btn:hover:not(:disabled) {
-		background: #5068d9;
+		background: var(--color-primary-hover);
 	}
 
 	.copy-btn:focus-visible {
@@ -109,5 +143,19 @@
 	.check-icon.visible {
 		opacity: 1;
 		transform: scale(1);
+	}
+
+	.error-icon {
+		opacity: 0;
+		transform: scale(0.6);
+		stroke: white;
+	}
+	.error-icon.visible {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	.copy-btn.failed {
+		background: var(--color-error);
 	}
 </style>

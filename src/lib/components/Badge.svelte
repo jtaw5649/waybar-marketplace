@@ -8,6 +8,7 @@
 		variant?: Variant;
 		size?: Size;
 		dot?: boolean;
+		live?: boolean;
 		class?: string;
 		children?: Snippet;
 	}
@@ -16,14 +17,19 @@
 		variant = 'default',
 		size = 'md',
 		dot = false,
+		live = false,
 		class: className = '',
 		children
 	}: Props = $props();
 </script>
 
-<span class="badge badge-{variant} badge-{size} {className}" class:has-dot={dot}>
+<span
+	class="badge badge-{variant} badge-{size} {className}"
+	class:has-dot={dot}
+	role={live ? 'status' : undefined}
+>
 	{#if dot}
-		<span class="dot"></span>
+		<span class="dot" aria-hidden="true"></span>
 	{/if}
 	{@render children?.()}
 </span>

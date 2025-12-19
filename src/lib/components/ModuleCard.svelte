@@ -41,16 +41,16 @@
 	const categoryColor = $derived(getCategoryColor(category));
 </script>
 
-<a
-	href="/modules/{encodeURIComponent(uuid)}"
-	class="card"
-	style="--card-color: {categoryColor}"
-	transition:fly={{ y: 20, duration: 300, delay }}
->
+<div class="card-wrapper" transition:fly={{ y: 20, duration: 300, delay }}>
 	<div class="favorite-action">
 		<StarFavorite {uuid} size="sm" />
 	</div>
-	<div class="card-content">
+	<a
+		href="/modules/{encodeURIComponent(uuid)}"
+		class="card"
+		style="--card-color: {categoryColor}"
+	>
+		<div class="card-content">
 		{#if icon}
 			<div class="card-icon">
 				<img src={icon} alt="" />
@@ -102,9 +102,14 @@
 			{formatDownloads(downloads)}
 		</div>
 	</div>
-</a>
+	</a>
+</div>
 
 <style>
+	.card-wrapper {
+		position: relative;
+	}
+
 	.card {
 		display: block;
 		position: relative;
@@ -155,7 +160,7 @@
 	}
 
 	.card-icon.placeholder {
-		background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+		background: linear-gradient(135deg, var(--color-primary), var(--color-info));
 		color: white;
 		display: flex;
 		align-items: center;
@@ -227,8 +232,12 @@
 		gap: 6px;
 		font-size: 0.75rem;
 		font-weight: 500;
-		color: #fbbf24;
-		background: linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(245, 158, 11, 0.15));
+		color: var(--color-warning);
+		background: linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--color-warning) 15%, transparent),
+			color-mix(in srgb, var(--color-warning) 20%, transparent)
+		);
 		padding: 4px 10px;
 		border-radius: 9999px;
 		flex-shrink: 0;
@@ -237,6 +246,6 @@
 	.card-stats svg {
 		width: 14px;
 		height: 14px;
-		color: #fb923c;
+		color: var(--color-warning);
 	}
 </style>

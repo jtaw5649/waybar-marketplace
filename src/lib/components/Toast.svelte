@@ -4,8 +4,11 @@
 
 	let toasts: ToastMessage[] = $state([]);
 
-	toast.subscribe((value) => {
-		toasts = value;
+	$effect(() => {
+		const unsubscribe = toast.subscribe((value) => {
+			toasts = value;
+		});
+		return unsubscribe;
 	});
 
 	const icons = {

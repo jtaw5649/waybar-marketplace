@@ -59,7 +59,15 @@
 	onMount(() => {
 		displayPlaceholder = placeholder;
 		registerSearchInput(() => inputRef?.focus());
-		return () => unregisterSearchInput();
+
+		if (autofocus && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			inputRef?.focus();
+		}
+
+		return () => {
+			unregisterSearchInput();
+			if (debounceTimer) clearTimeout(debounceTimer);
+		};
 	});
 
 	$effect(() => {
@@ -129,21 +137,19 @@
 			<line x1="21" y1="21" x2="16.65" y2="16.65" />
 		</svg>
 	</div>
-	<!-- svelte-ignore a11y_autofocus -->
 	<input
 		type="search"
 		bind:this={inputRef}
 		bind:value
 		placeholder={displayPlaceholder}
 		class="search-input"
-		{autofocus}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 		onkeydown={handleKeydown}
 		oninput={handleInput}
 		aria-label="Search modules"
 	/>
-	<div class="search-shortcut" aria-hidden="true">
+	<div id="search-shortcut-hint" class="search-shortcut" aria-hidden="true">
 		<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
 	</div>
 </form>

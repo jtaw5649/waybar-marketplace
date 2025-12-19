@@ -74,16 +74,16 @@
 	}
 
 	.star-favorite:hover {
-		color: #f59e0b;
+		color: var(--color-warning);
 		background-color: var(--color-bg-surface);
 	}
 
 	.star-favorite.favorited {
-		color: #f59e0b;
+		color: var(--color-warning);
 	}
 
 	.star-favorite.favorited:hover {
-		color: #d97706;
+		color: color-mix(in srgb, var(--color-warning) 80%, black);
 	}
 
 	.star-favorite:focus-visible {

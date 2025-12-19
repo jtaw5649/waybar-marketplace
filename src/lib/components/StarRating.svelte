@@ -10,6 +10,7 @@
 	let { value = 0, max = 5, readonly = false, size = 'md', onchange }: Props = $props();
 
 	let hoverValue: number | null = $state(null);
+	let containerRef: HTMLDivElement | null = $state(null);
 
 	function handleClick(rating: number) {
 		if (readonly) return;
@@ -27,10 +28,32 @@
 
 	function handleKeyDown(e: KeyboardEvent, rating: number) {
 		if (readonly) return;
+
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
 			onchange?.(rating);
+			return;
 		}
+
+		if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+			e.preventDefault();
+			const next = Math.min(rating + 1, max);
+			onchange?.(next);
+			focusStar(next);
+			return;
+		}
+
+		if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+			e.preventDefault();
+			const prev = Math.max(rating - 1, 1);
+			onchange?.(prev);
+			focusStar(prev);
+		}
+	}
+
+	function focusStar(rating: number) {
+		const button = containerRef?.querySelector(`button:nth-child(${rating})`) as HTMLButtonElement;
+		button?.focus();
 	}
 
 	function getStarLabel(rating: number): string {
@@ -41,6 +64,7 @@
 </script>
 
 <div
+	bind:this={containerRef}
 	class="star-rating star-{size}"
 	class:readonly
 	role={readonly ? 'img' : 'radiogroup'}
@@ -129,11 +153,11 @@
 	}
 
 	.star.filled {
-		color: #f59e0b;
+		color: var(--color-warning);
 	}
 
 	.star.half {
-		color: #f59e0b;
+		color: var(--color-warning);
 	}
 
 	.star-rating:not(.readonly) .star {

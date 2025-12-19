@@ -11,7 +11,9 @@
 		setQuery,
 		setModules
 	} from '$lib/stores/commandPalette';
+	import { toast } from '$lib/stores/toast';
 	import { fuzzySearch } from '$lib/utils/fuzzySearch';
+	import { API_BASE_URL } from '$lib';
 	import type { PaletteMode, PaletteItem, Module } from '$lib/types';
 
 	interface PaletteResult {
@@ -93,6 +95,7 @@
 	let inputRef: HTMLInputElement | null = $state(null);
 	let selectedIndex = $state(0);
 	let dialogEl: HTMLDivElement | null = $state(null);
+	let triggerEl: HTMLElement | null = null;
 
 	interface SearchableItem {
 		id: string;
@@ -132,6 +135,7 @@
 
 	$effect(() => {
 		if ($isOpen) {
+			triggerEl = document.activeElement as HTMLElement;
 			fetchModules();
 			selectedIndex = 0;
 			requestAnimationFrame(() => inputRef?.focus());
@@ -142,27 +146,48 @@
 	});
 
 	$effect(() => {
-		$query;
+		void $query;
 		selectedIndex = 0;
 	});
 
 	async function fetchModules() {
 		if ($modules.length > 0) return;
 		try {
-			const res = await fetch('/api/v1/index');
+			const res = await fetch(`${API_BASE_URL}/api/v1/index`);
 			if (res.ok) {
 				const data = await res.json();
 				setModules(data.modules || []);
 			}
 		} catch {
-			// Silently fail - modules just won't be searchable
+			toast.error('Failed to load modules for search');
 		}
+	}
+
+	function trapFocus(e: KeyboardEvent) {
+		const focusable = dialogEl?.querySelectorAll<HTMLElement>(
+			'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+		);
+		if (!focusable?.length) return;
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
+
+	function handleClose() {
+		close();
+		triggerEl?.focus();
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
-			close();
+			handleClose();
 			return;
 		}
 
@@ -187,13 +212,17 @@
 		}
 
 		if (e.key === 'Tab') {
-			e.preventDefault();
-			const modes: PaletteMode[] = ['all', 'modules', 'pages', 'commands'];
-			const currentIdx = modes.indexOf($mode);
-			const nextIdx = e.shiftKey
-				? (currentIdx - 1 + modes.length) % modes.length
-				: (currentIdx + 1) % modes.length;
-			setMode(modes[nextIdx]);
+			if (e.altKey) {
+				e.preventDefault();
+				const modes: PaletteMode[] = ['all', 'modules', 'pages', 'commands'];
+				const currentIdx = modes.indexOf($mode);
+				const nextIdx = e.shiftKey
+					? (currentIdx - 1 + modes.length) % modes.length
+					: (currentIdx + 1) % modes.length;
+				setMode(modes[nextIdx]);
+			} else {
+				trapFocus(e);
+			}
 		}
 	}
 
@@ -212,7 +241,7 @@
 	}
 
 	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === e.currentTarget) close();
+		if (e.target === e.currentTarget) handleClose();
 	}
 
 	function getIcon(icon?: string) {
@@ -240,26 +269,22 @@
 </script>
 
 {#if $isOpen}
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="palette-backdrop"
 		transition:fade={{ duration: 150 }}
 		onclick={handleBackdropClick}
-		onkeydown={handleKeydown}
-		role="dialog"
-		aria-modal="true"
-		aria-label="Command palette"
-		tabindex="-1"
+		role="presentation"
 	>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<div
 			bind:this={dialogEl}
 			class="palette"
 			transition:scale={{ duration: 150, start: 0.95 }}
 			onclick={(e) => e.stopPropagation()}
-			role="document"
+			onkeydown={handleKeydown}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Command palette"
+			tabindex="-1"
 		>
 			<div class="palette-header">
 				<div class="search-wrapper">
@@ -282,11 +307,19 @@
 						oninput={(e) => setQuery(e.currentTarget.value)}
 						placeholder="Search modules, pages, commands..."
 						class="search-input"
-						aria-label="Search"
+						role="combobox"
+						aria-label="Search modules, pages, and commands"
+						aria-haspopup="listbox"
+						aria-expanded={results.length > 0}
+						aria-controls="palette-results"
+						aria-activedescendant={results.length > 0
+							? `palette-option-${selectedIndex}`
+							: undefined}
+						aria-autocomplete="list"
 					/>
 				</div>
 				<div class="mode-chips">
-					{#each ['all', 'modules', 'pages', 'commands'] as m}
+					{#each ['all', 'modules', 'pages', 'commands'] as m (m)}
 						<button
 							class="chip"
 							class:active={$mode === m}
@@ -298,16 +331,19 @@
 				</div>
 			</div>
 
-			<div class="palette-results">
+			<div class="palette-results" role="listbox" id="palette-results" aria-label="Search results">
 				{#if results.length === 0}
-					<div class="no-results">
+					<div class="no-results" role="status">
 						<span class="no-results-text">No results found</span>
 					</div>
 				{:else}
-					{#each results as result, i}
+					{#each results as result, i (result.item.id)}
 						<button
 							class="result-item"
 							class:selected={i === selectedIndex}
+							id={`palette-option-${i}`}
+							role="option"
+							aria-selected={i === selectedIndex}
 							data-index={i}
 							onclick={() => executeItem(result.item)}
 							onmouseenter={() => (selectedIndex = i)}
@@ -346,7 +382,7 @@
 					<span>Select</span>
 				</div>
 				<div class="hint">
-					<kbd>Tab</kbd>
+					<kbd>Alt+Tab</kbd>
 					<span>Filter</span>
 				</div>
 				<div class="hint">
