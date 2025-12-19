@@ -5,11 +5,12 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
 
-	let activeTab: 'modules' | 'settings' = $state('modules');
+	let activeTab: 'modules' | 'collections' | 'settings' = $state('modules');
 
 	let displayName = $state('');
 	let bio = $state('');
@@ -18,6 +19,16 @@
 
 	let profile = $derived(data.profile);
 	let modules = $derived(data.modules || []);
+	let collections = $derived(data.collections || []);
+
+	let showCreateModal = $state(false);
+	let showEditModal = $state(false);
+	let showDeleteModal = $state(false);
+	let selectedCollection: { id: number; name: string; description: string | null; visibility: string } | null = $state(null);
+	let newCollectionName = $state('');
+	let newCollectionDescription = $state('');
+	let newCollectionVisibility = $state('private');
+	let savingCollection = $state(false);
 
 	onMount(() => {
 		displayName = data.profile?.display_name || '';
@@ -37,6 +48,47 @@
 
 	function getTotalDownloads(): number {
 		return modules.reduce((sum, m) => sum + m.downloads, 0);
+	}
+
+	function openEditModal(collection: typeof selectedCollection) {
+		selectedCollection = collection;
+		newCollectionName = collection?.name || '';
+		newCollectionDescription = collection?.description || '';
+		newCollectionVisibility = collection?.visibility || 'private';
+		showEditModal = true;
+	}
+
+	function openDeleteModal(collection: typeof selectedCollection) {
+		selectedCollection = collection;
+		showDeleteModal = true;
+	}
+
+	function resetCreateForm() {
+		newCollectionName = '';
+		newCollectionDescription = '';
+		newCollectionVisibility = 'private';
+	}
+
+	function getVisibilityIcon(visibility: string): string {
+		switch (visibility) {
+			case 'public':
+				return 'M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z';
+			case 'unlisted':
+				return 'M12 5C6.48 5 2 8.58 2 12s4.48 7 10 7 10-3.58 10-7-4.48-7-10-7zm0 12c-4.41 0-8-2.69-8-5s3.59-5 8-5 8 2.69 8 5-3.59 5-8 5z';
+			default:
+				return 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z';
+		}
+	}
+
+	function getVisibilityLabel(visibility: string): string {
+		switch (visibility) {
+			case 'public':
+				return 'Public';
+			case 'unlisted':
+				return 'Unlisted';
+			default:
+				return 'Private';
+		}
 	}
 </script>
 
@@ -113,6 +165,23 @@
 							<line x1="9" y1="21" x2="9" y2="9" />
 						</svg>
 						My Modules
+					</button>
+					<button
+						class="nav-item"
+						class:active={activeTab === 'collections'}
+						onclick={() => (activeTab = 'collections')}
+					>
+						<svg
+							viewBox="0 0 24 24"
+							width="18"
+							height="18"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+						</svg>
+						Collections
 					</button>
 					<button
 						class="nav-item"
@@ -216,6 +285,87 @@
 										</span>
 									</div>
 								</a>
+							{/each}
+						</div>
+					{/if}
+				{:else if activeTab === 'collections'}
+					<div class="content-header">
+						<h1>My Collections</h1>
+						<button class="btn btn-primary" onclick={() => (showCreateModal = true)}>
+							<svg
+								viewBox="0 0 24 24"
+								width="18"
+								height="18"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<line x1="12" y1="5" x2="12" y2="19" />
+								<line x1="5" y1="12" x2="19" y2="12" />
+							</svg>
+							New Collection
+						</button>
+					</div>
+
+					{#if collections.length === 0}
+						<div class="empty-state">
+							<div class="empty-icon">
+								<svg
+									viewBox="0 0 24 24"
+									width="48"
+									height="48"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.5"
+								>
+									<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+								</svg>
+							</div>
+							<h3>No collections yet</h3>
+							<p>Create collections to organize and share your favorite modules.</p>
+							<button class="btn btn-primary" onclick={() => (showCreateModal = true)}>
+								Create Collection
+							</button>
+						</div>
+					{:else}
+						<div class="collections-list">
+							{#each collections as collection (collection.id)}
+								<div class="collection-row">
+									<div class="collection-info">
+										<div class="collection-header">
+											<h3>{collection.name}</h3>
+											<span class="visibility-badge" title={getVisibilityLabel(collection.visibility)}>
+												<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+													<path d={getVisibilityIcon(collection.visibility)} />
+												</svg>
+												{getVisibilityLabel(collection.visibility)}
+											</span>
+										</div>
+										{#if collection.description}
+											<p class="collection-description">{collection.description}</p>
+										{/if}
+										<p class="collection-meta">
+											{collection.module_count} module{collection.module_count !== 1 ? 's' : ''}
+										</p>
+									</div>
+									<div class="collection-actions">
+										<a href="/collections/{collection.id}" class="btn btn-secondary btn-small">
+											View
+										</a>
+										<button
+											class="btn btn-secondary btn-small"
+											onclick={() => openEditModal(collection)}
+										>
+											Edit
+										</button>
+										<button
+											class="btn btn-danger btn-small"
+											onclick={() => openDeleteModal(collection)}
+										>
+											Delete
+										</button>
+									</div>
+								</div>
 							{/each}
 						</div>
 					{/if}
@@ -326,6 +476,177 @@
 		</div>
 	{/if}
 </main>
+
+{#if showCreateModal}
+	<Modal open={showCreateModal} title="Create Collection" onclose={() => { showCreateModal = false; resetCreateForm(); }}>
+		<form
+			method="POST"
+			action="?/createCollection"
+			use:enhance={() => {
+				savingCollection = true;
+				return async ({ result, update }) => {
+					savingCollection = false;
+					if (result.type === 'success') {
+						toast.success('Collection created!');
+						showCreateModal = false;
+						resetCreateForm();
+						await update();
+					} else {
+						toast.error('Failed to create collection');
+					}
+				};
+			}}
+		>
+			<div class="form-group">
+				<label for="collection-name">Name</label>
+				<input
+					type="text"
+					id="collection-name"
+					name="name"
+					bind:value={newCollectionName}
+					placeholder="My Favorites"
+					required
+					maxlength="100"
+				/>
+			</div>
+
+			<div class="form-group">
+				<label for="collection-description">Description</label>
+				<textarea
+					id="collection-description"
+					name="description"
+					bind:value={newCollectionDescription}
+					placeholder="A collection of my favorite modules..."
+					rows="3"
+					maxlength="500"
+				></textarea>
+			</div>
+
+			<div class="form-group">
+				<label for="collection-visibility">Visibility</label>
+				<select id="collection-visibility" name="visibility" bind:value={newCollectionVisibility}>
+					<option value="private">Private - Only you can see</option>
+					<option value="unlisted">Unlisted - Anyone with link can see</option>
+					<option value="public">Public - Visible on your profile</option>
+				</select>
+			</div>
+
+			<div class="modal-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => { showCreateModal = false; resetCreateForm(); }}>
+					Cancel
+				</button>
+				<button type="submit" class="btn btn-primary" disabled={savingCollection || !newCollectionName.trim()}>
+					{savingCollection ? 'Creating...' : 'Create Collection'}
+				</button>
+			</div>
+		</form>
+	</Modal>
+{/if}
+
+{#if showEditModal && selectedCollection}
+	<Modal open={showEditModal} title="Edit Collection" onclose={() => { showEditModal = false; selectedCollection = null; }}>
+		<form
+			method="POST"
+			action="?/updateCollection"
+			use:enhance={() => {
+				savingCollection = true;
+				return async ({ result, update }) => {
+					savingCollection = false;
+					if (result.type === 'success') {
+						toast.success('Collection updated!');
+						showEditModal = false;
+						selectedCollection = null;
+						await update();
+					} else {
+						toast.error('Failed to update collection');
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="id" value={selectedCollection.id} />
+
+			<div class="form-group">
+				<label for="edit-collection-name">Name</label>
+				<input
+					type="text"
+					id="edit-collection-name"
+					name="name"
+					bind:value={newCollectionName}
+					placeholder="My Favorites"
+					required
+					maxlength="100"
+				/>
+			</div>
+
+			<div class="form-group">
+				<label for="edit-collection-description">Description</label>
+				<textarea
+					id="edit-collection-description"
+					name="description"
+					bind:value={newCollectionDescription}
+					placeholder="A collection of my favorite modules..."
+					rows="3"
+					maxlength="500"
+				></textarea>
+			</div>
+
+			<div class="form-group">
+				<label for="edit-collection-visibility">Visibility</label>
+				<select id="edit-collection-visibility" name="visibility" bind:value={newCollectionVisibility}>
+					<option value="private">Private - Only you can see</option>
+					<option value="unlisted">Unlisted - Anyone with link can see</option>
+					<option value="public">Public - Visible on your profile</option>
+				</select>
+			</div>
+
+			<div class="modal-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => { showEditModal = false; selectedCollection = null; }}>
+					Cancel
+				</button>
+				<button type="submit" class="btn btn-primary" disabled={savingCollection || !newCollectionName.trim()}>
+					{savingCollection ? 'Saving...' : 'Save Changes'}
+				</button>
+			</div>
+		</form>
+	</Modal>
+{/if}
+
+{#if showDeleteModal && selectedCollection}
+	<Modal open={showDeleteModal} title="Delete Collection" onclose={() => { showDeleteModal = false; selectedCollection = null; }}>
+		<p class="delete-warning">
+			Are you sure you want to delete "<strong>{selectedCollection.name}</strong>"? This action cannot be undone.
+		</p>
+		<form
+			method="POST"
+			action="?/deleteCollection"
+			use:enhance={() => {
+				savingCollection = true;
+				return async ({ result, update }) => {
+					savingCollection = false;
+					if (result.type === 'success') {
+						toast.success('Collection deleted');
+						showDeleteModal = false;
+						selectedCollection = null;
+						await update();
+					} else {
+						toast.error('Failed to delete collection');
+					}
+				};
+			}}
+		>
+			<input type="hidden" name="id" value={selectedCollection.id} />
+
+			<div class="modal-actions">
+				<button type="button" class="btn btn-secondary" onclick={() => { showDeleteModal = false; selectedCollection = null; }}>
+					Cancel
+				</button>
+				<button type="submit" class="btn btn-danger" disabled={savingCollection}>
+					{savingCollection ? 'Deleting...' : 'Delete Collection'}
+				</button>
+			</div>
+		</form>
+	</Modal>
+{/if}
 
 <Footer />
 
@@ -710,6 +1031,125 @@
 		}
 	}
 
+	.collections-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.collection-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		padding: var(--space-lg);
+		background-color: var(--color-bg-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
+	}
+
+	.collection-row:hover {
+		border-color: var(--color-primary);
+		background-color: var(--color-bg-elevated);
+	}
+
+	.collection-info {
+		flex: 1;
+	}
+
+	.collection-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+		margin-bottom: var(--space-sm);
+	}
+
+	.collection-header h3 {
+		font-weight: 600;
+	}
+
+	.visibility-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
+		background-color: var(--color-bg-base);
+		border-radius: var(--radius-sm);
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+
+	.visibility-badge svg {
+		opacity: 0.7;
+	}
+
+	.collection-description {
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+		margin-bottom: var(--space-sm);
+	}
+
+	.collection-meta {
+		font-size: 0.75rem;
+		color: var(--color-text-faint);
+	}
+
+	.collection-actions {
+		display: flex;
+		gap: var(--space-sm);
+		flex-shrink: 0;
+	}
+
+	.btn-small {
+		padding: var(--space-sm) var(--space-md);
+		font-size: 0.75rem;
+	}
+
+	.btn-danger {
+		background-color: var(--color-error);
+		color: white;
+	}
+
+	.btn-danger:hover {
+		background-color: #c53030;
+	}
+
+	.modal-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--space-md);
+		margin-top: var(--space-xl);
+	}
+
+	.delete-warning {
+		color: var(--color-text-normal);
+		margin-bottom: var(--space-lg);
+	}
+
+	.delete-warning strong {
+		color: var(--color-error);
+	}
+
+	select {
+		width: 100%;
+		padding: var(--space-md);
+		background-color: var(--color-bg-base);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		color: var(--color-text-normal);
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: border-color var(--duration-fast) var(--ease-out);
+	}
+
+	select:focus {
+		outline: none;
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 3px rgba(97, 125, 250, 0.15);
+	}
+
 	@media (max-width: 768px) {
 		.dashboard {
 			flex-direction: column;
@@ -735,6 +1175,16 @@
 			flex-direction: column;
 			align-items: flex-start;
 			gap: var(--space-md);
+		}
+
+		.collection-row {
+			flex-direction: column;
+			gap: var(--space-md);
+		}
+
+		.collection-actions {
+			width: 100%;
+			justify-content: flex-start;
 		}
 	}
 </style>
