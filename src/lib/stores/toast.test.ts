@@ -164,4 +164,78 @@ describe('toast store', () => {
 			unsubscribe();
 		});
 	});
+
+	describe('pause and resume', () => {
+		it('toast starts with isPaused false', () => {
+			toast.success('Test');
+			const toasts = get(toast);
+			expect(toasts[0].isPaused).toBe(false);
+		});
+
+		it('pause sets isPaused to true', () => {
+			const id = toast.success('Test', 5000);
+			toast.pause(id);
+			const toasts = get(toast);
+			expect(toasts[0].isPaused).toBe(true);
+		});
+
+		it('pause stops auto-dismiss countdown', () => {
+			const id = toast.success('Test', 1000);
+			vi.advanceTimersByTime(500);
+			toast.pause(id);
+			vi.advanceTimersByTime(1000);
+			expect(get(toast)).toHaveLength(1);
+		});
+
+		it('resume sets isPaused to false', () => {
+			const id = toast.success('Test', 5000);
+			toast.pause(id);
+			toast.resume(id);
+			const toasts = get(toast);
+			expect(toasts[0].isPaused).toBe(false);
+		});
+
+		it('resume restarts countdown with remaining time', () => {
+			const id = toast.success('Test', 2000);
+			vi.advanceTimersByTime(500);
+			toast.pause(id);
+			vi.advanceTimersByTime(1000);
+			toast.resume(id);
+			expect(get(toast)).toHaveLength(1);
+			vi.advanceTimersByTime(1500);
+			expect(get(toast)).toHaveLength(0);
+		});
+
+		it('toast has startTime when created', () => {
+			vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+			toast.success('Test');
+			const toasts = get(toast);
+			expect(toasts[0].startTime).toBe(Date.now());
+		});
+
+		it('pause updates remainingTime based on elapsed time', () => {
+			const id = toast.success('Test', 5000);
+			vi.advanceTimersByTime(2000);
+			toast.pause(id);
+			const toasts = get(toast);
+			expect(toasts[0].remainingTime).toBe(3000);
+		});
+
+		it('pause on non-existent id does nothing', () => {
+			toast.success('Test', 5000);
+			expect(() => toast.pause('non-existent')).not.toThrow();
+		});
+
+		it('resume on non-existent id does nothing', () => {
+			toast.success('Test', 5000);
+			expect(() => toast.resume('non-existent')).not.toThrow();
+		});
+
+		it('does not pause if duration is 0', () => {
+			const id = toast.success('Test', 0);
+			toast.pause(id);
+			const toasts = get(toast);
+			expect(toasts[0].isPaused).toBe(false);
+		});
+	});
 });
