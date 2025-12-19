@@ -10,7 +10,11 @@ export interface ToastMessage {
 }
 
 function createToastStore() {
-	const { subscribe, update } = writable<ToastMessage[]>([]);
+	const { subscribe, update, set } = writable<ToastMessage[]>([]);
+
+	function reset() {
+		set([]);
+	}
 
 	function add(variant: ToastVariant, message: string, duration = 5000) {
 		const id = crypto.randomUUID();
@@ -35,7 +39,8 @@ function createToastStore() {
 		error: (message: string, duration?: number) => add('error', message, duration),
 		warning: (message: string, duration?: number) => add('warning', message, duration),
 		info: (message: string, duration?: number) => add('info', message, duration),
-		remove
+		remove,
+		reset
 	};
 }
 

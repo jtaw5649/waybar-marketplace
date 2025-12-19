@@ -1,24 +1,23 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
-	import { createEventDispatcher } from 'svelte';
 
 	interface Props {
 		open: boolean;
 		title: string;
 		size?: 'sm' | 'md' | 'lg';
+		onclose?: () => void;
 		children?: Snippet;
 		footer?: Snippet;
 	}
 
-	let { open, title, size = 'md', children, footer }: Props = $props();
-	const dispatch = createEventDispatcher();
+	let { open, title, size = 'md', onclose, children, footer }: Props = $props();
 
 	let dialogEl: HTMLDialogElement | undefined = $state(undefined);
 	let previousActiveElement: HTMLElement | null = null;
 
 	function close() {
-		dispatch('close');
+		onclose?.();
 	}
 
 	function handleKeydown(e: KeyboardEvent) {

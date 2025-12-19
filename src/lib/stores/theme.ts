@@ -24,6 +24,8 @@ function getEffectiveTheme(theme: Theme): 'light' | 'dark' {
 function createThemeStore() {
 	const initial = getStoredTheme();
 	const { subscribe, set } = writable<Theme>(initial);
+	let mediaQuery: MediaQueryList | null = null;
+	let mediaQueryHandler: ((e: MediaQueryListEvent) => void) | null = null;
 
 	function applyTheme(theme: Theme) {
 		if (!browser) return;
@@ -35,12 +37,14 @@ function createThemeStore() {
 	if (browser) {
 		applyTheme(initial);
 
-		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+		mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+		mediaQueryHandler = () => {
 			const current = getStoredTheme();
 			if (current === 'system') {
 				applyTheme('system');
 			}
-		});
+		};
+		mediaQuery.addEventListener('change', mediaQueryHandler);
 	}
 
 	return {
@@ -59,6 +63,11 @@ function createThemeStore() {
 		setSystem: () => {
 			set('system');
 			applyTheme('system');
+		},
+		cleanup: () => {
+			if (mediaQuery && mediaQueryHandler) {
+				mediaQuery.removeEventListener('change', mediaQueryHandler);
+			}
 		}
 	};
 }

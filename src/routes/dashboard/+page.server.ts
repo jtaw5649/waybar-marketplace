@@ -25,33 +25,48 @@ interface UserProfile {
 	created_at: string;
 }
 
+interface Collection {
+	id: number;
+	name: string;
+	description: string | null;
+	visibility: 'private' | 'public' | 'unlisted';
+	module_count: number;
+	created_at: string;
+	updated_at: string;
+}
+
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 
 	if (!session?.user) {
-		return { session, profile: null, modules: [] };
+		return { session, profile: null, modules: [], collections: [] };
 	}
 
-	const sessionToken = event.cookies.get('authjs.session-token');
+	const sessionToken =
+		event.cookies.get('__Secure-authjs.session-token') || event.cookies.get('authjs.session-token');
 
 	if (!sessionToken) {
-		return { session, profile: null, modules: [] };
+		return { session, profile: null, modules: [], collections: [] };
 	}
 
 	const cookieHeader = `authjs.session-token=${sessionToken}`;
 
 	try {
-		const [profileRes, modulesRes] = await Promise.all([
+		const [profileRes, modulesRes, collectionsRes] = await Promise.all([
 			fetch(`${API_BASE_URL}/api/v1/users/me`, {
 				headers: { Cookie: cookieHeader }
 			}),
 			fetch(`${API_BASE_URL}/api/v1/modules/mine`, {
+				headers: { Cookie: cookieHeader }
+			}),
+			fetch(`${API_BASE_URL}/api/v1/collections`, {
 				headers: { Cookie: cookieHeader }
 			})
 		]);
 
 		let profile: UserProfile | null = null;
 		let modules: Module[] = [];
+		let collections: Collection[] = [];
 
 		if (profileRes.ok) {
 			profile = await profileRes.json();
@@ -62,9 +77,14 @@ export const load: PageServerLoad = async (event) => {
 			modules = data.modules || [];
 		}
 
-		return { session, profile, modules };
+		if (collectionsRes.ok) {
+			const data = await collectionsRes.json();
+			collections = data.collections || [];
+		}
+
+		return { session, profile, modules, collections };
 	} catch {
-		return { session, profile: null, modules: [] };
+		return { session, profile: null, modules: [], collections: [] };
 	}
 };
 
@@ -75,7 +95,9 @@ export const actions: Actions = {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
-		const sessionToken = event.cookies.get('authjs.session-token');
+		const sessionToken =
+			event.cookies.get('__Secure-authjs.session-token') ||
+			event.cookies.get('authjs.session-token');
 		if (!sessionToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
@@ -100,6 +122,126 @@ export const actions: Actions = {
 
 		if (!res.ok) {
 			return fail(res.status, { message: 'Failed to update profile' });
+		}
+
+		return { success: true };
+	},
+
+	createCollection: async (event) => {
+		const session = await event.locals.auth();
+		if (!session?.user) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const sessionToken =
+			event.cookies.get('__Secure-authjs.session-token') ||
+			event.cookies.get('authjs.session-token');
+		if (!sessionToken) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const formData = await event.request.formData();
+		const name = formData.get('name') as string;
+		const description = formData.get('description') as string | null;
+		const visibility = formData.get('visibility') as string || 'private';
+
+		if (!name || name.trim().length === 0) {
+			return fail(400, { message: 'Collection name is required' });
+		}
+
+		const res = await fetch(`${API_BASE_URL}/api/v1/collections`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Cookie: `authjs.session-token=${sessionToken}`
+			},
+			body: JSON.stringify({
+				name: name.trim(),
+				description: description?.trim() || null,
+				visibility
+			})
+		});
+
+		if (!res.ok) {
+			const error = await res.text();
+			return fail(res.status, { message: error || 'Failed to create collection' });
+		}
+
+		return { success: true };
+	},
+
+	updateCollection: async (event) => {
+		const session = await event.locals.auth();
+		if (!session?.user) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const sessionToken =
+			event.cookies.get('__Secure-authjs.session-token') ||
+			event.cookies.get('authjs.session-token');
+		if (!sessionToken) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const formData = await event.request.formData();
+		const id = formData.get('id') as string;
+		const name = formData.get('name') as string;
+		const description = formData.get('description') as string | null;
+		const visibility = formData.get('visibility') as string;
+
+		if (!id) {
+			return fail(400, { message: 'Collection ID is required' });
+		}
+
+		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${id}`, {
+			method: 'PATCH',
+			headers: {
+				'Content-Type': 'application/json',
+				Cookie: `authjs.session-token=${sessionToken}`
+			},
+			body: JSON.stringify({
+				name: name?.trim() || undefined,
+				description: description?.trim() || null,
+				visibility: visibility || undefined
+			})
+		});
+
+		if (!res.ok) {
+			return fail(res.status, { message: 'Failed to update collection' });
+		}
+
+		return { success: true };
+	},
+
+	deleteCollection: async (event) => {
+		const session = await event.locals.auth();
+		if (!session?.user) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const sessionToken =
+			event.cookies.get('__Secure-authjs.session-token') ||
+			event.cookies.get('authjs.session-token');
+		if (!sessionToken) {
+			return fail(401, { message: 'Unauthorized' });
+		}
+
+		const formData = await event.request.formData();
+		const id = formData.get('id') as string;
+
+		if (!id) {
+			return fail(400, { message: 'Collection ID is required' });
+		}
+
+		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${id}`, {
+			method: 'DELETE',
+			headers: {
+				Cookie: `authjs.session-token=${sessionToken}`
+			}
+		});
+
+		if (!res.ok) {
+			return fail(res.status, { message: 'Failed to delete collection' });
 		}
 
 		return { success: true };

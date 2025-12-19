@@ -27,7 +27,7 @@
 </script>
 
 {#if href && !isDisabled}
-	<a {href} class="btn btn-{variant} btn-{size}" class:loading>
+	<a {href} class="btn btn-{variant} btn-{size}" class:loading {onclick}>
 		{#if loading}
 			<svg
 				class="spinner"
@@ -118,8 +118,8 @@
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		background-color: var(--color-primary-hover, #5068d9);
-		border-color: var(--color-primary-hover, #5068d9);
+		background-color: var(--color-primary-hover);
+		border-color: var(--color-primary-hover);
 	}
 
 	.btn-secondary {
@@ -163,8 +163,8 @@
 	}
 
 	.btn-destructive:hover:not(:disabled) {
-		background-color: #dc2626;
-		border-color: #dc2626;
+		background-color: color-mix(in srgb, var(--color-error) 85%, black);
+		border-color: color-mix(in srgb, var(--color-error) 85%, black);
 	}
 
 	.btn-content {

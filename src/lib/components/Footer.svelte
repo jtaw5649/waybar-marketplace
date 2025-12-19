@@ -178,7 +178,6 @@
 		color: var(--color-text-normal);
 	}
 
-	.github-link,
 	.external-link {
 		display: inline-flex;
 		align-items: center;

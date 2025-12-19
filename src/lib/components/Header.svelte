@@ -4,6 +4,8 @@
 	import type { Session } from '@auth/sveltekit';
 	import { open } from '$lib/stores/commandPalette';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import Button from './Button.svelte';
+	import Avatar from './Avatar.svelte';
 
 	interface Props {
 		session: Session | null;
@@ -79,20 +81,14 @@
 				<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
 			</button>
 			{#if session?.user}
-				<a href="/upload" class="btn btn-small">Upload</a>
+				<Button href="/upload" size="sm">Upload</Button>
 				<a href="/dashboard" class="user-link">
-					{#if session.user.image}
-						<img src={session.user.image} alt="" class="avatar" />
-					{:else}
-						<div class="avatar-placeholder">
-							{session.user.name?.charAt(0).toUpperCase() || 'U'}
-						</div>
-					{/if}
+					<Avatar src={session.user.image} name={session.user.name || 'U'} size="sm" />
 					<span class="user-name">{session.user.name}</span>
 				</a>
-				<button class="btn btn-small btn-ghost" onclick={() => signOut()}>Sign Out</button>
+				<Button variant="ghost" size="sm" onclick={() => signOut()}>Sign Out</Button>
 			{:else}
-				<a href={loginUrl} class="btn btn-small btn-primary">Log In</a>
+				<Button href={loginUrl} variant="primary" size="sm">Log In</Button>
 			{/if}
 		</div>
 
@@ -141,19 +137,13 @@
 				<a href="/upload" class="mobile-link" onclick={closeMobileMenu}>Upload Module</a>
 				<div class="mobile-divider"></div>
 				<div class="mobile-user">
-					{#if session.user.image}
-						<img src={session.user.image} alt="" class="avatar" />
-					{:else}
-						<div class="avatar-placeholder">
-							{session.user.name?.charAt(0).toUpperCase() || 'U'}
-						</div>
-					{/if}
+					<Avatar src={session.user.image} name={session.user.name || 'U'} size="sm" />
 					<span>{session.user.name}</span>
 				</div>
 				<button class="mobile-link mobile-button" onclick={handleSignOut}>Sign Out</button>
 			{:else}
 				<div class="mobile-divider"></div>
-				<a href={loginUrl} class="btn btn-primary mobile-cta" onclick={closeMobileMenu}>Log In</a>
+				<Button href={loginUrl} variant="primary" onclick={closeMobileMenu}>Log In</Button>
 			{/if}
 		</nav>
 	{/if}
@@ -243,80 +233,9 @@
 		background-color: var(--color-bg-surface);
 	}
 
-	.avatar {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-	}
-
-	.avatar-placeholder {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
-		color: white;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.75rem;
-		font-weight: 600;
-	}
-
 	.user-name {
 		color: var(--color-text-muted);
 		font-size: 0.875rem;
-	}
-
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-sm) var(--space-md);
-		font-size: 0.875rem;
-		font-weight: 500;
-		border-radius: var(--radius-md);
-		text-decoration: none;
-		border: 1px solid var(--color-border);
-		background-color: var(--color-bg-surface);
-		color: var(--color-text-muted);
-		cursor: pointer;
-		transition:
-			background-color var(--duration-fast) var(--ease-out),
-			border-color var(--duration-fast) var(--ease-out),
-			color var(--duration-fast) var(--ease-out);
-	}
-
-	.btn:hover {
-		background-color: var(--color-bg-elevated);
-		border-color: var(--color-primary);
-		color: var(--color-text-normal);
-	}
-
-	.btn-small {
-		padding: var(--space-xs) var(--space-md);
-	}
-
-	.btn-primary {
-		background-color: var(--color-primary);
-		color: white;
-		border-color: var(--color-primary);
-	}
-
-	.btn-primary:hover {
-		background-color: #5068d9;
-		border-color: #5068d9;
-	}
-
-	.btn-ghost {
-		background-color: transparent;
-		color: var(--color-text-muted);
-		border-color: transparent;
-	}
-
-	.btn-ghost:hover {
-		background-color: var(--color-bg-surface);
-		color: var(--color-text-normal);
-		border-color: transparent;
 	}
 
 	.search-trigger {
@@ -328,9 +247,6 @@
 		border: none;
 		border-radius: var(--radius-md);
 		cursor: pointer;
-	}
-
-	.search-trigger:hover {
 	}
 
 	.search-trigger:hover kbd {
@@ -465,12 +381,6 @@
 			padding: var(--space-md) var(--space-lg);
 			color: var(--color-text-muted);
 			font-size: 0.9rem;
-		}
-
-		.mobile-cta {
-			margin: var(--space-sm) var(--space-md);
-			padding: var(--space-md);
-			text-align: center;
 		}
 	}
 </style>

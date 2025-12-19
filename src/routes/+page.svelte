@@ -1,65 +1,14 @@
 <script lang="ts">
-	import { API_BASE_URL } from '$lib';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
-	import ModuleCardSkeleton from '$lib/components/ModuleCardSkeleton.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { getHomepageCategories } from '$lib/constants/categories';
 
 	let { data }: { data: PageData } = $props();
 
-	interface Module {
-		uuid: string;
-		name: string;
-		author: string;
-		description: string;
-		category: string;
-		downloads: number;
-		rating: number | null;
-		verified_author: boolean;
-	}
-
-	interface FeaturedData {
-		featured: Module[];
-		popular: Module[];
-		recent: Module[];
-	}
-
-	const categories = [
-		{ name: 'System', slug: 'system', icon: '/icons/category-system.svg', color: '#617dfa' },
-		{ name: 'Hardware', slug: 'hardware', icon: '/icons/category-hardware.svg', color: '#10b981' },
-		{ name: 'Network', slug: 'network', icon: '/icons/category-network.svg', color: '#f59e0b' },
-		{ name: 'Media', slug: 'media', icon: '/icons/category-media.svg', color: '#ec4899' },
-		{
-			name: 'Workspace',
-			slug: 'workspace',
-			icon: '/icons/category-workspace.svg',
-			color: '#8b5cf6'
-		},
-		{ name: 'Clock', slug: 'clock', icon: '/icons/category-clock.svg', color: '#06b6d4' }
-	];
-
-	let featuredData: FeaturedData | null = $state(null);
-	let loading = $state(true);
-	let error: string | null = $state(null);
-
-	$effect(() => {
-		fetchFeatured();
-	});
-
-	async function fetchFeatured() {
-		try {
-			const res = await fetch(`${API_BASE_URL}/api/v1/featured`);
-			if (!res.ok) throw new Error('Failed to fetch featured modules');
-			const json = await res.json();
-			featuredData = json;
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unknown error';
-		} finally {
-			loading = false;
-		}
-	}
+	const categories = getHomepageCategories();
 </script>
 
 <Header session={data.session} />
@@ -106,26 +55,15 @@
 		</div>
 	</section>
 
-	{#if loading}
-		<section class="modules-section">
-			<div class="section-header">
-				<h2>Featured Modules</h2>
-			</div>
-			<div class="grid featured-grid">
-				{#each Array(3) as _, i (i)}
-					<ModuleCardSkeleton />
-				{/each}
-			</div>
-		</section>
-	{:else if error}
+	{#if data.error}
 		<section class="modules-section">
 			<div class="error-state">
-				<p>{error}</p>
-				<button class="btn btn-primary" onclick={() => fetchFeatured()}>Try Again</button>
+				<p>{data.error}</p>
+				<a href="/" class="btn btn-primary">Try Again</a>
 			</div>
 		</section>
-	{:else if featuredData}
-		{#if featuredData.featured.length > 0}
+	{:else if data.featuredData}
+		{#if data.featuredData.featured.length > 0}
 			<section class="modules-section">
 				<div class="section-header">
 					<div>
@@ -134,7 +72,7 @@
 					</div>
 				</div>
 				<div class="grid featured-grid">
-					{#each featuredData.featured as module, i (module.uuid)}
+					{#each data.featuredData.featured as module, i (module.uuid)}
 						<ModuleCard
 							uuid={module.uuid}
 							name={module.name}
@@ -150,14 +88,14 @@
 			</section>
 		{/if}
 
-		{#if featuredData.popular.length > 0}
+		{#if data.featuredData.popular.length > 0}
 			<section class="modules-section">
 				<div class="section-header">
 					<h2>Popular Modules</h2>
 					<a href="/browse?sort=popular" class="see-all">See all →</a>
 				</div>
 				<div class="grid">
-					{#each featuredData.popular as module, i (module.uuid)}
+					{#each data.featuredData.popular as module, i (module.uuid)}
 						<ModuleCard
 							uuid={module.uuid}
 							name={module.name}
@@ -173,14 +111,14 @@
 			</section>
 		{/if}
 
-		{#if featuredData.recent.length > 0}
+		{#if data.featuredData.recent.length > 0}
 			<section class="modules-section">
 				<div class="section-header">
 					<h2>Recently Added</h2>
 					<a href="/browse?sort=recent" class="see-all">See all →</a>
 				</div>
 				<div class="grid">
-					{#each featuredData.recent as module, i (module.uuid)}
+					{#each data.featuredData.recent as module, i (module.uuid)}
 						<ModuleCard
 							uuid={module.uuid}
 							name={module.name}

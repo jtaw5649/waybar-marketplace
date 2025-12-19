@@ -44,6 +44,7 @@
 	const hasPrefix = $derived(!!prefix);
 	const hasSuffix = $derived(!!suffix);
 	const hasError = $derived(!!error);
+	const errorId = $derived(id ? `${id}-error` : undefined);
 </script>
 
 <div
@@ -69,6 +70,8 @@
 		{pattern}
 		bind:value
 		class:error={hasError}
+		aria-invalid={hasError}
+		aria-describedby={hasError && errorId ? errorId : undefined}
 		{oninput}
 		{onchange}
 		{onfocus}
@@ -83,7 +86,7 @@
 </div>
 
 {#if error}
-	<p class="input-error">{error}</p>
+	<p class="input-error" id={errorId} role="alert">{error}</p>
 {/if}
 
 <style>

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { fuzzySearch, type SearchableItem, type SearchResult } from './fuzzySearch';
+import {
+	fuzzySearch,
+	type SearchableItem,
+	type SearchResult as _SearchResult
+} from './fuzzySearch';
 
 describe('fuzzySearch', () => {
 	const items: SearchableItem[] = [
