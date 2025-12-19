@@ -17,6 +17,7 @@
 	let { data }: { data: PageData } = $props();
 
 	let activeTab: 'modules' | 'collections' | 'settings' = $state('modules');
+	let settingsSubTab: 'profile' | 'social' | 'featured' = $state('profile');
 
 	let displayName = $state('');
 	let bio = $state('');
@@ -49,7 +50,9 @@
 			profile?.username || data.session?.user?.login || ''
 		)
 	);
-	let effectiveUsername = $derived(getProfileUsername(profile?.username, data.session?.user?.login));
+	let effectiveUsername = $derived(
+		getProfileUsername(profile?.username, data.session?.user?.login)
+	);
 
 	let currentPinnedModules = $state<string[]>([]);
 
@@ -275,8 +278,12 @@
 						<span class="stat-label">{modules.length === 0 ? 'No modules' : 'Modules'}</span>
 					</div>
 					<div class="stat" aria-label="{getTotalDownloads()} total downloads">
-						<span class="stat-value">{getTotalDownloads() === 0 ? '—' : formatDownloads(getTotalDownloads())}</span>
-						<span class="stat-label">{getTotalDownloads() === 0 ? 'No downloads' : 'Downloads'}</span>
+						<span class="stat-value"
+							>{getTotalDownloads() === 0 ? '—' : formatDownloads(getTotalDownloads())}</span
+						>
+						<span class="stat-label"
+							>{getTotalDownloads() === 0 ? 'No downloads' : 'Downloads'}</span
+						>
 					</div>
 				</div>
 			</aside>
@@ -440,10 +447,75 @@
 					{/if}
 				{:else if activeTab === 'settings'}
 					<div class="content-header">
-						<h1>Profile Settings</h1>
+						<h1>Settings</h1>
 					</div>
 
-					<ProfileCompleteness profile={profileData} />
+					<div class="settings-sub-tabs">
+						<button
+							class="sub-tab"
+							class:active={settingsSubTab === 'profile'}
+							onclick={() => (settingsSubTab = 'profile')}
+						>
+							<svg
+								viewBox="0 0 24 24"
+								width="16"
+								height="16"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+								<circle cx="12" cy="7" r="4" />
+							</svg>
+							Profile
+						</button>
+						<button
+							class="sub-tab"
+							class:active={settingsSubTab === 'social'}
+							onclick={() => (settingsSubTab = 'social')}
+						>
+							<svg
+								viewBox="0 0 24 24"
+								width="16"
+								height="16"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+								<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+							</svg>
+							Social & Links
+						</button>
+						{#if modules.length > 0}
+							<button
+								class="sub-tab"
+								class:active={settingsSubTab === 'featured'}
+								onclick={() => (settingsSubTab = 'featured')}
+							>
+								<svg
+									viewBox="0 0 24 24"
+									width="16"
+									height="16"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path
+										d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+									/>
+								</svg>
+								Featured Modules
+								{#if currentPinnedModules.length > 0}
+									<span class="sub-tab-badge">{currentPinnedModules.length}</span>
+								{/if}
+							</button>
+						{/if}
+					</div>
+
+					{#if settingsSubTab === 'profile'}
+						<ProfileCompleteness profile={profileData} />
+					{/if}
 
 					<form
 						class="settings-form"
@@ -472,145 +544,155 @@
 							};
 						}}
 					>
-						<fieldset class="settings-section">
-							<legend class="section-title">Profile Information</legend>
-							<div class="form-group">
-								<div class="label-row">
-									<label for="displayName">Display Name</label>
-									<CharacterCounter current={displayName.length} max={50} />
+						{#if settingsSubTab === 'profile'}
+							<fieldset class="settings-section">
+								<legend class="section-title">Profile Information</legend>
+								<div class="form-group">
+									<div class="label-row">
+										<label for="displayName">Display Name</label>
+										<CharacterCounter current={displayName.length} max={50} />
+									</div>
+									<input
+										type="text"
+										id="displayName"
+										name="display_name"
+										bind:value={displayName}
+										placeholder="Your display name"
+										maxlength="50"
+										aria-describedby="displayName-help"
+									/>
+									<p id="displayName-help" class="help-text">
+										This name will be shown on your profile instead of your GitHub username.
+									</p>
 								</div>
-								<input
-									type="text"
-									id="displayName"
-									name="display_name"
-									bind:value={displayName}
-									placeholder="Your display name"
-									maxlength="50"
-									aria-describedby="displayName-help"
-								/>
-								<p id="displayName-help" class="help-text">
-									This name will be shown on your profile instead of your GitHub username.
-								</p>
-							</div>
 
-							<div class="form-group">
-								<div class="label-row">
-									<label for="bio">Bio</label>
-									<CharacterCounter current={bio.length} max={500} />
+								<div class="form-group">
+									<div class="label-row">
+										<label for="bio">Bio</label>
+										<CharacterCounter current={bio.length} max={500} />
+									</div>
+									<textarea
+										id="bio"
+										name="bio"
+										bind:value={bio}
+										placeholder="Tell us about yourself..."
+										rows="3"
+										maxlength="500"
+										aria-describedby="bio-help"
+									></textarea>
+									<p id="bio-help" class="help-text">
+										A short bio to display on your profile page.
+									</p>
 								</div>
-								<textarea
-									id="bio"
-									name="bio"
-									bind:value={bio}
-									placeholder="Tell us about yourself..."
-									rows="3"
-									maxlength="500"
-									aria-describedby="bio-help"
-								></textarea>
-								<p id="bio-help" class="help-text">A short bio to display on your profile page.</p>
-							</div>
-						</fieldset>
+							</fieldset>
+						{/if}
 
-						<fieldset class="settings-section">
-							<legend class="section-title">Links & Social</legend>
-							<div class="form-group">
-								<label for="websiteUrl">Website URL</label>
-								<input
-									type="url"
-									id="websiteUrl"
-									name="website_url"
-									bind:value={websiteUrl}
-									placeholder="https://example.com"
-									aria-describedby="websiteUrl-help"
-								/>
-								<p id="websiteUrl-help" class="help-text">Your personal website or blog.</p>
-							</div>
+						{#if settingsSubTab === 'social'}
+							<fieldset class="settings-section">
+								<legend class="section-title">Links & Social</legend>
+								<div class="form-group">
+									<label for="websiteUrl">Website URL</label>
+									<input
+										type="url"
+										id="websiteUrl"
+										name="website_url"
+										bind:value={websiteUrl}
+										placeholder="https://example.com"
+										aria-describedby="websiteUrl-help"
+									/>
+									<p id="websiteUrl-help" class="help-text">Your personal website or blog.</p>
+								</div>
 
-							<div class="form-group">
-								<label for="githubUrl">GitHub Profile</label>
-								<input
-									type="url"
-									id="githubUrl"
-									name="github_url"
-									bind:value={githubUrl}
-									placeholder="https://github.com/username"
-									aria-describedby="githubUrl-help"
-									aria-invalid={Boolean(githubUrl) && !githubValid}
-									class:input-error={githubUrl && !githubValid}
-								/>
-								<p id="githubUrl-help" class="help-text">
-									{#if githubUrl && !githubValid}
-										<span class="error-text">Enter a valid GitHub profile URL</span>
+								<div class="form-group">
+									<label for="githubUrl">GitHub Profile</label>
+									<input
+										type="url"
+										id="githubUrl"
+										name="github_url"
+										bind:value={githubUrl}
+										placeholder="https://github.com/username"
+										aria-describedby="githubUrl-help"
+										aria-invalid={Boolean(githubUrl) && !githubValid}
+										class:input-error={githubUrl && !githubValid}
+									/>
+									<p id="githubUrl-help" class="help-text">
+										{#if githubUrl && !githubValid}
+											<span class="error-text">Enter a valid GitHub profile URL</span>
+										{:else}
+											Link to your GitHub profile (separate from login).
+										{/if}
+									</p>
+								</div>
+
+								<div class="form-group">
+									<label for="twitterUrl">Twitter / X</label>
+									<input
+										type="url"
+										id="twitterUrl"
+										name="twitter_url"
+										bind:value={twitterUrl}
+										placeholder="https://x.com/username"
+										aria-describedby="twitterUrl-help"
+										aria-invalid={Boolean(twitterUrl) && !twitterValid}
+										class:input-error={twitterUrl && !twitterValid}
+									/>
+									<p id="twitterUrl-help" class="help-text">
+										{#if twitterUrl && !twitterValid}
+											<span class="error-text">Enter a valid Twitter/X profile URL</span>
+										{:else}
+											Your Twitter or X profile.
+										{/if}
+									</p>
+								</div>
+
+								<div class="form-group sponsor-field">
+									<label for="sponsorUrl">
+										<svg
+											viewBox="0 0 24 24"
+											width="16"
+											height="16"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											class="sponsor-icon"
+										>
+											<path
+												d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+											/>
+										</svg>
+										Sponsor / Donate
+									</label>
+									<input
+										type="url"
+										id="sponsorUrl"
+										name="sponsor_url"
+										bind:value={sponsorUrl}
+										placeholder="https://ko-fi.com/username"
+										aria-describedby="sponsorUrl-help"
+									/>
+									<p id="sponsorUrl-help" class="help-text">
+										Link to Ko-fi, GitHub Sponsors, Buy Me a Coffee, or other donation page.
+									</p>
+								</div>
+							</fieldset>
+						{/if}
+
+						{#if settingsSubTab === 'profile' || settingsSubTab === 'social'}
+							<div class="form-actions">
+								<button type="submit" class="btn btn-primary" disabled={saving}>
+									{#if saving}
+										<span class="spinner"></span>
+										Saving...
 									{:else}
-										Link to your GitHub profile (separate from login).
+										Save Changes
 									{/if}
-								</p>
+								</button>
+								<span class="sr-only" role="status" aria-live="polite">{saveStatus}</span>
 							</div>
-
-							<div class="form-group">
-								<label for="twitterUrl">Twitter / X</label>
-								<input
-									type="url"
-									id="twitterUrl"
-									name="twitter_url"
-									bind:value={twitterUrl}
-									placeholder="https://x.com/username"
-									aria-describedby="twitterUrl-help"
-									aria-invalid={Boolean(twitterUrl) && !twitterValid}
-									class:input-error={twitterUrl && !twitterValid}
-								/>
-								<p id="twitterUrl-help" class="help-text">
-									{#if twitterUrl && !twitterValid}
-										<span class="error-text">Enter a valid Twitter/X profile URL</span>
-									{:else}
-										Your Twitter or X profile.
-									{/if}
-								</p>
-							</div>
-
-							<div class="form-group sponsor-field">
-								<label for="sponsorUrl">
-									<svg
-										viewBox="0 0 24 24"
-										width="16"
-										height="16"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										class="sponsor-icon"
-									>
-										<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-									</svg>
-									Sponsor / Donate
-								</label>
-								<input
-									type="url"
-									id="sponsorUrl"
-									name="sponsor_url"
-									bind:value={sponsorUrl}
-									placeholder="https://ko-fi.com/username"
-									aria-describedby="sponsorUrl-help"
-								/>
-								<p id="sponsorUrl-help" class="help-text">
-									Link to Ko-fi, GitHub Sponsors, Buy Me a Coffee, or other donation page.
-								</p>
-							</div>
-						</fieldset>
-
-						<div class="form-actions">
-							<button type="submit" class="btn btn-primary" disabled={saving}>
-								{#if saving}
-									<span class="spinner"></span>
-									Saving...
-								{:else}
-									Save Changes
-								{/if}
-							</button>
-							<span class="sr-only" role="status" aria-live="polite">{saveStatus}</span>
-						</div>
+						{/if}
 					</form>
 
-					{#if modules.length > 0}
+					{#if settingsSubTab === 'featured' && modules.length > 0}
 						<div class="featured-modules-section">
 							<h3>Featured Modules</h3>
 							<p class="section-description">
@@ -629,19 +711,26 @@
 											class="pin-toggle"
 											class:pinned={pinnedModules.isPinned(module.uuid, currentPinnedModules)}
 											onclick={() => pinnedModules.toggle(module.uuid)}
-											disabled={!pinnedModules.isPinned(module.uuid, currentPinnedModules) && !pinnedModules.canPin(currentPinnedModules)}
+											disabled={!pinnedModules.isPinned(module.uuid, currentPinnedModules) &&
+												!pinnedModules.canPin(currentPinnedModules)}
 											aria-pressed={pinnedModules.isPinned(module.uuid, currentPinnedModules)}
-											aria-label={pinnedModules.isPinned(module.uuid, currentPinnedModules) ? 'Unpin module' : 'Pin module'}
+											aria-label={pinnedModules.isPinned(module.uuid, currentPinnedModules)
+												? 'Unpin module'
+												: 'Pin module'}
 										>
 											<svg
 												viewBox="0 0 24 24"
 												width="16"
 												height="16"
-												fill={pinnedModules.isPinned(module.uuid, currentPinnedModules) ? 'currentColor' : 'none'}
+												fill={pinnedModules.isPinned(module.uuid, currentPinnedModules)
+													? 'currentColor'
+													: 'none'}
 												stroke="currentColor"
 												stroke-width="2"
 											>
-												<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+												<path
+													d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+												/>
 											</svg>
 											{pinnedModules.isPinned(module.uuid, currentPinnedModules) ? 'Pinned' : 'Pin'}
 										</button>
@@ -654,8 +743,8 @@
 					<ProfilePreviewCard
 						displayName={previewDisplayName}
 						username={effectiveUsername}
-						bio={bio}
-						websiteUrl={websiteUrl}
+						{bio}
+						{websiteUrl}
 						avatarUrl={data.session.user?.image || null}
 						moduleCount={modules.length}
 						verified={profile?.verified_author || false}
@@ -1142,6 +1231,59 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-xs);
+	}
+
+	.settings-sub-tabs {
+		display: flex;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-lg);
+		border-bottom: 1px solid var(--color-border);
+		padding-bottom: var(--space-sm);
+	}
+
+	.sub-tab {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-md);
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--color-text-muted);
+		background: none;
+		border: none;
+		cursor: pointer;
+		transition:
+			color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
+	}
+
+	.sub-tab:hover {
+		color: var(--color-text-normal);
+		background-color: var(--color-bg-surface);
+	}
+
+	.sub-tab.active {
+		color: var(--color-primary);
+		background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+	}
+
+	.sub-tab svg {
+		flex-shrink: 0;
+	}
+
+	.sub-tab-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 9999px;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		background-color: var(--color-primary);
+		color: white;
 	}
 
 	.settings-form {

@@ -1,8 +1,5 @@
 <script lang="ts">
-	import {
-		calculateProfileCompleteness,
-		type ProfileData
-	} from '$lib/utils/profileCompleteness';
+	import { calculateProfileCompleteness, type ProfileData } from '$lib/utils/profileCompleteness';
 
 	interface Props {
 		profile: ProfileData;
@@ -36,7 +33,7 @@
 	</div>
 	{#if completeness.suggestions.length > 0}
 		<ul class="suggestions" aria-label="Profile improvement suggestions">
-			{#each completeness.suggestions.slice(0, 2) as suggestion}
+			{#each completeness.suggestions.slice(0, 2) as suggestion, i (i)}
 				<li>{suggestion}</li>
 			{/each}
 		</ul>

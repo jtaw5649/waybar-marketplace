@@ -15,6 +15,7 @@
 		verified?: boolean;
 		icon?: string;
 		delay?: number;
+		createdAt?: string;
 	}
 
 	let {
@@ -24,11 +25,14 @@
 		description: _description,
 		category,
 		downloads,
-		version: _version,
+		version,
 		verified = false,
 		icon,
-		delay = 0
+		delay = 0,
+		createdAt
 	}: Props = $props();
+
+	const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 	function formatDownloads(n: number): string {
 		if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -38,6 +42,9 @@
 
 	const categoryVariant = $derived(getCategoryVariant(category));
 	const categoryColor = $derived(getCategoryColor(category));
+	const isNew = $derived(
+		createdAt ? Date.now() - new Date(createdAt).getTime() < SEVEN_DAYS_MS : false
+	);
 </script>
 
 <div class="row-wrapper" in:fly={{ y: 10, duration: 200, delay }}>
@@ -53,6 +60,12 @@
 		<div class="row-main">
 			<div class="row-title">
 				<h3>{name}</h3>
+				{#if version}
+					<span class="version-badge">v{version}</span>
+				{/if}
+				{#if isNew}
+					<span class="new-badge">New</span>
+				{/if}
 				{#if verified}
 					<svg
 						class="verified-icon"
@@ -168,6 +181,26 @@
 		width: 16px;
 		height: 16px;
 		color: var(--color-success);
+		flex-shrink: 0;
+	}
+
+	.version-badge {
+		font-size: 0.6875rem;
+		font-weight: 500;
+		color: var(--color-text-faint);
+		background-color: var(--color-bg-elevated);
+		padding: 2px 6px;
+		border-radius: var(--radius-sm);
+		flex-shrink: 0;
+	}
+
+	.new-badge {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		color: var(--color-primary);
+		background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+		padding: 2px 6px;
+		border-radius: var(--radius-sm);
 		flex-shrink: 0;
 	}
 

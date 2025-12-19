@@ -10,7 +10,9 @@
 	import StarRating from '$lib/components/StarRating.svelte';
 	import CopyButton from '$lib/components/CopyButton.svelte';
 	import Modal from '$lib/components/Modal.svelte';
+	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 
 	const categoryVariants: Record<
 		string,
@@ -53,6 +55,7 @@
 	let reviewError: string | null = $state(null);
 
 	let collections = $derived(data.collections || []);
+	let relatedModules = $derived(data.relatedModules || []);
 	let showAddToCollectionModal = $state(false);
 	let selectedCollectionId = $state('');
 	let collectionNote = $state('');
@@ -65,11 +68,40 @@
 	let selectedFile: File | null = $state(null);
 	let altTextInput = $state('');
 	let lightboxIndex: number | null = $state(null);
+	let showStickyInstall = $state(false);
+	let moduleActionsRef: HTMLElement | null = $state(null);
 
 	const API_SCREENSHOT_BASE = $derived(`${API_BASE_URL}/screenshots/${data.uuid}`);
 
 	$effect(() => {
+		if (typeof window === 'undefined' || !moduleActionsRef) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				showStickyInstall = !entries[0].isIntersecting;
+			},
+			{ threshold: 0, rootMargin: '-80px 0px 0px 0px' }
+		);
+
+		observer.observe(moduleActionsRef);
+		return () => observer.disconnect();
+	});
+
+	$effect(() => {
 		screenshots = data.screenshots || [];
+	});
+
+	$effect(() => {
+		recentlyViewed.add({
+			uuid: data.uuid,
+			name: data.module.name,
+			author: data.module.author,
+			description: data.module.description,
+			category: data.module.category,
+			downloads: data.module.downloads,
+			verified_author: data.module.verified_author,
+			version: data.module.version
+		});
 	});
 
 	const REVIEWS_PER_PAGE = 10;
@@ -235,6 +267,18 @@
 
 <Header session={data.session} />
 
+{#if showStickyInstall}
+	<div class="sticky-install-bar">
+		<div class="sticky-install-content">
+			<span class="sticky-module-name">{data.module.name}</span>
+			<div class="sticky-command">
+				<code>waybar-mod install {data.module.uuid}</code>
+				<CopyButton text={`waybar-mod install ${data.module.uuid}`} />
+			</div>
+		</div>
+	</div>
+{/if}
+
 <main id="main-content">
 	<div class="module-header">
 		<div class="module-header-content">
@@ -294,7 +338,7 @@
 				{/if}
 			</div>
 
-			<div class="module-actions">
+			<div class="module-actions" bind:this={moduleActionsRef}>
 				<div class="download-command">
 					<code>waybar-mod install {data.module.uuid}</code>
 					<CopyButton text={`waybar-mod install ${data.module.uuid}`} />
@@ -502,6 +546,29 @@
 						</svg>
 					</button>
 				{/if}
+			</div>
+		{/if}
+
+		{#if relatedModules.length > 0}
+			<div class="related-section">
+				<h2>Related Modules</h2>
+				<p class="related-subtitle">More modules in {data.module.category}</p>
+				<div class="related-grid">
+					{#each relatedModules as relatedModule, i (relatedModule.uuid)}
+						<ModuleCard
+							uuid={relatedModule.uuid}
+							name={relatedModule.name}
+							author={relatedModule.author}
+							description={relatedModule.description}
+							category={relatedModule.category}
+							downloads={relatedModule.downloads}
+							version={relatedModule.version}
+							verified={relatedModule.verified_author}
+							createdAt={relatedModule.created_at}
+							delay={i * 50}
+						/>
+					{/each}
+				</div>
 			</div>
 		{/if}
 
@@ -1793,6 +1860,134 @@
 
 		.lightbox-nav {
 			display: none;
+		}
+	}
+
+	/* Related Modules Section */
+	.related-section {
+		margin-bottom: var(--space-2xl);
+		padding-bottom: var(--space-xl);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.related-section h2 {
+		font-size: 1.25rem;
+		font-weight: 600;
+		margin-bottom: var(--space-xs);
+	}
+
+	.related-subtitle {
+		color: var(--color-text-muted);
+		font-size: 0.875rem;
+		margin-bottom: var(--space-lg);
+	}
+
+	.related-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: var(--space-lg);
+	}
+
+	@media (max-width: 768px) {
+		.related-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	/* Sticky Install Bar */
+	.sticky-install-bar {
+		position: fixed;
+		top: 57px;
+		left: 0;
+		right: 0;
+		z-index: 50;
+		background-color: var(--color-bg-surface);
+		border-bottom: 1px solid var(--color-border);
+		padding: var(--space-sm) var(--space-lg);
+		box-shadow: var(--shadow-md);
+		animation: slideDown 200ms var(--ease-out);
+	}
+
+	@keyframes slideDown {
+		from {
+			opacity: 0;
+			transform: translateY(-100%);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.sticky-install-content {
+		max-width: 900px;
+		margin: 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-lg);
+	}
+
+	.sticky-module-name {
+		font-weight: 600;
+		font-size: 0.9375rem;
+		color: var(--color-text-normal);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.sticky-command {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		background-color: var(--color-bg-elevated);
+		padding: var(--space-xs) var(--space-md);
+		border-radius: var(--radius-md);
+		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-size: 0.8125rem;
+		flex-shrink: 0;
+	}
+
+	.sticky-command code {
+		color: var(--color-text-normal);
+	}
+
+	@media (max-width: 768px) {
+		.sticky-install-bar {
+			padding: var(--space-xs) var(--space-md);
+		}
+
+		.sticky-install-content {
+			gap: var(--space-md);
+		}
+
+		.sticky-module-name {
+			font-size: 0.875rem;
+			max-width: 120px;
+		}
+
+		.sticky-command {
+			font-size: 0.75rem;
+			padding: var(--space-xs) var(--space-sm);
+		}
+
+		.sticky-command code {
+			max-width: 150px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.sticky-module-name {
+			display: none;
+		}
+
+		.sticky-command {
+			width: 100%;
+			justify-content: space-between;
 		}
 	}
 </style>

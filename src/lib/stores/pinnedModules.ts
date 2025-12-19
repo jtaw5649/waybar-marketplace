@@ -5,9 +5,7 @@ const STORAGE_KEY = 'pinned_modules';
 const MAX_PINNED = 6;
 
 function createPinnedModulesStore() {
-	const initial: string[] = browser
-		? JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-		: [];
+	const initial: string[] = browser ? JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') : [];
 
 	const { subscribe, set, update } = writable<string[]>(initial);
 

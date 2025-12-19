@@ -54,6 +54,18 @@ interface Screenshot {
 	created_at: string;
 }
 
+interface RelatedModule {
+	uuid: string;
+	name: string;
+	author: string;
+	description: string;
+	category: string;
+	downloads: number;
+	verified_author: boolean;
+	version?: string;
+	created_at?: string;
+}
+
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const uuid = event.params.uuid;
@@ -61,11 +73,12 @@ export const load: PageServerLoad = async (event) => {
 	const sessionToken =
 		event.cookies.get('__Secure-authjs.session-token') || event.cookies.get('authjs.session-token');
 
-	const [moduleRes, reviewsRes, versionsRes, screenshotsRes] = await Promise.all([
+	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, indexRes] = await Promise.all([
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}`),
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/reviews`),
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`)
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`),
+		event.fetch(`${API_BASE_URL}/api/v1/index`)
 	]);
 
 	if (!moduleRes.ok) {
@@ -93,6 +106,16 @@ export const load: PageServerLoad = async (event) => {
 		screenshots = screenshotsData.data?.screenshots || screenshotsData.screenshots || [];
 	}
 
+	let relatedModules: RelatedModule[] = [];
+	if (indexRes.ok) {
+		const indexData = await indexRes.json();
+		const allModules = (indexData.modules || []) as RelatedModule[];
+		relatedModules = allModules
+			.filter((m) => m.category === module.category && m.uuid !== uuid)
+			.sort((a, b) => b.downloads - a.downloads)
+			.slice(0, 6);
+	}
+
 	let collections: Collection[] = [];
 	if (session?.user && sessionToken) {
 		try {
@@ -118,6 +141,7 @@ export const load: PageServerLoad = async (event) => {
 		versions,
 		screenshots,
 		collections,
+		relatedModules,
 		isOwner
 	};
 };

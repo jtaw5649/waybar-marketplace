@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	calculateProfileCompleteness,
-	type ProfileData,
-	type ProfileCompletenessResult
-} from './profileCompleteness';
+import { calculateProfileCompleteness, type ProfileData } from './profileCompleteness';
 
 describe('calculateProfileCompleteness', () => {
 	describe('percentage calculation', () => {

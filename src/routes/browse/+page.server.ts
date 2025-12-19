@@ -12,6 +12,8 @@ interface Module {
 	rating: number | null;
 	verified_author: boolean;
 	created_at: string;
+	version?: string;
+	updated_at?: string;
 }
 
 export const load: PageServerLoad = async ({ fetch, url }) => {

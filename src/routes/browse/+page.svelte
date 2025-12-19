@@ -13,6 +13,8 @@
 	import { getBrowseCategories } from '$lib/constants/categories';
 	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
 	import { sidebarCollapsed } from '$lib/stores/sidebar';
+	import { recentlyViewed } from '$lib/stores/recentlyViewed';
+	import { searchPreferences } from '$lib/stores/searchPreferences';
 	import SidebarToggle from '$lib/components/SidebarToggle.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -27,6 +29,8 @@
 		rating: number | null;
 		verified_author: boolean;
 		created_at: string;
+		version?: string;
+		updated_at?: string;
 	}
 
 	const categories = getBrowseCategories();
@@ -52,6 +56,22 @@
 	let mobileFiltersOpen = $state(false);
 	let currentViewMode = $state<ViewMode>('grid');
 	let isSidebarCollapsed = $state(false);
+	let recentModules = $state<typeof $recentlyViewed>([]);
+	let savedPrefs = $state({ sort: 'popular', category: '' });
+
+	const activeFilterCount = $derived(
+		(selectedCategory ? 1 : 0) + (searchQuery ? 1 : 0) + (selectedSort !== 'popular' ? 1 : 0)
+	);
+	const hasActiveFilters = $derived(selectedCategory || searchQuery || selectedSort !== 'popular');
+
+	function clearAllFilters() {
+		searchQuery = '';
+		selectedCategory = '';
+		selectedSort = 'popular';
+		currentPage = 1;
+		updateUrl();
+		searchPreferences.reset();
+	}
 
 	const activeFilterCount = $derived(
 		(selectedCategory ? 1 : 0) + (searchQuery ? 1 : 0) + (selectedSort !== 'popular' ? 1 : 0)
@@ -81,10 +101,27 @@
 	});
 
 	$effect(() => {
+		const unsubscribe = recentlyViewed.subscribe((value) => {
+			recentModules = value;
+		});
+		return unsubscribe;
+	});
+
+	$effect(() => {
+		const unsubscribe = searchPreferences.subscribe((value) => {
+			savedPrefs = value;
+		});
+		return unsubscribe;
+	});
+
+	$effect(() => {
 		const params = $page.url.searchParams;
+		const hasUrlParams =
+			params.has('q') || params.has('category') || params.has('sort') || params.has('page');
+
 		searchQuery = params.get('q') || '';
-		selectedCategory = params.get('category') || '';
-		selectedSort = params.get('sort') || 'popular';
+		selectedCategory = params.get('category') || (hasUrlParams ? '' : savedPrefs.category);
+		selectedSort = params.get('sort') || (hasUrlParams ? 'popular' : savedPrefs.sort);
 		currentPage = parseInt(params.get('page') || '1');
 	});
 
@@ -158,12 +195,14 @@
 		currentPage = 1;
 		updateUrl();
 		mobileFiltersOpen = false;
+		searchPreferences.setCategory(slug);
 	}
 
 	function handleSortChange(e: Event) {
 		selectedSort = (e.target as HTMLSelectElement).value;
 		currentPage = 1;
 		updateUrl();
+		searchPreferences.setSort(selectedSort);
 	}
 
 	function handlePageChange(page: number) {
@@ -313,49 +352,30 @@
 			</div>
 		</aside>
 
-		<section class="results">
-			{#if error}
-				<div class="empty-state">
-					<p class="error">{error}</p>
-					<a href="/browse" class="btn btn-primary">Refresh</a>
-				</div>
-			{:else if paginatedModules.length === 0}
-				<div class="empty-state">
-					<svg
-						width="48"
-						height="48"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-					>
-						<circle cx="11" cy="11" r="8" />
-						<line x1="21" y1="21" x2="16.65" y2="16.65" />
-					</svg>
-					<h2>No modules found</h2>
-					<p>Try adjusting your search or filters</p>
-					{#if searchQuery || selectedCategory}
-						<button
-							class="btn btn-secondary"
-							onclick={() => {
-								searchQuery = '';
-								selectedCategory = '';
-								currentPage = 1;
-								updateUrl();
-							}}
-						>
-							Clear Filters
+		<div class="results-container">
+			{#if recentModules.length > 0 && !hasActiveFilters}
+				<section class="recently-viewed">
+					<div class="section-header">
+						<h2>
+							<svg
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<circle cx="12" cy="12" r="10" />
+								<polyline points="12 6 12 12 16 14" />
+							</svg>
+							Recently Viewed
+						</h2>
+						<button class="clear-history-btn" onclick={() => recentlyViewed.clear()}>
+							Clear history
 						</button>
-					{/if}
-				</div>
-			{:else}
-				<div
-					class="module-container"
-					class:grid={currentViewMode === 'grid'}
-					class:list={currentViewMode === 'list'}
-				>
-					{#each paginatedModules as module, i (module.uuid)}
-						{#if currentViewMode === 'grid'}
+					</div>
+					<div class="recently-viewed-grid">
+						{#each recentModules.slice(0, 6) as module (module.uuid)}
 							<ModuleCard
 								uuid={module.uuid}
 								name={module.name}
@@ -364,83 +384,147 @@
 								category={module.category}
 								downloads={module.downloads}
 								verified={module.verified_author}
-								delay={i * 30}
+								version={module.version}
+								delay={0}
 							/>
-						{:else}
-							<ModuleCardRow
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 15}
-							/>
-						{/if}
-					{/each}
-				</div>
-
-				{#if totalPages > 1}
-					<nav class="pagination" aria-label="Pagination">
-						<button
-							class="pagination-btn"
-							disabled={currentPage === 1}
-							onclick={() => handlePageChange(currentPage - 1)}
-							aria-label="Previous page"
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<polyline points="15 18 9 12 15 6" />
-							</svg>
-							<span class="pagination-label">Previous</span>
-						</button>
-
-						<div class="pagination-pages">
-							{#each getPageNumbers() as pageNum, i (i)}
-								{#if pageNum === 'ellipsis'}
-									<span class="pagination-ellipsis" aria-hidden="true">...</span>
-								{:else}
-									<button
-										class="pagination-page"
-										class:active={pageNum === currentPage}
-										onclick={() => handlePageChange(pageNum)}
-										aria-current={pageNum === currentPage ? 'page' : undefined}
-									>
-										{pageNum}
-									</button>
-								{/if}
-							{/each}
-						</div>
-
-						<button
-							class="pagination-btn"
-							disabled={currentPage === totalPages}
-							onclick={() => handlePageChange(currentPage + 1)}
-							aria-label="Next page"
-						>
-							<span class="pagination-label">Next</span>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<polyline points="9 18 15 12 9 6" />
-							</svg>
-						</button>
-					</nav>
-				{/if}
+						{/each}
+					</div>
+				</section>
 			{/if}
-		</section>
+
+			<section class="results">
+				{#if error}
+					<div class="empty-state">
+						<p class="error">{error}</p>
+						<a href="/browse" class="btn btn-primary">Refresh</a>
+					</div>
+				{:else if paginatedModules.length === 0}
+					<div class="empty-state">
+						<svg
+							width="48"
+							height="48"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<line x1="21" y1="21" x2="16.65" y2="16.65" />
+						</svg>
+						<h2>No modules found</h2>
+						<p>Try adjusting your search or filters</p>
+						{#if searchQuery || selectedCategory}
+							<button
+								class="btn btn-secondary"
+								onclick={() => {
+									searchQuery = '';
+									selectedCategory = '';
+									currentPage = 1;
+									updateUrl();
+								}}
+							>
+								Clear Filters
+							</button>
+						{/if}
+					</div>
+				{:else}
+					<div
+						class="module-container"
+						class:grid={currentViewMode === 'grid'}
+						class:list={currentViewMode === 'list'}
+					>
+						{#each paginatedModules as module, i (module.uuid)}
+							{#if currentViewMode === 'grid'}
+								<ModuleCard
+									uuid={module.uuid}
+									name={module.name}
+									author={module.author}
+									description={module.description}
+									category={module.category}
+									downloads={module.downloads}
+									verified={module.verified_author}
+									version={module.version}
+									createdAt={module.created_at}
+									delay={i * 30}
+								/>
+							{:else}
+								<ModuleCardRow
+									uuid={module.uuid}
+									name={module.name}
+									author={module.author}
+									description={module.description}
+									category={module.category}
+									downloads={module.downloads}
+									verified={module.verified_author}
+									version={module.version}
+									createdAt={module.created_at}
+									delay={i * 15}
+								/>
+							{/if}
+						{/each}
+					</div>
+
+					{#if totalPages > 1}
+						<nav class="pagination" aria-label="Pagination">
+							<button
+								class="pagination-btn"
+								disabled={currentPage === 1}
+								onclick={() => handlePageChange(currentPage - 1)}
+								aria-label="Previous page"
+							>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<polyline points="15 18 9 12 15 6" />
+								</svg>
+								<span class="pagination-label">Previous</span>
+							</button>
+
+							<div class="pagination-pages">
+								{#each getPageNumbers() as pageNum, i (i)}
+									{#if pageNum === 'ellipsis'}
+										<span class="pagination-ellipsis" aria-hidden="true">...</span>
+									{:else}
+										<button
+											class="pagination-page"
+											class:active={pageNum === currentPage}
+											onclick={() => handlePageChange(pageNum)}
+											aria-current={pageNum === currentPage ? 'page' : undefined}
+										>
+											{pageNum}
+										</button>
+									{/if}
+								{/each}
+							</div>
+
+							<button
+								class="pagination-btn"
+								disabled={currentPage === totalPages}
+								onclick={() => handlePageChange(currentPage + 1)}
+								aria-label="Next page"
+							>
+								<span class="pagination-label">Next</span>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<polyline points="9 18 15 12 9 6" />
+								</svg>
+							</button>
+						</nav>
+					{/if}
+				{/if}
+			</section>
+		</div>
 	</div>
 </main>
 
@@ -679,6 +763,59 @@
 		outline: none;
 		border-color: var(--color-primary);
 		box-shadow: var(--focus-ring);
+	}
+
+	.results-container {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2xl);
+	}
+
+	.recently-viewed {
+		padding-bottom: var(--space-xl);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.recently-viewed .section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--space-lg);
+	}
+
+	.recently-viewed .section-header h2 {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		font-size: 1.1rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.recently-viewed .section-header h2 svg {
+		color: var(--color-text-muted);
+	}
+
+	.clear-history-btn {
+		font-size: 0.8rem;
+		color: var(--color-text-muted);
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: var(--space-xs) var(--space-sm);
+		border-radius: var(--radius-sm);
+		transition: all var(--duration-fast) var(--ease-out);
+	}
+
+	.clear-history-btn:hover {
+		color: var(--color-text);
+		background-color: var(--color-bg-secondary);
+	}
+
+	.recently-viewed-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: var(--space-lg);
 	}
 
 	.results {

@@ -9,6 +9,9 @@ interface UserProfile {
 	avatar_url: string | null;
 	bio: string | null;
 	website_url: string | null;
+	github_url: string | null;
+	twitter_url: string | null;
+	mastodon_url: string | null;
 	verified_author: boolean;
 	module_count: number;
 	created_at: string;

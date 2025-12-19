@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCharacterCounterState, type CharacterCounterState } from './characterCounter';
+import { getCharacterCounterState } from './characterCounter';
 
 describe('getCharacterCounterState', () => {
 	describe('normal state', () => {
