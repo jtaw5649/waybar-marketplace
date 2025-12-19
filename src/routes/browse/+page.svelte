@@ -53,6 +53,19 @@
 	let currentViewMode = $state<ViewMode>('grid');
 	let isSidebarCollapsed = $state(false);
 
+	const activeFilterCount = $derived(
+		(selectedCategory ? 1 : 0) + (searchQuery ? 1 : 0) + (selectedSort !== 'popular' ? 1 : 0)
+	);
+	const hasActiveFilters = $derived(selectedCategory || searchQuery || selectedSort !== 'popular');
+
+	function clearAllFilters() {
+		searchQuery = '';
+		selectedCategory = '';
+		selectedSort = 'popular';
+		currentPage = 1;
+		updateUrl();
+	}
+
 	$effect(() => {
 		const unsubscribe = viewMode.subscribe((value) => {
 			currentViewMode = value;
@@ -239,6 +252,42 @@
 			class:open={mobileFiltersOpen}
 			class:collapsed={isSidebarCollapsed}
 		>
+			{#if hasActiveFilters && !isSidebarCollapsed}
+				<button class="clear-filters-btn" onclick={clearAllFilters}>
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<line x1="18" y1="6" x2="6" y2="18" />
+						<line x1="6" y1="6" x2="18" y2="18" />
+					</svg>
+					Clear all filters
+					<span class="filter-count">{activeFilterCount}</span>
+				</button>
+			{/if}
+			{#if isSidebarCollapsed && hasActiveFilters}
+				<button
+					class="collapsed-filter-badge"
+					onclick={() => sidebarCollapsed.set(false)}
+					title="Expand to see {activeFilterCount} active filter{activeFilterCount > 1 ? 's' : ''}"
+				>
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+					</svg>
+					<span class="badge-count">{activeFilterCount}</span>
+				</button>
+			{/if}
 			<div class="filter-section">
 				<h3>Category</h3>
 				<div class="filter-options">
@@ -445,13 +494,19 @@
 
 	.browse-layout {
 		display: grid;
-		grid-template-columns: 240px 1fr;
+		grid-template-columns: clamp(240px, 18vw, 280px) 1fr;
 		gap: var(--space-2xl);
 		max-width: 1400px;
 		margin: 0 auto;
 		padding: var(--space-2xl);
 		width: 100%;
 		transition: grid-template-columns var(--duration-normal) var(--ease-out);
+	}
+
+	@media (min-width: 1600px) {
+		.browse-layout {
+			grid-template-columns: 300px 1fr;
+		}
 	}
 
 	.browse-layout.sidebar-collapsed {
@@ -476,13 +531,89 @@
 
 	.filter-sidebar.collapsed .filter-section h3,
 	.filter-sidebar.collapsed .filter-option,
-	.filter-sidebar.collapsed .sort-select {
+	.filter-sidebar.collapsed .sort-select,
+	.filter-sidebar.collapsed .clear-filters-btn {
 		opacity: 0;
 		visibility: hidden;
 		pointer-events: none;
 		transition:
 			opacity var(--duration-fast) var(--ease-out),
 			visibility var(--duration-fast) var(--ease-out);
+	}
+
+	.clear-filters-btn {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		width: 100%;
+		padding: var(--space-sm) var(--space-md);
+		margin-bottom: var(--space-lg);
+		background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+		border-radius: var(--radius-md);
+		color: var(--color-error);
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out);
+	}
+
+	.clear-filters-btn:hover {
+		background-color: color-mix(in srgb, var(--color-error) 25%, transparent);
+		border-color: color-mix(in srgb, var(--color-error) 50%, transparent);
+	}
+
+	.clear-filters-btn svg {
+		flex-shrink: 0;
+	}
+
+	.filter-count {
+		margin-left: auto;
+		background-color: var(--color-error);
+		color: white;
+		font-size: 0.7rem;
+		font-weight: 600;
+		padding: 2px 6px;
+		border-radius: 9999px;
+		min-width: 18px;
+		text-align: center;
+	}
+
+	.collapsed-filter-badge {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		width: 40px;
+		height: 48px;
+		margin: 0 auto var(--space-md);
+		background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+		border-radius: var(--radius-md);
+		color: var(--color-primary);
+		cursor: pointer;
+		transition:
+			background-color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out);
+	}
+
+	.collapsed-filter-badge:hover {
+		background-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+		transform: scale(1.05);
+	}
+
+	.badge-count {
+		font-size: 0.65rem;
+		font-weight: 700;
+		background-color: var(--color-primary);
+		color: white;
+		padding: 1px 5px;
+		border-radius: 9999px;
+		min-width: 16px;
+		text-align: center;
 	}
 
 	.filter-section {

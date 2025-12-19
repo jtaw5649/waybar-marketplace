@@ -1,6 +1,6 @@
 import { SvelteKitAuth } from '@auth/sveltekit';
 import GitHub from '@auth/sveltekit/providers/github';
-import { AUTH_GITHUB_ID, AUTH_GITHUB_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	providers: [GitHub],
@@ -48,8 +48,8 @@ async function refreshAccessToken(token: Record<string, unknown>) {
 				Accept: 'application/json'
 			},
 			body: new URLSearchParams({
-				client_id: AUTH_GITHUB_ID,
-				client_secret: AUTH_GITHUB_SECRET,
+				client_id: env.AUTH_GITHUB_ID ?? '',
+				client_secret: env.AUTH_GITHUB_SECRET ?? '',
 				grant_type: 'refresh_token',
 				refresh_token: token.refreshToken as string
 			})
