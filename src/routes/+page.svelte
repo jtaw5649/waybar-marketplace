@@ -27,12 +27,12 @@
 	}
 
 	const categories = [
-		{ name: 'System', slug: 'system', icon: '⚙️', color: '#617dfa' },
-		{ name: 'Hardware', slug: 'hardware', icon: '🖥️', color: '#10b981' },
-		{ name: 'Network', slug: 'network', icon: '🌐', color: '#f59e0b' },
-		{ name: 'Media', slug: 'media', icon: '🎵', color: '#ec4899' },
-		{ name: 'Workspace', slug: 'workspace', icon: '🪟', color: '#8b5cf6' },
-		{ name: 'Clock', slug: 'clock', icon: '🕐', color: '#06b6d4' }
+		{ name: 'System', slug: 'system', icon: '/icons/category-system.svg', color: '#617dfa' },
+		{ name: 'Hardware', slug: 'hardware', icon: '/icons/category-hardware.svg', color: '#10b981' },
+		{ name: 'Network', slug: 'network', icon: '/icons/category-network.svg', color: '#f59e0b' },
+		{ name: 'Media', slug: 'media', icon: '/icons/category-media.svg', color: '#ec4899' },
+		{ name: 'Workspace', slug: 'workspace', icon: '/icons/category-workspace.svg', color: '#8b5cf6' },
+		{ name: 'Clock', slug: 'clock', icon: '/icons/category-clock.svg', color: '#06b6d4' }
 	];
 
 	let featuredData: FeaturedData | null = $state(null);
@@ -94,7 +94,7 @@
 					class="category-card"
 					style="--cat-color: {cat.color}"
 				>
-					<span class="category-icon">{cat.icon}</span>
+					<img src={cat.icon} alt="" class="category-icon" />
 					<span class="category-name">{cat.name}</span>
 				</a>
 			{/each}
@@ -319,7 +319,8 @@
 	}
 
 	.category-icon {
-		font-size: 1.75rem;
+		width: 32px;
+		height: 32px;
 	}
 
 	.category-name {

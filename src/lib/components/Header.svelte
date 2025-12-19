@@ -32,17 +32,22 @@
 	<div class="header-content">
 		<a href="/" class="logo" onclick={closeMobileMenu}>
 			<svg
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
+				width="28"
+				height="28"
+				viewBox="8 8 112 112"
 				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
 				aria-hidden="true"
 			>
-				<rect x="3" y="3" width="18" height="18" rx="2" />
-				<line x1="3" y1="9" x2="21" y2="9" />
-				<line x1="9" y1="21" x2="9" y2="9" />
+				<defs>
+					<linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+						<stop offset="0%" stop-color="#617DFA" />
+						<stop offset="100%" stop-color="#8B5CF6" />
+					</linearGradient>
+				</defs>
+				<rect x="10" y="44" width="108" height="40" rx="12" fill="var(--color-bg-elevated)" stroke="url(#logoGrad)" stroke-width="4" />
+				<rect x="18" y="52" width="24" height="24" rx="6" fill="url(#logoGrad)" />
+				<rect x="48" y="52" width="36" height="24" rx="6" fill="var(--color-border)" />
+				<rect x="90" y="52" width="20" height="24" rx="6" fill="var(--color-border)" fill-opacity="0.5" />
 			</svg>
 			<span>Waybar Marketplace</span>
 		</a>
@@ -56,14 +61,7 @@
 
 		<div class="header-actions desktop-actions">
 			<button class="search-trigger" onclick={open} aria-label="Search">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="11" cy="11" r="8" />
-					<line x1="21" y1="21" x2="16.65" y2="16.65" />
-				</svg>
-				<span class="search-text">Search</span>
-				<span class="search-shortcut">
-					<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
-				</span>
+				<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
 			</button>
 			{#if session?.user}
 				<a href="/upload" class="btn btn-small">Upload</a>
@@ -306,50 +304,43 @@
 	.search-trigger {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-xs) var(--space-md);
-		background-color: var(--color-bg-surface);
-		border: 1px solid var(--color-border);
+		gap: 2px;
+		padding: var(--space-xs) var(--space-sm);
+		background: none;
+		border: none;
 		border-radius: var(--radius-md);
-		color: var(--color-text-muted);
-		font-size: 0.85rem;
 		cursor: pointer;
-		transition: all var(--duration-fast) var(--ease-out);
+		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.search-trigger:hover {
-		background-color: var(--color-bg-elevated);
-		border-color: var(--color-primary);
-		color: var(--color-text-normal);
+		background-color: var(--color-bg-surface);
+	}
+
+	.search-trigger:hover kbd {
+		border-color: var(--color-text-faint);
+		color: var(--color-text-muted);
 	}
 
 	.search-trigger:focus-visible {
 		box-shadow: var(--focus-ring);
 	}
 
-	.search-text {
-		color: var(--color-text-faint);
-	}
-
-	.search-shortcut {
-		display: flex;
-		gap: 2px;
-		margin-left: var(--space-sm);
-	}
-
-	.search-shortcut kbd {
+	.search-trigger kbd {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 18px;
-		height: 18px;
-		padding: 0 3px;
-		background-color: var(--color-bg-elevated);
+		min-width: 20px;
+		height: 20px;
+		padding: 0 4px;
+		background-color: var(--color-bg-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
-		font-size: 0.65rem;
+		font-size: 0.7rem;
 		font-family: inherit;
 		color: var(--color-text-faint);
+		transition: border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
 	}
 
 	.mobile-menu-toggle {
