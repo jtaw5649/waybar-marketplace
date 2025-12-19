@@ -10,6 +10,7 @@
 		<h1>Waybar Modules</h1>
 		<div class="header-right">
 			{#if data.session?.user}
+				<a href="/upload" class="btn btn-small">Upload</a>
 				<span class="user-name">{data.session.user.name}</span>
 				<button class="btn btn-small" onclick={() => signOut()}>Sign Out</button>
 			{:else}
@@ -27,7 +28,9 @@
 			</p>
 			<div class="hero-actions">
 				<a href="/browse" class="btn btn-primary">Browse Modules</a>
-				{#if !data.session?.user}
+				{#if data.session?.user}
+					<a href="/upload" class="btn btn-secondary">Upload Module</a>
+				{:else}
 					<a href="/login" class="btn btn-secondary">Sign In</a>
 				{/if}
 			</div>
