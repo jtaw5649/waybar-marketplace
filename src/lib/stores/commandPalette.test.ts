@@ -13,7 +13,7 @@ import {
 	reset
 } from './commandPalette';
 import { get } from 'svelte/store';
-import type { PaletteMode, Module } from '$lib/types';
+import type { PaletteMode as _PaletteMode, Module } from '$lib/types';
 
 describe('commandPalette store', () => {
 	beforeEach(() => {

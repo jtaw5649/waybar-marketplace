@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 
 function getStoredFavorites(): Set<string> {
@@ -16,7 +16,7 @@ function getStoredFavorites(): Set<string> {
 
 function createFavoritesStore() {
 	const initial = getStoredFavorites();
-	const { subscribe, update, set } = writable<Set<string>>(initial);
+	const store = writable<Set<string>>(initial);
 
 	function persist(favorites: Set<string>) {
 		if (browser) {
@@ -25,9 +25,9 @@ function createFavoritesStore() {
 	}
 
 	return {
-		subscribe,
+		subscribe: store.subscribe,
 		add: (uuid: string) => {
-			update((favorites) => {
+			store.update((favorites) => {
 				const next = new Set(favorites);
 				next.add(uuid);
 				persist(next);
@@ -35,7 +35,7 @@ function createFavoritesStore() {
 			});
 		},
 		remove: (uuid: string) => {
-			update((favorites) => {
+			store.update((favorites) => {
 				const next = new Set(favorites);
 				next.delete(uuid);
 				persist(next);
@@ -43,7 +43,7 @@ function createFavoritesStore() {
 			});
 		},
 		toggle: (uuid: string) => {
-			update((favorites) => {
+			store.update((favorites) => {
 				const next = new Set(favorites);
 				if (next.has(uuid)) {
 					next.delete(uuid);
@@ -55,15 +55,10 @@ function createFavoritesStore() {
 			});
 		},
 		has: (uuid: string) => {
-			let result = false;
-			const unsubscribe = subscribe((favorites) => {
-				result = favorites.has(uuid);
-			});
-			unsubscribe();
-			return result;
+			return get(store).has(uuid);
 		},
 		clear: () => {
-			set(new Set());
+			store.set(new Set());
 			persist(new Set());
 		}
 	};
