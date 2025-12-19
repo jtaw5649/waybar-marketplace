@@ -1,0 +1,7 @@
+# Copy this file to wrangler.local.toml and fill in values
+# wrangler.local.toml is gitignored
+
+[[d1_databases]]
+binding = "DB"
+database_name = "waybar-registry"
+database_id = "your-database-id-here"
