@@ -12,11 +12,13 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 					accessToken: account.access_token,
 					expiresAt: account.expires_at,
 					refreshToken: account.refresh_token,
-					login: (profile as { login?: string })?.login
+					login: (profile as { login?: string })?.login,
+					error: undefined
 				};
 			}
 
-			if (token.expiresAt && Date.now() < (token.expiresAt as number) * 1000) {
+			const FIVE_MINUTES_MS = 5 * 60 * 1000;
+			if (token.expiresAt && Date.now() < (token.expiresAt as number) * 1000 - FIVE_MINUTES_MS) {
 				return token;
 			}
 
@@ -24,7 +26,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 				return refreshAccessToken(token);
 			}
 
-			return token;
+			return { ...token, error: 'RefreshTokenError', accessToken: undefined };
 		},
 		async session({ session, token }) {
 			if (session.user) {
@@ -57,16 +59,20 @@ async function refreshAccessToken(token: Record<string, unknown>) {
 
 		const tokens = await response.json();
 
-		if (!response.ok) throw tokens;
+		if (!response.ok) {
+			console.error('[AUTH] Refresh failed:', tokens);
+			return { ...token, error: 'RefreshTokenError', accessToken: undefined };
+		}
 
 		return {
 			...token,
 			accessToken: tokens.access_token,
 			expiresAt: Math.floor(Date.now() / 1000) + tokens.expires_in,
-			refreshToken: tokens.refresh_token ?? token.refreshToken
+			refreshToken: tokens.refresh_token ?? token.refreshToken,
+			error: undefined
 		};
 	} catch (error) {
-		console.error('Error refreshing token:', error);
-		return { ...token, error: 'RefreshTokenError' };
+		console.error('[AUTH] Refresh exception:', error);
+		return { ...token, error: 'RefreshTokenError', accessToken: undefined };
 	}
 }
