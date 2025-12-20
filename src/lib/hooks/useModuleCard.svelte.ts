@@ -13,10 +13,15 @@ export function useModuleCard(props: ModuleCardInput) {
 
 	const categoryVariant = getCategoryVariant(props.category);
 	const categoryColor = getCategoryColor(props.category);
-	const isNew = props.createdAt
-		? Date.now() - new Date(props.createdAt).getTime() < SEVEN_DAYS_MS
-		: false;
-	const isStarred = starsState.current.starred.has(props.uuid);
+	const isNew = props.createdAt ? Date.now() - Date.parse(props.createdAt) < SEVEN_DAYS_MS : false;
+	const isStarred = $derived(starsState.current.starred.has(props.uuid));
 
-	return { categoryVariant, categoryColor, isNew, isStarred };
+	return {
+		categoryVariant,
+		categoryColor,
+		isNew,
+		get isStarred() {
+			return isStarred;
+		}
+	};
 }
