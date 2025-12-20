@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
+import type { Module } from '$lib/types';
 
 interface UserProfile {
 	id: number;
@@ -15,17 +16,6 @@ interface UserProfile {
 	verified_author: boolean;
 	module_count: number;
 	created_at: string;
-}
-
-interface Module {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	downloads: number;
-	rating: number | null;
-	verified_author: boolean;
 }
 
 interface Collection {
@@ -45,9 +35,9 @@ export const load: PageServerLoad = async (event) => {
 
 	if (!profileRes.ok) {
 		if (profileRes.status === 404) {
-			error(404, 'User not found');
+			throw error(404, 'User not found');
 		}
-		error(500, 'Failed to fetch user profile');
+		throw error(500, 'Failed to fetch user profile');
 	}
 
 	const profile: UserProfile = await profileRes.json();

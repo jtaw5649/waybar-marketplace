@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
+import type { Module } from '$lib/types';
 
 interface ReviewUser {
 	username: string;
@@ -16,19 +17,6 @@ interface Review {
 	created_at: string;
 	updated_at: string | null;
 	user: ReviewUser;
-}
-
-interface Module {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	version: string;
-	downloads: number;
-	rating: number | null;
-	repo_url: string;
-	verified_author: boolean;
 }
 
 interface VersionHistoryEntry {
@@ -82,7 +70,7 @@ export const load: PageServerLoad = async (event) => {
 	]);
 
 	if (!moduleRes.ok) {
-		error(404, 'Module not found');
+		throw error(404, 'Module not found');
 	}
 
 	const moduleData = await moduleRes.json();
