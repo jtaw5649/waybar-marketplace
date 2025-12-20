@@ -66,4 +66,59 @@ describe('admin page server', () => {
 			}
 		});
 	});
+
+	describe('authenticated admin user', () => {
+		it('returns session, submissions, and stats', async () => {
+			const mockSession = {
+				user: { name: 'admin' },
+				accessToken: 'valid-token'
+			};
+
+			const mockSubmissions = [{ id: 1, name: 'Test Module' }];
+			const mockStats = { total_modules: 10, total_users: 5 };
+
+			const mockEvent = {
+				locals: {
+					auth: vi.fn().mockResolvedValue(mockSession)
+				},
+				fetch: vi.fn((url) => {
+					if (url.endsWith('/users/me')) {
+						return Promise.resolve({
+							ok: true,
+							json: () => Promise.resolve({ role: 'admin' })
+						});
+					}
+					if (url.endsWith('/admin/submissions')) {
+						return Promise.resolve({
+							ok: true,
+							json: () => Promise.resolve({ data: mockSubmissions })
+						});
+					}
+					if (url.endsWith('/admin/stats')) {
+						return Promise.resolve({
+							ok: true,
+							json: () => Promise.resolve({ data: mockStats })
+						});
+					}
+					return Promise.reject(new Error('Unknown URL'));
+				})
+			} as unknown as LoadEvent;
+
+			const { load } = await import('./+page.server');
+			const result = await load(mockEvent);
+
+			expect(result).toEqual({
+				session: mockSession,
+				submissions: mockSubmissions,
+				stats: mockStats
+			});
+
+			expect(mockEvent.fetch).toHaveBeenCalledWith(expect.stringContaining('/admin/submissions'), {
+				headers: { Authorization: 'Bearer valid-token' }
+			});
+			expect(mockEvent.fetch).toHaveBeenCalledWith(expect.stringContaining('/admin/stats'), {
+				headers: { Authorization: 'Bearer valid-token' }
+			});
+		});
+	});
 });

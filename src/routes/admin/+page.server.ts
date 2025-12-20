@@ -15,19 +15,34 @@ export const load: PageServerLoad = async (event) => {
 		throw redirect(302, '/login?redirectTo=/admin');
 	}
 
-	const res = await event.fetch(`${API_BASE_URL}/api/v1/users/me`, {
-		headers: { Authorization: `Bearer ${session.accessToken}` }
-	});
+	const headers = { Authorization: `Bearer ${session.accessToken}` };
 
-	if (!res.ok) {
+	const meRes = await event.fetch(`${API_BASE_URL}/api/v1/users/me`, { headers });
+
+	if (!meRes.ok) {
 		throw error(403, 'Access denied. Could not verify permissions.');
 	}
 
-	const profile: UserProfile = await res.json();
+	const profile: UserProfile = await meRes.json();
 
 	if (profile.role !== 'admin') {
 		throw error(403, 'Access denied. Admin privileges required.');
 	}
 
-	return { session };
+	const [submissionsRes, statsRes] = await Promise.all([
+		event.fetch(`${API_BASE_URL}/api/v1/admin/submissions`, { headers }),
+		event.fetch(`${API_BASE_URL}/api/v1/admin/stats`, { headers })
+	]);
+
+	if (!submissionsRes.ok || !statsRes.ok) {
+		throw error(500, 'Failed to fetch admin data');
+	}
+
+	const [submissionsData, statsData] = await Promise.all([submissionsRes.json(), statsRes.json()]);
+
+	return {
+		session,
+		submissions: submissionsData.data || [],
+		stats: statsData.data || null
+	};
 };
