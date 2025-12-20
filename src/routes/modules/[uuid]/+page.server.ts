@@ -135,7 +135,7 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		session,
-		uuid,
+		uuid: module.uuid,
 		module,
 		reviews,
 		versions,

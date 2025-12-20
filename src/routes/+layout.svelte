@@ -4,8 +4,15 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import { toggle } from '$lib/stores/commandPalette';
+	import { stars } from '$lib/stores/stars';
+	import { page } from '$app/stores';
 
 	let { children }: { children: Snippet } = $props();
+
+	$effect(() => {
+		const session = $page.data.session;
+		stars.setAuthenticated(!!session?.user);
+	});
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'k') {

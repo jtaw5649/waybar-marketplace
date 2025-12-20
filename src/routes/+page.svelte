@@ -3,15 +3,25 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
+	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { getHomepageCategories } from '$lib/constants/categories';
 	import { recentlyViewed, type RecentModule } from '$lib/stores/recentlyViewed';
+	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
 
 	let { data }: { data: PageData } = $props();
 
 	const categories = getHomepageCategories();
 
 	let recentModules = $state<RecentModule[]>([]);
+	let currentViewMode = $state<ViewMode>('grid');
+
+	$effect(() => {
+		const unsubscribe = viewMode.subscribe((value) => {
+			currentViewMode = value;
+		});
+		return unsubscribe;
+	});
 
 	$effect(() => {
 		const unsubscribe = recentlyViewed.subscribe((value) => {
@@ -107,18 +117,31 @@
 				</div>
 				<a href="/browse" class="see-all">Browse all →</a>
 			</div>
-			<div class="grid">
+			<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
 				{#each recommendedModules as module, i (module.uuid)}
-					<ModuleCard
-						uuid={module.uuid}
-						name={module.name}
-						author={module.author}
-						description={module.description}
-						category={module.category}
-						downloads={module.downloads}
-						verified={module.verified_author}
-						delay={i * 50}
-					/>
+					{#if currentViewMode === 'grid'}
+						<ModuleCard
+							uuid={module.uuid}
+							name={module.name}
+							author={module.author}
+							description={module.description}
+							category={module.category}
+							downloads={module.downloads}
+							verified={module.verified_author}
+							delay={i * 50}
+						/>
+					{:else}
+						<ModuleCardRow
+							uuid={module.uuid}
+							name={module.name}
+							author={module.author}
+							description={module.description}
+							category={module.category}
+							downloads={module.downloads}
+							verified={module.verified_author}
+							delay={i * 30}
+						/>
+					{/if}
 				{/each}
 			</div>
 		</section>
@@ -140,18 +163,31 @@
 						<p>Hand-picked by our team</p>
 					</div>
 				</div>
-				<div class="grid featured-grid">
+				<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'} class:featured-grid={currentViewMode === 'grid'}>
 					{#each data.featuredData.featured as module, i (module.uuid)}
-						<ModuleCard
-							uuid={module.uuid}
-							name={module.name}
-							author={module.author}
-							description={module.description}
-							category={module.category}
-							downloads={module.downloads}
-							verified={module.verified_author}
-							delay={i * 50}
-						/>
+						{#if currentViewMode === 'grid'}
+							<ModuleCard
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 50}
+							/>
+						{:else}
+							<ModuleCardRow
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 30}
+							/>
+						{/if}
 					{/each}
 				</div>
 			</section>
@@ -163,18 +199,31 @@
 					<h2>Popular Modules</h2>
 					<a href="/browse?sort=popular" class="see-all">See all →</a>
 				</div>
-				<div class="grid">
+				<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
 					{#each data.featuredData.popular as module, i (module.uuid)}
-						<ModuleCard
-							uuid={module.uuid}
-							name={module.name}
-							author={module.author}
-							description={module.description}
-							category={module.category}
-							downloads={module.downloads}
-							verified={module.verified_author}
-							delay={i * 50}
-						/>
+						{#if currentViewMode === 'grid'}
+							<ModuleCard
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 50}
+							/>
+						{:else}
+							<ModuleCardRow
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 30}
+							/>
+						{/if}
 					{/each}
 				</div>
 			</section>
@@ -186,18 +235,31 @@
 					<h2>Recently Added</h2>
 					<a href="/browse?sort=recent" class="see-all">See all →</a>
 				</div>
-				<div class="grid">
+				<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
 					{#each data.featuredData.recent as module, i (module.uuid)}
-						<ModuleCard
-							uuid={module.uuid}
-							name={module.name}
-							author={module.author}
-							description={module.description}
-							category={module.category}
-							downloads={module.downloads}
-							verified={module.verified_author}
-							delay={i * 50}
-						/>
+						{#if currentViewMode === 'grid'}
+							<ModuleCard
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 50}
+							/>
+						{:else}
+							<ModuleCardRow
+								uuid={module.uuid}
+								name={module.name}
+								author={module.author}
+								description={module.description}
+								category={module.category}
+								downloads={module.downloads}
+								verified={module.verified_author}
+								delay={i * 30}
+							/>
+						{/if}
 					{/each}
 				</div>
 			</section>
@@ -407,13 +469,19 @@
 		color: var(--color-error);
 	}
 
-	.grid {
+	.module-container.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: var(--space-lg);
 	}
 
-	.featured-grid {
+	.module-container.list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.module-container.featured-grid {
 		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 	}
 
@@ -443,7 +511,7 @@
 			grid-template-columns: repeat(3, 1fr);
 		}
 
-		.grid {
+		.module-container.grid {
 			grid-template-columns: 1fr;
 		}
 	}

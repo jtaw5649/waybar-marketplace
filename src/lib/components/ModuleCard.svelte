@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import { get } from 'svelte/store';
 	import Badge from './Badge.svelte';
 	import Tag from './Tag.svelte';
 	import StarFavorite from './StarFavorite.svelte';
 	import { getCategoryVariant, getCategoryColor } from '$lib/constants';
+	import { stars } from '$lib/stores/stars';
 
 	interface Props {
 		uuid: string;
@@ -35,6 +37,13 @@
 
 	const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
+	let starsState = $state(get(stars));
+	$effect(() => {
+		return stars.subscribe((s) => {
+			starsState = s;
+		});
+	});
+
 	function formatDownloads(n: number): string {
 		if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
 		if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -46,6 +55,7 @@
 	const isNew = $derived(
 		createdAt ? Date.now() - new Date(createdAt).getTime() < SEVEN_DAYS_MS : false
 	);
+	const isStarred = $derived(starsState.starred.has(uuid));
 </script>
 
 <div class="card-wrapper" in:fly={{ y: 20, duration: 300, delay }}>
@@ -103,6 +113,16 @@
 							<polyline points="22 4 12 14.01 9 11.01" />
 						</svg>
 						Verified
+					</Tag>
+				{/if}
+				{#if isStarred}
+					<Tag variant="amber">
+						<svg viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+							/>
+						</svg>
+						Starred
 					</Tag>
 				{/if}
 			</div>

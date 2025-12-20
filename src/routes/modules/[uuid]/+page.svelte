@@ -11,6 +11,8 @@
 	import CopyButton from '$lib/components/CopyButton.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
+	import CollapsibleSection from '$lib/components/CollapsibleSection.svelte';
+	import BentoScreenshots from '$lib/components/BentoScreenshots.svelte';
 	import { toast } from '$lib/stores/toast';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 
@@ -261,6 +263,23 @@
 		if (event.key === 'ArrowRight') nextImage();
 		if (event.key === 'ArrowLeft') prevImage();
 	}
+
+	async function handleDeleteScreenshot(screenshotId: number) {
+		const formData = new FormData();
+		formData.append('screenshot_id', screenshotId.toString());
+
+		const res = await fetch('?/deleteScreenshot', {
+			method: 'POST',
+			body: formData
+		});
+
+		if (res.ok) {
+			screenshots = screenshots.filter((s) => s.id !== screenshotId);
+			toast.success('Screenshot deleted');
+		} else {
+			toast.error('Failed to delete screenshot');
+		}
+	}
 </script>
 
 <svelte:window onkeydown={handleLightboxKeydown} />
@@ -425,77 +444,18 @@
 						{/if}
 					</div>
 				{:else}
-					<div class="screenshots-grid">
-						{#each screenshots as screenshot, i (screenshot.id)}
-							<div class="screenshot-item">
-								<button
-									class="screenshot-btn"
-									onclick={() => openLightbox(i)}
-									aria-label={screenshot.alt_text || `Screenshot ${i + 1}`}
-								>
-									<img
-										src={getScreenshotUrl(screenshot.r2_key)}
-										alt={screenshot.alt_text || `Screenshot ${i + 1}`}
-										loading="lazy"
-									/>
-									<div class="screenshot-overlay">
-										<svg
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-										>
-											<circle cx="11" cy="11" r="8" />
-											<line x1="21" y1="21" x2="16.65" y2="16.65" />
-											<line x1="11" y1="8" x2="11" y2="14" />
-											<line x1="8" y1="11" x2="14" y2="11" />
-										</svg>
-									</div>
-								</button>
-								{#if isOwner}
-									<form
-										method="POST"
-										action="?/deleteScreenshot"
-										class="delete-screenshot-form"
-										use:enhance={() => {
-											return async ({ result }) => {
-												if (result.type === 'success') {
-													screenshots = screenshots.filter((s) => s.id !== screenshot.id);
-													toast.success('Screenshot deleted');
-												} else {
-													toast.error('Failed to delete screenshot');
-												}
-											};
-										}}
-									>
-										<input type="hidden" name="screenshot_id" value={screenshot.id} />
-										<button type="submit" class="btn-delete-screenshot" title="Delete screenshot">
-											<svg
-												width="14"
-												height="14"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-											>
-												<line x1="18" y1="6" x2="6" y2="18" />
-												<line x1="6" y1="6" x2="18" y2="18" />
-											</svg>
-										</button>
-									</form>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				{/if}
+				<BentoScreenshots
+					{screenshots}
+					getUrl={getScreenshotUrl}
+					{isOwner}
+					onDelete={handleDeleteScreenshot}
+				/>
+			{/if}
 			</div>
 		{/if}
 
 		{#if data.versions.length > 0}
-			<div class="version-history-section">
-				<h2>Version History</h2>
+			<CollapsibleSection title="Version History" count={data.versions.length}>
 				<div class="versions-list">
 					{#each displayedVersions as version (version.version)}
 						<div class="version-card">
@@ -546,7 +506,7 @@
 						</svg>
 					</button>
 				{/if}
-			</div>
+			</CollapsibleSection>
 		{/if}
 
 		{#if relatedModules.length > 0}
@@ -572,9 +532,8 @@
 			</div>
 		{/if}
 
-		<div class="reviews-section">
-			<div class="reviews-header">
-				<h2>Reviews ({reviews.length})</h2>
+		<CollapsibleSection title="Reviews" count={reviews.length}>
+			{#snippet actions()}
 				{#if data.session?.user && !showReviewForm}
 					<button class="btn btn-primary" onclick={() => (showReviewForm = true)}>
 						{userReview ? 'Edit Review' : 'Write Review'}
@@ -582,7 +541,7 @@
 				{:else if !data.session?.user}
 					<a href="/login" class="btn btn-secondary">Log in to Review</a>
 				{/if}
-			</div>
+			{/snippet}
 
 			{#if showReviewForm}
 				<form
@@ -737,7 +696,7 @@
 					</nav>
 				{/if}
 			{/if}
-		</div>
+		</CollapsibleSection>
 	</div>
 </main>
 
@@ -1665,91 +1624,7 @@
 		color: var(--color-text-faint);
 	}
 
-	.screenshots-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: var(--space-md);
-	}
-
-	.screenshot-item {
-		position: relative;
-		aspect-ratio: 16 / 10;
-		border-radius: var(--radius-lg);
-		overflow: hidden;
-		border: 1px solid var(--color-border);
-	}
-
-	.screenshot-btn {
-		width: 100%;
-		height: 100%;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		position: relative;
-	}
-
-	.screenshot-btn img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		transition: transform var(--duration-normal) var(--ease-out);
-	}
-
-	.screenshot-btn:hover img {
-		transform: scale(1.05);
-	}
-
-	.screenshot-overlay {
-		position: absolute;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		opacity: 0;
-		transition: opacity var(--duration-fast) var(--ease-out);
-	}
-
-	.screenshot-btn:hover .screenshot-overlay {
-		opacity: 1;
-	}
-
-	.screenshot-overlay svg {
-		color: white;
-	}
-
-	.delete-screenshot-form {
-		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
-		z-index: 1;
-	}
-
-	.btn-delete-screenshot {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 28px;
-		height: 28px;
-		background-color: var(--color-bg-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		color: var(--color-text-muted);
-		cursor: pointer;
-		transition:
-			background-color var(--duration-fast) var(--ease-out),
-			border-color var(--duration-fast) var(--ease-out),
-			color var(--duration-fast) var(--ease-out);
-	}
-
-	.btn-delete-screenshot:hover {
-		background-color: var(--color-error);
-		border-color: var(--color-error);
-		color: white;
-	}
-
-	/* File Input */
+		/* File Input */
 	.file-input-wrapper {
 		position: relative;
 	}

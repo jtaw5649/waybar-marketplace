@@ -6,6 +6,7 @@
 	import ThemeToggle from './ThemeToggle.svelte';
 	import Button from './Button.svelte';
 	import Avatar from './Avatar.svelte';
+	import StarsDropdown from './StarsDropdown.svelte';
 
 	interface Props {
 		session: Session | null;
@@ -77,6 +78,7 @@
 
 		<div class="header-actions desktop-actions">
 			<ThemeToggle />
+			<StarsDropdown />
 			<button class="search-trigger" onclick={open} aria-label="Search">
 				<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
 			</button>
@@ -132,6 +134,22 @@
 		<div class="mobile-menu-backdrop" onclick={closeMobileMenu} aria-hidden="true"></div>
 		<nav id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation">
 			<a href="/browse" class="mobile-link" onclick={closeMobileMenu}>Browse</a>
+			<a href="/stars" class="mobile-link" onclick={closeMobileMenu}>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					style="display: inline; vertical-align: -2px; margin-right: 6px;"
+				>
+					<path
+						d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+					/>
+				</svg>
+				Stars
+			</a>
 			{#if session?.user}
 				<a href="/dashboard" class="mobile-link" onclick={closeMobileMenu}>Dashboard</a>
 				<a href="/upload" class="mobile-link" onclick={closeMobileMenu}>Upload Module</a>

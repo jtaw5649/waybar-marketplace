@@ -73,19 +73,6 @@
 		searchPreferences.reset();
 	}
 
-	const activeFilterCount = $derived(
-		(selectedCategory ? 1 : 0) + (searchQuery ? 1 : 0) + (selectedSort !== 'popular' ? 1 : 0)
-	);
-	const hasActiveFilters = $derived(selectedCategory || searchQuery || selectedSort !== 'popular');
-
-	function clearAllFilters() {
-		searchQuery = '';
-		selectedCategory = '';
-		selectedSort = 'popular';
-		currentPage = 1;
-		updateUrl();
-	}
-
 	$effect(() => {
 		const unsubscribe = viewMode.subscribe((value) => {
 			currentViewMode = value;
@@ -374,19 +361,33 @@
 							Clear history
 						</button>
 					</div>
-					<div class="recently-viewed-grid">
+					<div class="recently-viewed-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
 						{#each recentModules.slice(0, 6) as module (module.uuid)}
-							<ModuleCard
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								version={module.version}
-								delay={0}
-							/>
+							{#if currentViewMode === 'grid'}
+								<ModuleCard
+									uuid={module.uuid}
+									name={module.name}
+									author={module.author}
+									description={module.description}
+									category={module.category}
+									downloads={module.downloads}
+									verified={module.verified_author}
+									version={module.version}
+									delay={0}
+								/>
+							{:else}
+								<ModuleCardRow
+									uuid={module.uuid}
+									name={module.name}
+									author={module.author}
+									description={module.description}
+									category={module.category}
+									downloads={module.downloads}
+									verified={module.verified_author}
+									version={module.version}
+									delay={0}
+								/>
+							{/if}
 						{/each}
 					</div>
 				</section>
@@ -812,10 +813,16 @@
 		background-color: var(--color-bg-secondary);
 	}
 
-	.recently-viewed-grid {
+	.recently-viewed-container.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: var(--space-lg);
+	}
+
+	.recently-viewed-container.list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
 	}
 
 	.results {

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { favorites } from '$lib/stores/favorites';
+	import { stars } from '$lib/stores/stars';
+	import { get } from 'svelte/store';
 
 	interface Props {
 		uuid: string;
@@ -8,24 +9,31 @@
 
 	let { uuid, size = 'md' }: Props = $props();
 
-	const isFavorited = $derived($favorites.has(uuid));
+	let starsState = $state(get(stars));
+	$effect(() => {
+		return stars.subscribe((s) => {
+			starsState = s;
+		});
+	});
 
-	function handleClick(event: MouseEvent) {
+	const isStarred = $derived(starsState.starred.has(uuid));
+
+	async function handleClick(event: MouseEvent) {
 		event.preventDefault();
 		event.stopPropagation();
-		favorites.toggle(uuid);
+		await stars.toggle(uuid);
 	}
 </script>
 
 <button
 	class="star-favorite"
-	class:favorited={isFavorited}
+	class:favorited={isStarred}
 	class:size-sm={size === 'sm'}
 	onclick={handleClick}
-	aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-	aria-pressed={isFavorited}
+	aria-label={isStarred ? 'Remove from stars' : 'Add to stars'}
+	aria-pressed={isStarred}
 >
-	{#if isFavorited}
+	{#if isStarred}
 		<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 			<path
 				d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
