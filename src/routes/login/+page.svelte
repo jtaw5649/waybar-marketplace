@@ -18,7 +18,7 @@
 			await signOut({ redirect: false });
 		}
 
-		signIn('github', { callbackUrl: redirectTo });
+		signIn('github', { redirectTo });
 	}
 </script>
 

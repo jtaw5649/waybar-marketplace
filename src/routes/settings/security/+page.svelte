@@ -37,7 +37,7 @@
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			toast.success('Account scheduled for deletion. You will be signed out.');
 			showDeleteModal = false;
-			await signOut({ callbackUrl: '/' });
+			await signOut({ redirectTo: '/' });
 		} catch {
 			toast.error('Failed to delete account. Please try again.');
 		} finally {
@@ -109,7 +109,7 @@
 				<span class="session-label">Current Session</span>
 				<span class="session-meta">Signed in via GitHub OAuth</span>
 			</div>
-			<button class="btn btn-secondary" onclick={() => signOut({ callbackUrl: '/login' })}>
+			<button class="btn btn-secondary" onclick={() => signOut({ redirectTo: '/login' })}>
 				Sign Out
 			</button>
 		</div>
