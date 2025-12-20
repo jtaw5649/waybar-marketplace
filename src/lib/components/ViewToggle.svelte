@@ -1,14 +1,8 @@
 <script lang="ts">
+	import { fromStore } from 'svelte/store';
 	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
 
-	let currentMode = $state<ViewMode>('grid');
-
-	$effect(() => {
-		const unsubscribe = viewMode.subscribe((value) => {
-			currentMode = value;
-		});
-		return unsubscribe;
-	});
+	const viewModeState = fromStore(viewMode);
 
 	function setMode(mode: ViewMode) {
 		viewMode.set(mode);
@@ -18,9 +12,9 @@
 <div class="view-toggle" role="group" aria-label="View mode">
 	<button
 		class="view-btn"
-		class:active={currentMode === 'grid'}
+		class:active={viewModeState.current === 'grid'}
 		onclick={() => setMode('grid')}
-		aria-pressed={currentMode === 'grid'}
+		aria-pressed={viewModeState.current === 'grid'}
 		aria-label="Grid view"
 		title="Grid view"
 	>
@@ -41,9 +35,9 @@
 	</button>
 	<button
 		class="view-btn"
-		class:active={currentMode === 'list'}
+		class:active={viewModeState.current === 'list'}
 		onclick={() => setMode('list')}
-		aria-pressed={currentMode === 'list'}
+		aria-pressed={viewModeState.current === 'list'}
 		aria-label="List view"
 		title="List view"
 	>

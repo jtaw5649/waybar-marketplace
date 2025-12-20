@@ -1,18 +1,12 @@
 <script lang="ts">
+	import { fromStore } from 'svelte/store';
 	import { theme, type Theme } from '$lib/stores/theme';
 
-	let currentTheme = $state<Theme>('system');
-
-	$effect(() => {
-		const unsubscribe = theme.subscribe((value) => {
-			currentTheme = value;
-		});
-		return unsubscribe;
-	});
+	const themeState = fromStore(theme);
 
 	function cycleTheme() {
 		const order: Theme[] = ['system', 'light', 'dark'];
-		const currentIndex = order.indexOf(currentTheme);
+		const currentIndex = order.indexOf(themeState.current);
 		const nextIndex = (currentIndex + 1) % order.length;
 		theme.set(order[nextIndex]);
 	}
@@ -21,10 +15,10 @@
 <button
 	class="theme-toggle"
 	onclick={cycleTheme}
-	aria-label="Toggle theme (currently {currentTheme})"
-	title="Theme: {currentTheme}"
+	aria-label="Toggle theme (currently {themeState.current})"
+	title="Theme: {themeState.current}"
 >
-	{#if currentTheme === 'light'}
+	{#if themeState.current === 'light'}
 		<svg
 			width="18"
 			height="18"
@@ -44,7 +38,7 @@
 			<line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
 			<line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
 		</svg>
-	{:else if currentTheme === 'dark'}
+	{:else if themeState.current === 'dark'}
 		<svg
 			width="18"
 			height="18"

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { fromStore } from 'svelte/store';
 	import { stars } from '$lib/stores/stars';
-	import { get } from 'svelte/store';
 	import { fly, fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
@@ -12,22 +12,17 @@
 	}
 
 	let isOpen = $state(false);
-	let dropdownRef: HTMLDivElement;
-	let triggerRef: HTMLButtonElement;
+	let dropdownRef = $state<HTMLDivElement | null>(null);
+	let triggerRef = $state<HTMLButtonElement | null>(null);
 	let recentStars = $state<StarredModule[]>([]);
 	let loading = $state(false);
 
-	let starsState = $state(get(stars));
-	$effect(() => {
-		return stars.subscribe((s) => {
-			starsState = s;
-		});
-	});
+	const starsState = fromStore(stars);
 
-	const starCount = $derived(starsState.starred.size);
+	const starCount = $derived(starsState.current.starred.size);
 
 	async function loadRecentStars() {
-		if (!starsState.isAuthenticated || recentStars.length > 0) return;
+		if (!starsState.current.isAuthenticated || recentStars.length > 0) return;
 
 		loading = true;
 		try {
@@ -57,6 +52,7 @@
 	function handleClickOutside(event: MouseEvent) {
 		if (
 			dropdownRef &&
+			triggerRef &&
 			!dropdownRef.contains(event.target as Node) &&
 			!triggerRef.contains(event.target as Node)
 		) {
@@ -95,7 +91,8 @@
 			/>
 		</svg>
 		{#if starCount > 0}
-			<span class="badge" in:fly={{ y: -5, duration: 150 }}>{starCount > 99 ? '99+' : starCount}</span
+			<span class="badge" in:fly={{ y: -5, duration: 150 }}
+				>{starCount > 99 ? '99+' : starCount}</span
 			>
 		{/if}
 	</button>

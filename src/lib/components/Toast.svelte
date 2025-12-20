@@ -1,15 +1,9 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { toast, type ToastMessage } from '$lib/stores/toast';
+	import { fromStore } from 'svelte/store';
+	import { toast } from '$lib/stores/toast';
 
-	let toasts: ToastMessage[] = $state([]);
-
-	$effect(() => {
-		const unsubscribe = toast.subscribe((value) => {
-			toasts = value;
-		});
-		return unsubscribe;
-	});
+	const toastState = fromStore(toast);
 
 	const icons = {
 		success: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 12 15 16 10"/></svg>`,
@@ -19,9 +13,9 @@
 	};
 </script>
 
-{#if toasts.length > 0}
+{#if toastState.current.length > 0}
 	<div class="toast-container" role="region" aria-label="Notifications" aria-live="polite">
-		{#each toasts as t (t.id)}
+		{#each toastState.current as t (t.id)}
 			<div
 				class="toast toast-{t.variant}"
 				class:toast-paused={t.isPaused}
@@ -31,6 +25,7 @@
 				onmouseleave={() => toast.resume(t.id)}
 			>
 				<span class="toast-icon" aria-hidden="true">
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html icons[t.variant]}
 				</span>
 				<span class="toast-message">{t.message}</span>

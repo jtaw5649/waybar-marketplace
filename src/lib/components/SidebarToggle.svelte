@@ -1,14 +1,8 @@
 <script lang="ts">
+	import { fromStore } from 'svelte/store';
 	import { sidebarCollapsed } from '$lib/stores/sidebar';
 
-	let collapsed = $state(false);
-
-	$effect(() => {
-		const unsubscribe = sidebarCollapsed.subscribe((value) => {
-			collapsed = value;
-		});
-		return unsubscribe;
-	});
+	const sidebarState = fromStore(sidebarCollapsed);
 
 	function toggle() {
 		sidebarCollapsed.toggle();
@@ -18,10 +12,10 @@
 <button
 	class="sidebar-toggle"
 	onclick={toggle}
-	aria-expanded={!collapsed}
+	aria-expanded={!sidebarState.current}
 	aria-controls="filter-sidebar"
-	aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-	title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+	aria-label={sidebarState.current ? 'Expand sidebar' : 'Collapse sidebar'}
+	title={sidebarState.current ? 'Expand sidebar' : 'Collapse sidebar'}
 >
 	<svg
 		width="18"
@@ -31,7 +25,7 @@
 		stroke="currentColor"
 		stroke-width="2"
 		aria-hidden="true"
-		class:rotated={collapsed}
+		class:rotated={sidebarState.current}
 	>
 		<rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
 		<line x1="9" y1="3" x2="9" y2="21" />
