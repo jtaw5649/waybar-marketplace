@@ -1,17 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { API_BASE_URL } from '$lib';
 import { fail, redirect } from '@sveltejs/kit';
-
-interface Module {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	downloads: number;
-	rating: number | null;
-	version: { major: number; minor: number; patch: number } | null;
-}
+import type { Module } from '$lib/types';
+import { validateSession } from '$lib/utils/sessionValidator';
 
 interface UserProfile {
 	id: number;
@@ -37,12 +28,13 @@ interface Collection {
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
+	const validation = validateSession(session);
 
-	if (!session?.user || !session.accessToken) {
+	if (!session?.user || !validation.isValid) {
 		return { session, profile: null, modules: [], collections: [] };
 	}
 
-	if (session.error === 'RefreshTokenError') {
+	if (validation.shouldReauth) {
 		throw redirect(302, '/login');
 	}
 

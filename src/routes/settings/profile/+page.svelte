@@ -8,6 +8,7 @@
 	import { toast } from '$lib/stores/toast';
 	import { validateSocialUrl } from '$lib/utils/socialLinks';
 	import { getDisplayName, getProfileUsername } from '$lib/utils/displayName';
+	import { fromStore } from 'svelte/store';
 	import { pinnedModules, MAX_PINNED_MODULES } from '$lib/stores/pinnedModules';
 
 	let { data }: { data: PageData } = $props();
@@ -47,14 +48,9 @@
 		getProfileUsername(profile?.username, data.session?.user?.login)
 	);
 
-	let currentPinnedModules = $state<string[]>([]);
+	const pinnedModulesState = fromStore(pinnedModules);
 
-	$effect(() => {
-		const unsubscribe = pinnedModules.subscribe((value) => {
-			currentPinnedModules = value;
-		});
-		return unsubscribe;
-	});
+	const currentPinnedModules = $derived(pinnedModulesState.current);
 
 	onMount(() => {
 		displayName = data.profile?.display_name || '';
@@ -78,7 +74,15 @@
 		class:active={activeSection === 'profile'}
 		onclick={() => (activeSection = 'profile')}
 	>
-		<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+		<svg
+			viewBox="0 0 24 24"
+			width="16"
+			height="16"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			aria-hidden="true"
+		>
 			<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
 			<circle cx="12" cy="7" r="4" />
 		</svg>
@@ -89,7 +93,15 @@
 		class:active={activeSection === 'social'}
 		onclick={() => (activeSection = 'social')}
 	>
-		<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+		<svg
+			viewBox="0 0 24 24"
+			width="16"
+			height="16"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			aria-hidden="true"
+		>
 			<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
 			<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
 		</svg>
@@ -101,8 +113,18 @@
 			class:active={activeSection === 'featured'}
 			onclick={() => (activeSection = 'featured')}
 		>
-			<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-				<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+			<svg
+				viewBox="0 0 24 24"
+				width="16"
+				height="16"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				aria-hidden="true"
+			>
+				<path
+					d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+				/>
 			</svg>
 			Featured
 			{#if currentPinnedModules.length > 0}
@@ -168,9 +190,7 @@
 					maxlength="500"
 					aria-describedby="bio-help"
 				></textarea>
-				<p id="bio-help" class="help-text">
-					A short bio to display on your profile page.
-				</p>
+				<p id="bio-help" class="help-text">A short bio to display on your profile page.</p>
 			</div>
 		</fieldset>
 	{/if}
@@ -245,7 +265,9 @@
 						class="sponsor-icon"
 						aria-hidden="true"
 					>
-						<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+						<path
+							d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+						/>
 					</svg>
 					Sponsor / Donate
 				</label>
@@ -315,7 +337,9 @@
 							stroke-width="2"
 							aria-hidden="true"
 						>
-							<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+							<path
+								d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+							/>
 						</svg>
 						{pinnedModules.isPinned(module.uuid, currentPinnedModules) ? 'Pinned' : 'Pin'}
 					</button>

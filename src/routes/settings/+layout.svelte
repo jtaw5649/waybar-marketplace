@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import type { LayoutData } from './$types';
@@ -14,7 +14,10 @@
 	] as const;
 
 	function isActive(slug: string): boolean {
-		return $page.url.pathname === `/settings/${slug}` || $page.url.pathname === `/settings` && slug === 'profile';
+		return (
+			page.url.pathname === `/settings/${slug}` ||
+			(page.url.pathname === `/settings` && slug === 'profile')
+		);
 	}
 </script>
 
@@ -25,7 +28,7 @@
 		<aside class="settings-sidebar">
 			<h1 class="settings-title">Settings</h1>
 			<nav class="settings-nav" aria-label="Settings navigation">
-				{#each sections as section}
+				{#each sections as section (section.slug)}
 					<a
 						href="/settings/{section.slug}"
 						class="nav-link"
@@ -33,17 +36,41 @@
 						aria-current={isActive(section.slug) ? 'page' : undefined}
 					>
 						{#if section.icon === 'user'}
-							<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+							<svg
+								viewBox="0 0 24 24"
+								width="18"
+								height="18"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								aria-hidden="true"
+							>
 								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
 								<circle cx="12" cy="7" r="4" />
 							</svg>
 						{:else if section.icon === 'bell'}
-							<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+							<svg
+								viewBox="0 0 24 24"
+								width="18"
+								height="18"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								aria-hidden="true"
+							>
 								<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
 								<path d="M13.73 21a2 2 0 0 1-3.46 0" />
 							</svg>
 						{:else if section.icon === 'shield'}
-							<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+							<svg
+								viewBox="0 0 24 24"
+								width="18"
+								height="18"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								aria-hidden="true"
+							>
 								<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
 							</svg>
 						{/if}
@@ -53,7 +80,15 @@
 			</nav>
 
 			<a href="/dashboard" class="back-link">
-				<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<svg
+					viewBox="0 0 24 24"
+					width="16"
+					height="16"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					aria-hidden="true"
+				>
 					<path d="M19 12H5M12 19l-7-7 7-7" />
 				</svg>
 				Back to Dashboard

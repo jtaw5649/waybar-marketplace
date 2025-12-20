@@ -1,40 +1,29 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { fromStore } from 'svelte/store';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { getHomepageCategories } from '$lib/constants/categories';
-	import { recentlyViewed, type RecentModule } from '$lib/stores/recentlyViewed';
-	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
+	import { recentlyViewed } from '$lib/stores/recentlyViewed';
+	import { viewMode } from '$lib/stores/viewMode';
 
 	let { data }: { data: PageData } = $props();
 
 	const categories = getHomepageCategories();
 
-	let recentModules = $state<RecentModule[]>([]);
-	let currentViewMode = $state<ViewMode>('grid');
-
-	$effect(() => {
-		const unsubscribe = viewMode.subscribe((value) => {
-			currentViewMode = value;
-		});
-		return unsubscribe;
-	});
-
-	$effect(() => {
-		const unsubscribe = recentlyViewed.subscribe((value) => {
-			recentModules = value;
-		});
-		return unsubscribe;
-	});
+	const viewModeState = fromStore(viewMode);
+	const recentModulesState = fromStore(recentlyViewed);
 
 	const recommendedModules = $derived.by(() => {
-		if (recentModules.length === 0 || !data.featuredData) return [];
+		if (recentModulesState.current.length === 0 || !data.featuredData) return [];
 
-		const viewedCategories = [...new Set(recentModules.map((m) => m.category.toLowerCase()))];
-		const viewedUuids = new Set(recentModules.map((m) => m.uuid));
+		const viewedCategories = [
+			...new Set(recentModulesState.current.map((m) => m.category.toLowerCase()))
+		];
+		const viewedUuids = new Set(recentModulesState.current.map((m) => m.uuid));
 
 		const allModules = [...(data.featuredData.popular || []), ...(data.featuredData.recent || [])];
 
@@ -117,9 +106,13 @@
 				</div>
 				<a href="/browse" class="see-all">Browse all →</a>
 			</div>
-			<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
+			<div
+				class="module-container"
+				class:grid={viewModeState.current === 'grid'}
+				class:list={viewModeState.current === 'list'}
+			>
 				{#each recommendedModules as module, i (module.uuid)}
-					{#if currentViewMode === 'grid'}
+					{#if viewModeState.current === 'grid'}
 						<ModuleCard
 							uuid={module.uuid}
 							name={module.name}
@@ -163,9 +156,14 @@
 						<p>Hand-picked by our team</p>
 					</div>
 				</div>
-				<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'} class:featured-grid={currentViewMode === 'grid'}>
+				<div
+					class="module-container"
+					class:grid={viewModeState.current === 'grid'}
+					class:list={viewModeState.current === 'list'}
+					class:featured-grid={viewModeState.current === 'grid'}
+				>
 					{#each data.featuredData.featured as module, i (module.uuid)}
-						{#if currentViewMode === 'grid'}
+						{#if viewModeState.current === 'grid'}
 							<ModuleCard
 								uuid={module.uuid}
 								name={module.name}
@@ -199,9 +197,13 @@
 					<h2>Popular Modules</h2>
 					<a href="/browse?sort=popular" class="see-all">See all →</a>
 				</div>
-				<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
+				<div
+					class="module-container"
+					class:grid={viewModeState.current === 'grid'}
+					class:list={viewModeState.current === 'list'}
+				>
 					{#each data.featuredData.popular as module, i (module.uuid)}
-						{#if currentViewMode === 'grid'}
+						{#if viewModeState.current === 'grid'}
 							<ModuleCard
 								uuid={module.uuid}
 								name={module.name}
@@ -235,9 +237,13 @@
 					<h2>Recently Added</h2>
 					<a href="/browse?sort=recent" class="see-all">See all →</a>
 				</div>
-				<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
+				<div
+					class="module-container"
+					class:grid={viewModeState.current === 'grid'}
+					class:list={viewModeState.current === 'list'}
+				>
 					{#each data.featuredData.recent as module, i (module.uuid)}
-						{#if currentViewMode === 'grid'}
+						{#if viewModeState.current === 'grid'}
 							<ModuleCard
 								uuid={module.uuid}
 								name={module.name}

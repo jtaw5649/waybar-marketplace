@@ -9,17 +9,25 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
-    if: github.event.pull_request.merged == true
+    name: Release
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.repository_owner == 'jtaw5649'
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: '22'
+          cache: 'npm'
+
       - run: npm ci
+
       - uses: changesets/action@v1
         with:
           title: 'chore: version packages'

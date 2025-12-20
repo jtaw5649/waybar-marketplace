@@ -175,6 +175,7 @@
 					{#if showPreview}
 						<div class="markdown-preview">
 							{#if description}
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 								{@html renderMarkdown(description)}
 							{:else}
 								<span class="placeholder">Preview will appear here...</span>

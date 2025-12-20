@@ -12,17 +12,17 @@
 
 	let { title, count, defaultExpanded = true, actions, children }: Props = $props();
 
+	// svelte-ignore state_referenced_locally
 	let expanded = $state(defaultExpanded);
 </script>
 
 <section class="collapsible-section">
 	<div class="section-header-wrapper">
-		<button
-			class="section-header"
-			onclick={() => (expanded = !expanded)}
-			aria-expanded={expanded}
-		>
-			<h2>{title}{#if count !== undefined} <span class="count">({count})</span>{/if}</h2>
+		<button class="section-header" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
+			<h2>
+				{title}{#if count !== undefined}
+					<span class="count">({count})</span>{/if}
+			</h2>
 			<svg
 				class="chevron"
 				class:rotated={!expanded}

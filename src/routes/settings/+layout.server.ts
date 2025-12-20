@@ -1,6 +1,8 @@
 import type { LayoutServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
+import type { Module } from '$lib/types';
+import { validateSession } from '$lib/utils/sessionValidator';
 
 interface UserProfile {
 	id: number;
@@ -14,20 +16,11 @@ interface UserProfile {
 	created_at: string;
 }
 
-interface Module {
-	uuid: string;
-	name: string;
-	category: string;
-}
-
 export const load: LayoutServerLoad = async (event) => {
 	const session = await event.locals.auth();
+	const validation = validateSession(session);
 
-	if (!session?.user || !session.accessToken) {
-		throw redirect(302, '/login');
-	}
-
-	if (session.error === 'RefreshTokenError') {
+	if (!session?.user || validation.shouldReauth) {
 		throw redirect(302, '/login');
 	}
 

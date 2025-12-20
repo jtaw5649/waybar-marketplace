@@ -1,20 +1,7 @@
 import { API_BASE_URL } from '$lib';
 import { classifyApiError } from '$lib/utils/apiError';
+import type { Module } from '$lib/types';
 import type { PageServerLoad } from './$types';
-
-interface Module {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	downloads: number;
-	rating: number | null;
-	verified_author: boolean;
-	created_at: string;
-	version?: string;
-	updated_at?: string;
-}
 
 export const load: PageServerLoad = async ({ fetch, url }) => {
 	try {

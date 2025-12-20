@@ -1,37 +1,25 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import { fromStore } from 'svelte/store';
 	import { stars } from '$lib/stores/stars';
-	import { get } from 'svelte/store';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
 	import Button from '$lib/components/Button.svelte';
-	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
+	import { viewMode } from '$lib/stores/viewMode';
 
 	let { data } = $props();
 
-	let starsState = $state(get(stars));
-	let currentViewMode = $state<ViewMode>('grid');
+	const viewModeState = fromStore(viewMode);
+	const starsState = fromStore(stars);
 
-	$effect(() => {
-		return viewMode.subscribe((value) => {
-			currentViewMode = value;
-		});
-	});
-
-	$effect(() => {
-		return stars.subscribe((s) => {
-			starsState = s;
-		});
-	});
-
-	const localStarredUuids = $derived([...starsState.starred]);
+	const localStarredUuids = $derived([...starsState.current.starred]);
 	const serverModules = $derived(data.starredModules);
 
 	const displayModules = $derived(() => {
 		if (data.isAuthenticated) {
-			return serverModules.filter((m) => starsState.starred.has(m.uuid));
+			return serverModules.filter((m) => starsState.current.starred.has(m.uuid));
 		}
 		return serverModules.filter((m) => localStarredUuids.includes(m.uuid));
 	});
@@ -81,9 +69,13 @@
 		</div>
 
 		{#if displayModules().length > 0}
-			<div class="module-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
+			<div
+				class="module-container"
+				class:grid={viewModeState.current === 'grid'}
+				class:list={viewModeState.current === 'list'}
+			>
 				{#each displayModules() as module, i (module.uuid)}
-					{#if currentViewMode === 'grid'}
+					{#if viewModeState.current === 'grid'}
 						<ModuleCard
 							uuid={module.uuid}
 							name={module.name}

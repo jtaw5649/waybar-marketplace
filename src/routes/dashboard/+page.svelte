@@ -12,7 +12,9 @@
 	import { toast } from '$lib/stores/toast';
 	import { validateSocialUrl } from '$lib/utils/socialLinks';
 	import { getDisplayName, getProfileUsername } from '$lib/utils/displayName';
+	import { fromStore } from 'svelte/store';
 	import { pinnedModules, MAX_PINNED_MODULES } from '$lib/stores/pinnedModules';
+	import { formatDownloads } from '$lib/utils/formatDownloads';
 
 	let { data }: { data: PageData } = $props();
 
@@ -54,14 +56,9 @@
 		getProfileUsername(profile?.username, data.session?.user?.login)
 	);
 
-	let currentPinnedModules = $state<string[]>([]);
+	const pinnedModulesState = fromStore(pinnedModules);
 
-	$effect(() => {
-		const unsubscribe = pinnedModules.subscribe((value) => {
-			currentPinnedModules = value;
-		});
-		return unsubscribe;
-	});
+	const currentPinnedModules = $derived(pinnedModulesState.current);
 
 	let showCreateModal = $state(false);
 	let showEditModal = $state(false);
@@ -83,14 +80,8 @@
 		websiteUrl = data.profile?.website_url || '';
 	});
 
-	function formatDownloads(n: number): string {
-		if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-		return n.toString();
-	}
-
-	function formatVersion(v: { major: number; minor: number; patch: number } | null): string {
-		if (!v) return '0.0.0';
-		return `${v.major}.${v.minor}.${v.patch}`;
+	function formatVersion(v: string | undefined): string {
+		return v || '0.0.0';
 	}
 
 	function getTotalDownloads(): number {

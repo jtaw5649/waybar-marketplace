@@ -5,12 +5,12 @@
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import { toggle } from '$lib/stores/commandPalette';
 	import { stars } from '$lib/stores/stars';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let { children }: { children: Snippet } = $props();
 
 	$effect(() => {
-		const session = $page.data.session;
+		const session = page.data.session;
 		stars.setAuthenticated(!!session?.user);
 	});
 

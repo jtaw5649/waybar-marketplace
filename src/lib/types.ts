@@ -10,13 +10,26 @@ export interface PaletteItem {
 	path?: string;
 }
 
+export interface ModuleVersion {
+	major: number;
+	minor: number;
+	patch: number;
+}
+
 export interface Module {
 	uuid: string;
 	name: string;
-	description: string;
 	author: string;
+	description: string;
 	category: string;
-	downloads?: number;
+	downloads: number;
+	rating: number | null;
+	verified_author: boolean;
+	created_at: string;
+	updated_at?: string;
+	version?: string;
+	repo_url?: string;
+	icon?: string;
 }
 
 export interface PageItem extends PaletteItem {

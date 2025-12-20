@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { signIn } from '@auth/sveltekit/client';
-	import { page } from '$app/stores';
+	import { signIn, signOut } from '@auth/sveltekit/client';
+	import { page } from '$app/state';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
@@ -9,11 +9,16 @@
 
 	let loading = $state(false);
 
-	const redirectTo = $derived($page.url.searchParams.get('redirectTo') || '/');
+	const redirectTo = $derived(page.url.searchParams.get('redirectTo') || '/');
 
-	function handleSignIn() {
+	async function handleSignIn() {
 		loading = true;
-		signIn('github', { callbackUrl: redirectTo });
+
+		if (data.session?.error === 'RefreshTokenError') {
+			await signOut({ redirect: false });
+		}
+
+		signIn('github', { redirectTo });
 	}
 </script>
 

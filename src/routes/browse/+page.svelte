@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { fromStore } from 'svelte/store';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
@@ -11,27 +12,14 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { calculatePopularityScore, calculateTrendingScore } from '$lib/utils/popularity';
 	import { getBrowseCategories } from '$lib/constants/categories';
-	import { viewMode, type ViewMode } from '$lib/stores/viewMode';
+	import { viewMode } from '$lib/stores/viewMode';
 	import { sidebarCollapsed } from '$lib/stores/sidebar';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 	import { searchPreferences } from '$lib/stores/searchPreferences';
 	import SidebarToggle from '$lib/components/SidebarToggle.svelte';
+	import type { Module } from '$lib/types';
 
 	let { data }: { data: PageData } = $props();
-
-	interface Module {
-		uuid: string;
-		name: string;
-		author: string;
-		description: string;
-		category: string;
-		downloads: number;
-		rating: number | null;
-		verified_author: boolean;
-		created_at: string;
-		version?: string;
-		updated_at?: string;
-	}
 
 	const categories = getBrowseCategories();
 
@@ -54,10 +42,11 @@
 	let currentPage = $state(1);
 
 	let mobileFiltersOpen = $state(false);
-	let currentViewMode = $state<ViewMode>('grid');
-	let isSidebarCollapsed = $state(false);
-	let recentModules = $state<typeof $recentlyViewed>([]);
-	let savedPrefs = $state({ sort: 'popular', category: '' });
+
+	const viewModeState = fromStore(viewMode);
+	const sidebarState = fromStore(sidebarCollapsed);
+	const recentModulesState = fromStore(recentlyViewed);
+	const searchPrefsState = fromStore(searchPreferences);
 
 	const activeFilterCount = $derived(
 		(selectedCategory ? 1 : 0) + (searchQuery ? 1 : 0) + (selectedSort !== 'popular' ? 1 : 0)
@@ -74,41 +63,14 @@
 	}
 
 	$effect(() => {
-		const unsubscribe = viewMode.subscribe((value) => {
-			currentViewMode = value;
-		});
-		return unsubscribe;
-	});
-
-	$effect(() => {
-		const unsubscribe = sidebarCollapsed.subscribe((value) => {
-			isSidebarCollapsed = value;
-		});
-		return unsubscribe;
-	});
-
-	$effect(() => {
-		const unsubscribe = recentlyViewed.subscribe((value) => {
-			recentModules = value;
-		});
-		return unsubscribe;
-	});
-
-	$effect(() => {
-		const unsubscribe = searchPreferences.subscribe((value) => {
-			savedPrefs = value;
-		});
-		return unsubscribe;
-	});
-
-	$effect(() => {
-		const params = $page.url.searchParams;
+		const params = page.url.searchParams;
 		const hasUrlParams =
 			params.has('q') || params.has('category') || params.has('sort') || params.has('page');
 
 		searchQuery = params.get('q') || '';
-		selectedCategory = params.get('category') || (hasUrlParams ? '' : savedPrefs.category);
-		selectedSort = params.get('sort') || (hasUrlParams ? 'popular' : savedPrefs.sort);
+		selectedCategory =
+			params.get('category') || (hasUrlParams ? '' : searchPrefsState.current.category);
+		selectedSort = params.get('sort') || (hasUrlParams ? 'popular' : searchPrefsState.current.sort);
 		currentPage = parseInt(params.get('page') || '1');
 	});
 
@@ -253,7 +215,7 @@
 		</div>
 	</div>
 
-	<div class="browse-layout" class:sidebar-collapsed={isSidebarCollapsed}>
+	<div class="browse-layout" class:sidebar-collapsed={sidebarState.current}>
 		<button
 			class="mobile-filter-toggle"
 			onclick={() => (mobileFiltersOpen = !mobileFiltersOpen)}
@@ -276,9 +238,9 @@
 			id="filter-sidebar"
 			class="filter-sidebar"
 			class:open={mobileFiltersOpen}
-			class:collapsed={isSidebarCollapsed}
+			class:collapsed={sidebarState.current}
 		>
-			{#if hasActiveFilters && !isSidebarCollapsed}
+			{#if hasActiveFilters && !sidebarState.current}
 				<button class="clear-filters-btn" onclick={clearAllFilters}>
 					<svg
 						width="14"
@@ -295,7 +257,7 @@
 					<span class="filter-count">{activeFilterCount}</span>
 				</button>
 			{/if}
-			{#if isSidebarCollapsed && hasActiveFilters}
+			{#if sidebarState.current && hasActiveFilters}
 				<button
 					class="collapsed-filter-badge"
 					onclick={() => sidebarCollapsed.set(false)}
@@ -340,7 +302,7 @@
 		</aside>
 
 		<div class="results-container">
-			{#if recentModules.length > 0 && !hasActiveFilters}
+			{#if recentModulesState.current.length > 0 && !hasActiveFilters}
 				<section class="recently-viewed">
 					<div class="section-header">
 						<h2>
@@ -361,9 +323,13 @@
 							Clear history
 						</button>
 					</div>
-					<div class="recently-viewed-container" class:grid={currentViewMode === 'grid'} class:list={currentViewMode === 'list'}>
-						{#each recentModules.slice(0, 6) as module (module.uuid)}
-							{#if currentViewMode === 'grid'}
+					<div
+						class="recently-viewed-container"
+						class:grid={viewModeState.current === 'grid'}
+						class:list={viewModeState.current === 'list'}
+					>
+						{#each recentModulesState.current.slice(0, 6) as module (module.uuid)}
+							{#if viewModeState.current === 'grid'}
 								<ModuleCard
 									uuid={module.uuid}
 									name={module.name}
@@ -431,11 +397,11 @@
 				{:else}
 					<div
 						class="module-container"
-						class:grid={currentViewMode === 'grid'}
-						class:list={currentViewMode === 'list'}
+						class:grid={viewModeState.current === 'grid'}
+						class:list={viewModeState.current === 'list'}
 					>
 						{#each paginatedModules as module, i (module.uuid)}
-							{#if currentViewMode === 'grid'}
+							{#if viewModeState.current === 'grid'}
 								<ModuleCard
 									uuid={module.uuid}
 									name={module.name}

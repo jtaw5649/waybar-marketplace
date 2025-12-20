@@ -15,6 +15,7 @@
 	import BentoScreenshots from '$lib/components/BentoScreenshots.svelte';
 	import { toast } from '$lib/stores/toast';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
+	import { formatDownloads } from '$lib/utils/formatDownloads';
 
 	const categoryVariants: Record<
 		string,
@@ -38,11 +39,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let reviews = $state<typeof data.reviews>([]);
-
-	$effect(() => {
-		reviews = data.reviews;
-	});
+	let reviews = $derived(data.reviews);
 
 	let showReviewForm = $state(false);
 	let userReview = $derived.by(() => {
@@ -63,13 +60,12 @@
 	let collectionNote = $state('');
 	let addingToCollection = $state(false);
 
-	let screenshots = $state<typeof data.screenshots>([]);
+	let screenshots = $derived(data.screenshots || []);
 	let isOwner = $derived(data.isOwner || false);
 	let showUploadModal = $state(false);
 	let uploadingScreenshot = $state(false);
 	let selectedFile: File | null = $state(null);
 	let altTextInput = $state('');
-	let lightboxIndex: number | null = $state(null);
 	let showStickyInstall = $state(false);
 	let moduleActionsRef: HTMLElement | null = $state(null);
 
@@ -87,10 +83,6 @@
 
 		observer.observe(moduleActionsRef);
 		return () => observer.disconnect();
-	});
-
-	$effect(() => {
-		screenshots = data.screenshots || [];
 	});
 
 	$effect(() => {
@@ -207,12 +199,6 @@
 		});
 	}
 
-	function formatDownloads(n: number): string {
-		if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-		if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-		return n.toString();
-	}
-
 	let showAllVersions = $state(false);
 	const INITIAL_VERSIONS_COUNT = 3;
 	const displayedVersions = $derived(
@@ -237,33 +223,6 @@
 		showUploadModal = false;
 	}
 
-	function openLightbox(index: number) {
-		lightboxIndex = index;
-	}
-
-	function closeLightbox() {
-		lightboxIndex = null;
-	}
-
-	function nextImage() {
-		if (lightboxIndex !== null && lightboxIndex < screenshots.length - 1) {
-			lightboxIndex = lightboxIndex + 1;
-		}
-	}
-
-	function prevImage() {
-		if (lightboxIndex !== null && lightboxIndex > 0) {
-			lightboxIndex = lightboxIndex - 1;
-		}
-	}
-
-	function handleLightboxKeydown(event: KeyboardEvent) {
-		if (lightboxIndex === null) return;
-		if (event.key === 'Escape') closeLightbox();
-		if (event.key === 'ArrowRight') nextImage();
-		if (event.key === 'ArrowLeft') prevImage();
-	}
-
 	async function handleDeleteScreenshot(screenshotId: number) {
 		const formData = new FormData();
 		formData.append('screenshot_id', screenshotId.toString());
@@ -281,8 +240,6 @@
 		}
 	}
 </script>
-
-<svelte:window onkeydown={handleLightboxKeydown} />
 
 <Header session={data.session} />
 
@@ -397,6 +354,7 @@
 		<div class="module-description">
 			<h2>About</h2>
 			<div class="description markdown-body">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html renderMarkdown(data.module.description)}
 			</div>
 		</div>
@@ -444,13 +402,13 @@
 						{/if}
 					</div>
 				{:else}
-				<BentoScreenshots
-					{screenshots}
-					getUrl={getScreenshotUrl}
-					{isOwner}
-					onDelete={handleDeleteScreenshot}
-				/>
-			{/if}
+					<BentoScreenshots
+						{screenshots}
+						getUrl={getScreenshotUrl}
+						{isOwner}
+						onDelete={handleDeleteScreenshot}
+					/>
+				{/if}
 			</div>
 		{/if}
 
@@ -482,6 +440,7 @@
 							</div>
 							{#if version.changelog}
 								<div class="version-changelog">
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 									{@html renderMarkdown(version.changelog)}
 								</div>
 							{:else}
@@ -507,29 +466,6 @@
 					</button>
 				{/if}
 			</CollapsibleSection>
-		{/if}
-
-		{#if relatedModules.length > 0}
-			<div class="related-section">
-				<h2>Related Modules</h2>
-				<p class="related-subtitle">More modules in {data.module.category}</p>
-				<div class="related-grid">
-					{#each relatedModules as relatedModule, i (relatedModule.uuid)}
-						<ModuleCard
-							uuid={relatedModule.uuid}
-							name={relatedModule.name}
-							author={relatedModule.author}
-							description={relatedModule.description}
-							category={relatedModule.category}
-							downloads={relatedModule.downloads}
-							version={relatedModule.version}
-							verified={relatedModule.verified_author}
-							createdAt={relatedModule.created_at}
-							delay={i * 50}
-						/>
-					{/each}
-				</div>
-			</div>
 		{/if}
 
 		<CollapsibleSection title="Reviews" count={reviews.length}>
@@ -697,6 +633,29 @@
 				{/if}
 			{/if}
 		</CollapsibleSection>
+
+		{#if relatedModules.length > 0}
+			<div class="related-section">
+				<h2>Related Modules</h2>
+				<p class="related-subtitle">More modules in {data.module.category}</p>
+				<div class="related-grid">
+					{#each relatedModules as relatedModule, i (relatedModule.uuid)}
+						<ModuleCard
+							uuid={relatedModule.uuid}
+							name={relatedModule.name}
+							author={relatedModule.author}
+							description={relatedModule.description}
+							category={relatedModule.category}
+							downloads={relatedModule.downloads}
+							version={relatedModule.version}
+							verified={relatedModule.verified_author}
+							createdAt={relatedModule.created_at}
+							delay={i * 50}
+						/>
+					{/each}
+				</div>
+			</div>
+		{/if}
 	</div>
 </main>
 
@@ -861,65 +820,6 @@
 	</Modal>
 {/if}
 
-{#if lightboxIndex !== null && screenshots[lightboxIndex]}
-	<div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot viewer">
-		<button class="lightbox-close" onclick={closeLightbox} aria-label="Close">
-			<svg
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<line x1="18" y1="6" x2="6" y2="18" />
-				<line x1="6" y1="6" x2="18" y2="18" />
-			</svg>
-		</button>
-
-		<div class="lightbox-content">
-			{#if lightboxIndex > 0}
-				<button class="lightbox-nav lightbox-prev" onclick={prevImage} aria-label="Previous image">
-					<svg
-						width="32"
-						height="32"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<polyline points="15 18 9 12 15 6" />
-					</svg>
-				</button>
-			{/if}
-
-			<img
-				src={getScreenshotUrl(screenshots[lightboxIndex].r2_key)}
-				alt={screenshots[lightboxIndex].alt_text || `Screenshot ${lightboxIndex + 1}`}
-			/>
-
-			{#if lightboxIndex < screenshots.length - 1}
-				<button class="lightbox-nav lightbox-next" onclick={nextImage} aria-label="Next image">
-					<svg
-						width="32"
-						height="32"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<polyline points="9 18 15 12 9 6" />
-					</svg>
-				</button>
-			{/if}
-		</div>
-
-		<div class="lightbox-counter">
-			{lightboxIndex + 1} / {screenshots.length}
-		</div>
-	</div>
-{/if}
-
 <Footer />
 
 <style>
@@ -1075,18 +975,6 @@
 	}
 
 	.module-description h2 {
-		font-size: 1.25rem;
-		font-weight: 600;
-		margin-bottom: var(--space-lg);
-	}
-
-	.version-history-section {
-		margin-bottom: var(--space-2xl);
-		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	.version-history-section h2 {
 		font-size: 1.25rem;
 		font-weight: 600;
 		margin-bottom: var(--space-lg);
@@ -1269,18 +1157,6 @@
 	.description :global(img) {
 		max-width: 100%;
 		border-radius: var(--radius-md);
-	}
-
-	.reviews-section h2 {
-		font-size: 1.25rem;
-		font-weight: 600;
-	}
-
-	.reviews-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: var(--space-lg);
 	}
 
 	.review-form {
@@ -1624,7 +1500,7 @@
 		color: var(--color-text-faint);
 	}
 
-		/* File Input */
+	/* File Input */
 	.file-input-wrapper {
 		position: relative;
 	}
@@ -1654,87 +1530,11 @@
 		border-color: var(--color-primary);
 	}
 
-	/* Lightbox */
-	.lightbox {
-		position: fixed;
-		inset: 0;
-		z-index: 1000;
-		background: rgba(0, 0, 0, 0.9);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-xl);
-	}
-
-	.lightbox-close {
-		position: absolute;
-		top: var(--space-lg);
-		right: var(--space-lg);
-		padding: var(--space-sm);
-		background: none;
-		border: none;
-		color: white;
-		cursor: pointer;
-		opacity: 0.7;
-		transition: opacity var(--duration-fast) var(--ease-out);
-	}
-
-	.lightbox-close:hover {
-		opacity: 1;
-	}
-
-	.lightbox-content {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: var(--space-lg);
-		max-width: 100%;
-		max-height: 80vh;
-	}
-
-	.lightbox-content img {
-		max-width: 100%;
-		max-height: 80vh;
-		object-fit: contain;
-		border-radius: var(--radius-md);
-	}
-
-	.lightbox-nav {
-		padding: var(--space-md);
-		background: rgba(255, 255, 255, 0.1);
-		border: none;
-		border-radius: 50%;
-		color: white;
-		cursor: pointer;
-		transition: background var(--duration-fast) var(--ease-out);
-	}
-
-	.lightbox-nav:hover {
-		background: rgba(255, 255, 255, 0.2);
-	}
-
-	.lightbox-counter {
-		position: absolute;
-		bottom: var(--space-lg);
-		color: white;
-		font-size: 0.875rem;
-		opacity: 0.7;
-	}
-
 	@media (max-width: 768px) {
-		.screenshots-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
 		.screenshots-header {
 			flex-direction: column;
 			align-items: flex-start;
 			gap: var(--space-md);
-		}
-
-		.lightbox-nav {
-			display: none;
 		}
 	}
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { signOut } from '@auth/sveltekit/client';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import type { Session } from '@auth/sveltekit';
 	import { open } from '$lib/stores/commandPalette';
 	import ThemeToggle from './ThemeToggle.svelte';
@@ -30,7 +30,7 @@
 	}
 
 	const loginUrl = $derived(
-		`/login?redirectTo=${encodeURIComponent($page.url.pathname + $page.url.search)}`
+		`/login?redirectTo=${encodeURIComponent(page.url.pathname + page.url.search)}`
 	);
 </script>
 
@@ -70,9 +70,9 @@
 		</a>
 
 		<nav class="desktop-nav" aria-label="Main navigation">
-			<a href="/browse" class:active={$page.url.pathname.startsWith('/browse')}>Browse</a>
+			<a href="/browse" class:active={page.url.pathname.startsWith('/browse')}>Browse</a>
 			{#if session?.user}
-				<a href="/dashboard" class:active={$page.url.pathname === '/dashboard'}>Dashboard</a>
+				<a href="/dashboard" class:active={page.url.pathname === '/dashboard'}>Dashboard</a>
 			{/if}
 		</nav>
 

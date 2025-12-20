@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { get } from 'svelte/store';
 	import Tag from './Tag.svelte';
 	import StarFavorite from './StarFavorite.svelte';
-	import { getCategoryVariant, getCategoryColor } from '$lib/constants';
-	import { stars } from '$lib/stores/stars';
+	import { formatDownloads } from '$lib/utils/formatDownloads';
+	import { useModuleCard } from '$lib/hooks/useModuleCard';
 
 	interface Props {
 		uuid: string;
@@ -33,27 +32,12 @@
 		createdAt
 	}: Props = $props();
 
-	const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-	let starsState = $state(get(stars));
-	$effect(() => {
-		return stars.subscribe((s) => {
-			starsState = s;
-		});
+	// svelte-ignore state_referenced_locally
+	const { categoryVariant, categoryColor, isNew, isStarred } = useModuleCard({
+		uuid,
+		category,
+		createdAt
 	});
-
-	function formatDownloads(n: number): string {
-		if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-		if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-		return n.toString();
-	}
-
-	const categoryVariant = $derived(getCategoryVariant(category));
-	const categoryColor = $derived(getCategoryColor(category));
-	const isNew = $derived(
-		createdAt ? Date.now() - new Date(createdAt).getTime() < SEVEN_DAYS_MS : false
-	);
-	const isStarred = $derived(starsState.starred.has(uuid));
 </script>
 
 <div class="row-wrapper" in:fly={{ y: 10, duration: 200, delay }}>
