@@ -3,7 +3,7 @@
 	import Tag from './Tag.svelte';
 	import StarFavorite from './StarFavorite.svelte';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
-	import { useModuleCard } from '$lib/hooks/useModuleCard';
+	import { useModuleCard } from '$lib/hooks/useModuleCard.svelte';
 
 	interface Props {
 		uuid: string;
