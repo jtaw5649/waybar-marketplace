@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { fromStore } from 'svelte/store';
-	import { stars } from '$lib/stores/stars';
+	import { stars } from '$lib/stores/stars.svelte';
 
 	interface Props {
 		uuid: string;
@@ -9,9 +8,7 @@
 
 	let { uuid, size = 'md' }: Props = $props();
 
-	const starsState = fromStore(stars);
-
-	const isStarred = $derived(starsState.current.starred.has(uuid));
+	const isStarred = $derived(stars.isStarred(uuid));
 
 	async function handleClick(event: MouseEvent) {
 		event.preventDefault();

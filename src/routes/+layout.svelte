@@ -4,7 +4,7 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import { toggle } from '$lib/stores/commandPalette';
-	import { stars } from '$lib/stores/stars';
+	import { stars } from '$lib/stores/stars.svelte';
 	import { page } from '$app/state';
 
 	let { children }: { children: Snippet } = $props();

@@ -3,11 +3,10 @@ import { writable } from 'svelte/store';
 
 const mockStarsStore = writable({ starred: new Set(['starred-uuid']), isAuthenticated: false });
 
-vi.mock('$lib/stores/stars', () => ({
+vi.mock('$lib/stores/stars.svelte', () => ({
 	stars: {
-		subscribe: (fn: (value: unknown) => void) => mockStarsStore.subscribe(fn),
-		setStarred: (uuids: string[]) =>
-			mockStarsStore.set({ starred: new Set(uuids), isAuthenticated: false })
+		isStarred: vi.fn((uuid: string) => uuid === 'starred-uuid'),
+		starred: new Set(['starred-uuid'])
 	}
 }));
 
@@ -42,19 +41,31 @@ describe('useModuleCard', () => {
 	describe('categoryVariant', () => {
 		it('returns purple for status category', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({ uuid: 'test', category: 'status', createdAt: undefined });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'status',
+				createdAt: undefined
+			}));
 			expect(result.categoryVariant).toBe('purple');
 		});
 
 		it('returns blue for utility category', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({ uuid: 'test', category: 'utility', createdAt: undefined });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'utility',
+				createdAt: undefined
+			}));
 			expect(result.categoryVariant).toBe('blue');
 		});
 
 		it('returns neutral for unknown category', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({ uuid: 'test', category: 'unknown', createdAt: undefined });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'unknown',
+				createdAt: undefined
+			}));
 			expect(result.categoryVariant).toBe('neutral');
 		});
 	});
@@ -62,13 +73,21 @@ describe('useModuleCard', () => {
 	describe('categoryColor', () => {
 		it('returns correct hex color for status category', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({ uuid: 'test', category: 'status', createdAt: undefined });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'status',
+				createdAt: undefined
+			}));
 			expect(result.categoryColor).toBe('#8b5cf6');
 		});
 
 		it('returns gray for unknown category', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({ uuid: 'test', category: 'unknown', createdAt: undefined });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'unknown',
+				createdAt: undefined
+			}));
 			expect(result.categoryColor).toBe('#6b7280');
 		});
 	});
@@ -77,20 +96,32 @@ describe('useModuleCard', () => {
 		it('returns true for modules created within 7 days', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
 			const recentDate = new Date(Date.now() - 1000 * 60 * 60).toISOString();
-			const result = useModuleCard({ uuid: 'test', category: 'status', createdAt: recentDate });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'status',
+				createdAt: recentDate
+			}));
 			expect(result.isNew).toBe(true);
 		});
 
 		it('returns false for modules older than 7 days', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
 			const oldDate = new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString();
-			const result = useModuleCard({ uuid: 'test', category: 'status', createdAt: oldDate });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'status',
+				createdAt: oldDate
+			}));
 			expect(result.isNew).toBe(false);
 		});
 
 		it('returns false when createdAt is undefined', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({ uuid: 'test', category: 'status', createdAt: undefined });
+			const result = useModuleCard(() => ({
+				uuid: 'test',
+				category: 'status',
+				createdAt: undefined
+			}));
 			expect(result.isNew).toBe(false);
 		});
 	});
@@ -98,24 +129,24 @@ describe('useModuleCard', () => {
 	describe('isStarred', () => {
 		it('returns true for starred modules', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
-			const result = useModuleCard({
+			const result = useModuleCard(() => ({
 				uuid: 'starred-uuid',
 				category: 'status',
 				createdAt: undefined
-			});
+			}));
 			expect(result.isStarred).toBe(true);
 		});
 
 		it('returns false for non-starred modules', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
 
-			const result = useModuleCard({
+			const result = useModuleCard(() => ({
 				uuid: 'not-starred',
 
 				category: 'status',
 
 				createdAt: undefined
-			});
+			}));
 
 			expect(result.isStarred).toBe(false);
 		});

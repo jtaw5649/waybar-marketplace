@@ -1,29 +1,16 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { API_BASE_URL } from '$lib';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	interface Submission {
-		id: number;
-		submitter_id: number;
-		uuid: string;
-		name: string;
-		description: string;
-		category: string;
-		version: string;
-		repo_url: string;
-		status: string;
-		submitted_at: string;
-		submitter_username: string;
-	}
-
-	let submissions: Submission[] = $state($state.snapshot(data.submissions || []));
+	let submissions = $derived(data.submissions || []);
 	let stats = $derived(data.stats);
 	let actionLoading: number | null = $state(null);
 	let rejectReason = $state('');
@@ -43,7 +30,7 @@
 				throw new Error(text || 'Failed to approve submission');
 			}
 
-			submissions = submissions.filter((s) => s.id !== id);
+			await invalidateAll();
 			toast.success('Submission approved successfully!');
 		} catch (e) {
 			const message = e instanceof Error ? e.message : 'Unknown error';
@@ -76,7 +63,7 @@
 				throw new Error(text || 'Failed to reject submission');
 			}
 
-			submissions = submissions.filter((s) => s.id !== id);
+			await invalidateAll();
 			showRejectModal = null;
 			rejectReason = '';
 			toast.success('Submission rejected');

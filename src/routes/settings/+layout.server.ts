@@ -43,8 +43,8 @@ export const load: LayoutServerLoad = async (event) => {
 			const data = await modulesRes.json();
 			modules = data.modules || [];
 		}
-	} catch {
-		// Continue with null profile
+	} catch (e) {
+		console.error('Failed to fetch user data:', e);
 	}
 
 	return { session, profile, modules };

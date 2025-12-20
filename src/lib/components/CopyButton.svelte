@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 
 	interface Props {
 		text: string;

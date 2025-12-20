@@ -51,18 +51,12 @@ function calculateDownloadScore(downloads: number): number {
 function calculateRatingMultiplier(rating: number | null): number {
 	if (rating === null) return 1.0;
 
-	// Rating 1-5 maps to multiplier 0.7-1.3
-	// Rating 3 = 1.0 (neutral)
-	// Rating 5 = 1.3 (30% boost)
-	// Rating 1 = 0.7 (30% penalty)
 	return 0.7 + (rating - 1) * 0.15;
 }
 
 function calculateRecencyBonus(created_at: string): number {
 	const ageInDays = getAgeInDays(created_at);
 
-	// Bonus decays from 1.5 to 1.0 over 90 days
-	// After 90 days, stays at 1.0 (no penalty, just no bonus)
 	const decayDays = 90;
 	const maxBonus = 0.5;
 
@@ -75,13 +69,7 @@ function calculateRecencyBonus(created_at: string): number {
 function calculateTrendingBonus(created_at: string): number {
 	const ageInDays = getAgeInDays(created_at);
 
-	// Trending uses exponential decay over 14 days
-	// Brand new = 3.0x multiplier
-	// 1 day old = ~2.4x
-	// 7 days old = ~1.5x
-	// 14 days old = ~1.0x
-	// Older = diminishing towards 0.5x
-	const halfLife = 7; // days
+	const halfLife = 7;
 	const maxMultiplier = 3.0;
 	const minMultiplier = 0.5;
 

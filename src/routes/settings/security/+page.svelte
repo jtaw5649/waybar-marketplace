@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import Modal from '$lib/components/Modal.svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { signOut } from '@auth/sveltekit/client';
 
 	let { data }: { data: PageData } = $props();

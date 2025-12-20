@@ -4,7 +4,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 
 	let { data }: { data: PageData } = $props();
 

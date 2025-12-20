@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { fromStore } from 'svelte/store';
-	import { stars } from '$lib/stores/stars';
+	import { stars } from '$lib/stores/stars.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
@@ -12,16 +12,15 @@
 	let { data } = $props();
 
 	const viewModeState = fromStore(viewMode);
-	const starsState = fromStore(stars);
 
-	const localStarredUuids = $derived([...starsState.current.starred]);
+	const localStarredUuids = $derived([...stars.starred]);
 	const serverModules = $derived(data.starredModules);
 
 	const displayModules = $derived(() => {
 		if (data.isAuthenticated) {
-			return serverModules.filter((m) => starsState.current.starred.has(m.uuid));
+			return serverModules.filter((m) => stars.starred.has(m.uuid));
 		}
-		return serverModules.filter((m) => localStarredUuids.includes(m.uuid));
+		return serverModules.filter((m) => stars.starred.has(m.uuid));
 	});
 
 	const localOnlyCount = $derived(

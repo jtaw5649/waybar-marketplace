@@ -9,7 +9,7 @@
 	import CharacterCounter from '$lib/components/CharacterCounter.svelte';
 	import ProfileCompleteness from '$lib/components/ProfileCompleteness.svelte';
 	import ProfilePreviewCard from '$lib/components/ProfilePreviewCard.svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { validateSocialUrl } from '$lib/utils/socialLinks';
 	import { getDisplayName, getProfileUsername } from '$lib/utils/displayName';
 	import { fromStore } from 'svelte/store';

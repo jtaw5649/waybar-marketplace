@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { get } from 'svelte/store';
-import { toast } from './toast';
+import { toast } from './toast.svelte';
 
 describe('toast store', () => {
 	beforeEach(() => {
@@ -14,14 +13,14 @@ describe('toast store', () => {
 
 	describe('initial state', () => {
 		it('starts with empty toast list', () => {
-			expect(get(toast)).toEqual([]);
+			expect(toast.messages).toEqual([]);
 		});
 	});
 
 	describe('adding toasts', () => {
 		it('adds success toast with correct variant', () => {
 			toast.success('Success message');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts).toHaveLength(1);
 			expect(toasts[0].variant).toBe('success');
 			expect(toasts[0].message).toBe('Success message');
@@ -29,7 +28,7 @@ describe('toast store', () => {
 
 		it('adds error toast with correct variant', () => {
 			toast.error('Error message');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts).toHaveLength(1);
 			expect(toasts[0].variant).toBe('error');
 			expect(toasts[0].message).toBe('Error message');
@@ -37,7 +36,7 @@ describe('toast store', () => {
 
 		it('adds warning toast with correct variant', () => {
 			toast.warning('Warning message');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts).toHaveLength(1);
 			expect(toasts[0].variant).toBe('warning');
 			expect(toasts[0].message).toBe('Warning message');
@@ -45,7 +44,7 @@ describe('toast store', () => {
 
 		it('adds info toast with correct variant', () => {
 			toast.info('Info message');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts).toHaveLength(1);
 			expect(toasts[0].variant).toBe('info');
 			expect(toasts[0].message).toBe('Info message');
@@ -61,18 +60,18 @@ describe('toast store', () => {
 			toast.success('First');
 			toast.error('Second');
 			toast.info('Third');
-			expect(get(toast)).toHaveLength(3);
+			expect(toast.messages).toHaveLength(3);
 		});
 
 		it('uses default duration of 5000ms', () => {
 			toast.success('Test');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].duration).toBe(5000);
 		});
 
 		it('accepts custom duration', () => {
 			toast.success('Test', 3000);
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].duration).toBe(3000);
 		});
 	});
@@ -80,48 +79,48 @@ describe('toast store', () => {
 	describe('auto-dismiss', () => {
 		it('removes toast after duration expires', () => {
 			toast.success('Test', 1000);
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 			vi.advanceTimersByTime(1000);
-			expect(get(toast)).toHaveLength(0);
+			expect(toast.messages).toHaveLength(0);
 		});
 
 		it('does not remove toast before duration expires', () => {
 			toast.success('Test', 2000);
 			vi.advanceTimersByTime(1999);
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 		});
 
 		it('handles multiple toasts with different durations', () => {
 			toast.success('Short', 1000);
 			toast.error('Long', 3000);
-			expect(get(toast)).toHaveLength(2);
+			expect(toast.messages).toHaveLength(2);
 			vi.advanceTimersByTime(1000);
-			expect(get(toast)).toHaveLength(1);
-			expect(get(toast)[0].message).toBe('Long');
+			expect(toast.messages).toHaveLength(1);
+			expect(toast.messages[0].message).toBe('Long');
 			vi.advanceTimersByTime(2000);
-			expect(get(toast)).toHaveLength(0);
+			expect(toast.messages).toHaveLength(0);
 		});
 
 		it('does not auto-dismiss when duration is 0', () => {
 			toast.success('Persistent', 0);
 			vi.advanceTimersByTime(10000);
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 		});
 	});
 
 	describe('manual removal', () => {
 		it('removes toast by id', () => {
 			const id = toast.success('Test', 0);
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 			toast.remove(id);
-			expect(get(toast)).toHaveLength(0);
+			expect(toast.messages).toHaveLength(0);
 		});
 
 		it('removes only the specified toast', () => {
 			const id1 = toast.success('First', 0);
 			toast.error('Second', 0);
 			toast.remove(id1);
-			const remaining = get(toast);
+			const remaining = toast.messages;
 			expect(remaining).toHaveLength(1);
 			expect(remaining[0].message).toBe('Second');
 		});
@@ -129,7 +128,7 @@ describe('toast store', () => {
 		it('handles removing non-existent id gracefully', () => {
 			toast.success('Test', 0);
 			toast.remove('non-existent-id');
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 		});
 	});
 
@@ -138,44 +137,23 @@ describe('toast store', () => {
 			toast.success('First', 0);
 			toast.error('Second', 0);
 			toast.info('Third', 0);
-			expect(get(toast)).toHaveLength(3);
+			expect(toast.messages).toHaveLength(3);
 			toast.reset();
-			expect(get(toast)).toHaveLength(0);
-		});
-	});
-
-	describe('subscription', () => {
-		it('notifies subscribers when toast is added', () => {
-			const values: unknown[] = [];
-			const unsubscribe = toast.subscribe((v) => values.push([...v]));
-			toast.success('Test', 0);
-			expect(values.length).toBe(2);
-			expect((values[1] as unknown[]).length).toBe(1);
-			unsubscribe();
-		});
-
-		it('notifies subscribers when toast is removed', () => {
-			const id = toast.success('Test', 0);
-			const values: unknown[] = [];
-			const unsubscribe = toast.subscribe((v) => values.push([...v]));
-			toast.remove(id);
-			expect(values.length).toBe(2);
-			expect((values[1] as unknown[]).length).toBe(0);
-			unsubscribe();
+			expect(toast.messages).toHaveLength(0);
 		});
 	});
 
 	describe('pause and resume', () => {
 		it('toast starts with isPaused false', () => {
 			toast.success('Test');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].isPaused).toBe(false);
 		});
 
 		it('pause sets isPaused to true', () => {
 			const id = toast.success('Test', 5000);
 			toast.pause(id);
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].isPaused).toBe(true);
 		});
 
@@ -184,14 +162,14 @@ describe('toast store', () => {
 			vi.advanceTimersByTime(500);
 			toast.pause(id);
 			vi.advanceTimersByTime(1000);
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 		});
 
 		it('resume sets isPaused to false', () => {
 			const id = toast.success('Test', 5000);
 			toast.pause(id);
 			toast.resume(id);
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].isPaused).toBe(false);
 		});
 
@@ -201,15 +179,15 @@ describe('toast store', () => {
 			toast.pause(id);
 			vi.advanceTimersByTime(1000);
 			toast.resume(id);
-			expect(get(toast)).toHaveLength(1);
+			expect(toast.messages).toHaveLength(1);
 			vi.advanceTimersByTime(1500);
-			expect(get(toast)).toHaveLength(0);
+			expect(toast.messages).toHaveLength(0);
 		});
 
 		it('toast has startTime when created', () => {
 			vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
 			toast.success('Test');
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].startTime).toBe(Date.now());
 		});
 
@@ -217,7 +195,7 @@ describe('toast store', () => {
 			const id = toast.success('Test', 5000);
 			vi.advanceTimersByTime(2000);
 			toast.pause(id);
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].remainingTime).toBe(3000);
 		});
 
@@ -234,7 +212,7 @@ describe('toast store', () => {
 		it('does not pause if duration is 0', () => {
 			const id = toast.success('Test', 0);
 			toast.pause(id);
-			const toasts = get(toast);
+			const toasts = toast.messages;
 			expect(toasts[0].isPaused).toBe(false);
 		});
 	});

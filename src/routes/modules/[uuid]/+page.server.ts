@@ -114,8 +114,8 @@ export const load: PageServerLoad = async (event) => {
 				const collectionsData = await collectionsRes.json();
 				collections = collectionsData.collections || [];
 			}
-		} catch {
-			// Silently fail - collections are optional
+		} catch (e) {
+			console.error('Failed to fetch collections:', e);
 		}
 	}
 

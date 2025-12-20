@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { fromStore } from 'svelte/store';
-	import { stars } from '$lib/stores/stars';
+	import { stars } from '$lib/stores/stars.svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
@@ -17,12 +16,10 @@
 	let recentStars = $state<StarredModule[]>([]);
 	let loading = $state(false);
 
-	const starsState = fromStore(stars);
-
-	const starCount = $derived(starsState.current.starred.size);
+	const starCount = $derived(stars.starred.size);
 
 	async function loadRecentStars() {
-		if (!starsState.current.isAuthenticated || recentStars.length > 0) return;
+		if (!stars.isAuthenticated || recentStars.length > 0) return;
 
 		loading = true;
 		try {

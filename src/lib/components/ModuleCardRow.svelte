@@ -32,12 +32,11 @@
 		createdAt
 	}: Props = $props();
 
-	// svelte-ignore state_referenced_locally
-	const { categoryVariant, categoryColor, isNew, isStarred } = useModuleCard({
+	const { categoryVariant, categoryColor, isNew, isStarred } = useModuleCard(() => ({
 		uuid,
 		category,
 		createdAt
-	});
+	}));
 </script>
 
 <div class="row-wrapper" in:fly={{ y: 10, duration: 200, delay }}>

@@ -1,21 +1,11 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { fromStore } from 'svelte/store';
-	import { toast } from '$lib/stores/toast';
-
-	const toastState = fromStore(toast);
-
-	const icons = {
-		success: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 12 15 16 10"/></svg>`,
-		error: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
-		warning: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-		info: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
-	};
+	import { toast } from '$lib/stores/toast.svelte';
 </script>
 
-{#if toastState.current.length > 0}
+{#if toast.messages.length > 0}
 	<div class="toast-container" role="region" aria-label="Notifications" aria-live="polite">
-		{#each toastState.current as t (t.id)}
+		{#each toast.messages as t (t.id)}
 			<div
 				class="toast toast-{t.variant}"
 				class:toast-paused={t.isPaused}
@@ -25,8 +15,60 @@
 				onmouseleave={() => toast.resume(t.id)}
 			>
 				<span class="toast-icon" aria-hidden="true">
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-					{@html icons[t.variant]}
+					{#if t.variant === 'success'}
+						<svg
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<polyline points="9 12 12 15 16 10" />
+						</svg>
+					{:else if t.variant === 'error'}
+						<svg
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="15" y1="9" x2="9" y2="15" />
+							<line x1="9" y1="9" x2="15" y2="15" />
+						</svg>
+					{:else if t.variant === 'warning'}
+						<svg
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path
+								d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+							/>
+							<line x1="12" y1="9" x2="12" y2="13" />
+							<line x1="12" y1="17" x2="12.01" y2="17" />
+						</svg>
+					{:else if t.variant === 'info'}
+						<svg
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
 				</span>
 				<span class="toast-message">{t.message}</span>
 				<button

@@ -13,7 +13,7 @@
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import CollapsibleSection from '$lib/components/CollapsibleSection.svelte';
 	import BentoScreenshots from '$lib/components/BentoScreenshots.svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
 

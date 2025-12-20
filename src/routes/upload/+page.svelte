@@ -4,7 +4,7 @@
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { getCategorySlugs, getCategoryName } from '$lib/constants/categories';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();

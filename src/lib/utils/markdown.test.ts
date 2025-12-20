@@ -55,7 +55,6 @@ describe('renderMarkdown', () => {
 
 		it('renders task lists (checkboxes sanitized)', () => {
 			const result = renderMarkdown('- [ ] unchecked\n- [x] checked');
-			// Checkboxes are sanitized for security, but list structure remains
 			expect(result).toContain('<ul>');
 			expect(result).toContain('<li>');
 			expect(result).toContain('unchecked');

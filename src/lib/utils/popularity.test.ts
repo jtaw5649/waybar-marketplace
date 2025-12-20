@@ -31,7 +31,6 @@ describe('calculatePopularityScore', () => {
 
 			expect(score100).toBeGreaterThan(score10);
 			expect(score1000).toBeGreaterThan(score100);
-			// Logarithmic: 10x downloads should not give 10x score
 			expect(score100 / score10).toBeLessThan(5);
 		});
 	});
@@ -82,7 +81,6 @@ describe('calculatePopularityScore', () => {
 				created_at: baseDate
 			});
 
-			// Rating of 3 (average) should be close to unrated
 			expect(Math.abs(unrated - rated3)).toBeLessThan(unrated * 0.3);
 		});
 	});
@@ -128,7 +126,6 @@ describe('calculatePopularityScore', () => {
 				created_at: oneYearAgo.toISOString()
 			});
 
-			// Old module should still have significant score (at least 50% of new)
 			expect(oldModule).toBeGreaterThan(newModule * 0.5);
 		});
 	});
@@ -179,7 +176,6 @@ describe('calculateTrendingScore', () => {
 			created_at: oneWeekAgo.toISOString()
 		});
 
-		// New module with fewer downloads can beat older popular one in trending
 		expect(newLowDownloads).toBeGreaterThan(oldHighDownloads * 0.5);
 	});
 

@@ -11,7 +11,7 @@
 		setQuery,
 		setModules
 	} from '$lib/stores/commandPalette';
-	import { toast } from '$lib/stores/toast';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { fuzzySearch } from '$lib/utils/fuzzySearch';
 	import { API_BASE_URL } from '$lib';
 	import type { PaletteMode, PaletteItem, Module } from '$lib/types';

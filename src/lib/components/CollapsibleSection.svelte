@@ -1,19 +1,19 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { slide } from 'svelte/transition';
+	import { untrack } from 'svelte';
 
 	interface Props {
 		title: string;
 		count?: number;
-		defaultExpanded?: boolean;
+		initialExpanded?: boolean;
 		actions?: Snippet;
 		children: Snippet;
 	}
 
-	let { title, count, defaultExpanded = true, actions, children }: Props = $props();
+	let { title, count, initialExpanded = true, actions, children }: Props = $props();
 
-	// svelte-ignore state_referenced_locally
-	let expanded = $state(defaultExpanded);
+	let expanded = $state(untrack(() => initialExpanded));
 </script>
 
 <section class="collapsible-section">
