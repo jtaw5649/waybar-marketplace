@@ -117,7 +117,11 @@ describe('commandPalette store', () => {
 					name: 'Battery Monitor',
 					description: 'Shows battery status',
 					author: 'test',
-					category: 'system'
+					category: 'system',
+					downloads: 100,
+					rating: 4.5,
+					verified_author: false,
+					created_at: '2024-01-01T00:00:00Z'
 				}
 			];
 			setModules(testModules);
@@ -126,10 +130,30 @@ describe('commandPalette store', () => {
 
 		it('replaces existing modules', () => {
 			const first: Module[] = [
-				{ uuid: '1', name: 'First', description: '', author: '', category: '' }
+				{
+					uuid: '1',
+					name: 'First',
+					description: '',
+					author: '',
+					category: '',
+					downloads: 0,
+					rating: null,
+					verified_author: false,
+					created_at: '2024-01-01T00:00:00Z'
+				}
 			];
 			const second: Module[] = [
-				{ uuid: '2', name: 'Second', description: '', author: '', category: '' }
+				{
+					uuid: '2',
+					name: 'Second',
+					description: '',
+					author: '',
+					category: '',
+					downloads: 0,
+					rating: null,
+					verified_author: false,
+					created_at: '2024-01-01T00:00:00Z'
+				}
 			];
 			setModules(first);
 			setModules(second);
@@ -142,7 +166,19 @@ describe('commandPalette store', () => {
 			open();
 			setMode('commands');
 			setQuery('test');
-			setModules([{ uuid: '1', name: 'Test', description: '', author: '', category: '' }]);
+			setModules([
+				{
+					uuid: '1',
+					name: 'Test',
+					description: '',
+					author: '',
+					category: '',
+					downloads: 0,
+					rating: null,
+					verified_author: false,
+					created_at: '2024-01-01T00:00:00Z'
+				}
+			]);
 
 			reset();
 
