@@ -1,8 +1,7 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [master]
 
 permissions:
@@ -14,23 +13,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Release
+  release-please:
+    name: Release Please
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && github.repository_owner == 'jtaw5649'
+    if: github.repository_owner == 'jtaw5649'
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v4
+      - uses: googleapis/release-please-action@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-
-      - run: npm ci
-
-      - uses: changesets/action@v1
-        with:
-          title: 'chore: version packages'
-          commit: 'chore: version packages'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
