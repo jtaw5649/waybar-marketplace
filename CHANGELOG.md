@@ -1,5 +1,11 @@
 # waybar-marketplace
 
+## 0.3.1
+
+### Patch Changes
+
+- [#12](https://github.com/jtaw5649/waybar-marketplace/pull/12) [`4903fa4`](https://github.com/jtaw5649/waybar-marketplace/commit/4903fa490ea1100186258123a4e5267fc8f31d34) Thanks [@jtaw5649](https://github.com/jtaw5649)! - PR-based workflows, login favicon, Sign in to Log in
+
 ## 0.2.5
 
 ### Patch Changes
