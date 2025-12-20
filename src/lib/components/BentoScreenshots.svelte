@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fly, fade } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
 	interface Screenshot {
@@ -20,13 +20,7 @@
 	let selectedIndex = $state<number | null>(null);
 	let dialogRef: HTMLDialogElement;
 
-	const gridSpans = [
-		'span-large',
-		'span-medium',
-		'span-medium',
-		'span-small',
-		'span-small'
-	];
+	const gridSpans = ['span-large', 'span-medium', 'span-medium', 'span-small', 'span-small'];
 
 	function openDialog(index: number) {
 		selectedIndex = index;
@@ -65,7 +59,10 @@
 
 <div class="bento-grid" class:has-many={screenshots.length > 2}>
 	{#each screenshots as screenshot, i (screenshot.id)}
-		<div class="bento-item {gridSpans[i] || 'span-small'}" in:fly={{ y: 20, duration: 300, delay: i * 50 }}>
+		<div
+			class="bento-item {gridSpans[i] || 'span-small'}"
+			in:fly={{ y: 20, duration: 300, delay: i * 50 }}
+		>
 			<button
 				class="bento-btn"
 				onclick={() => openDialog(i)}

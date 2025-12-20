@@ -1,3 +1,5 @@
+export const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 export type TagVariant = 'purple' | 'blue' | 'green' | 'amber' | 'pink' | 'teal' | 'gray';
 
 export const CATEGORY_VARIANTS: Record<string, TagVariant> = {
