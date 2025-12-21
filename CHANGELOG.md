@@ -1,5 +1,12 @@
 # waybar-marketplace
 
+## [0.5.1](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.5.0...waybar-marketplace-v0.5.1) (2025-12-21)
+
+
+### Bug Fixes
+
+* normalize stars payload handling ([#26](https://github.com/jtaw5649/waybar-marketplace/issues/26)) ([bb06ece](https://github.com/jtaw5649/waybar-marketplace/commit/bb06ecebbbcdca936f56a4854d528093d00e5231))
+
 ## [0.5.0](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.4.1...waybar-marketplace-v0.5.0) (2025-12-21)
 
 
