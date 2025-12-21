@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { normalizeStarsPayload } from '$lib/utils/starsResponse';
 import { SvelteSet, SvelteMap } from 'svelte/reactivity';
 
 const STORAGE_KEY = 'starred_modules';
@@ -47,9 +48,8 @@ class StarsStore {
 			const res = await fetch('/api/stars');
 			if (res.ok) {
 				const data = await res.json();
-				const serverStars = new Set<string>(
-					(data.data?.modules || []).map((m: { uuid: string }) => m.uuid)
-				);
+				const payload = normalizeStarsPayload<{ uuid: string }>(data);
+				const serverStars = new Set<string>(payload.modules.map((m) => m.uuid));
 
 				const merged = new Set([...this.starred, ...serverStars]);
 

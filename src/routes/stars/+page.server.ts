@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { API_BASE_URL } from '$lib';
+import { normalizeStarsPayload } from '$lib/utils/starsResponse';
 import { validateSession } from '$lib/utils/sessionValidator';
 
 interface StarredModule {
@@ -15,13 +16,6 @@ interface StarredModule {
 	author_username: string;
 	created_at: string;
 	starred_at: string;
-}
-
-interface StarsResponse {
-	data: {
-		modules: StarredModule[];
-		total: number;
-	};
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -53,11 +47,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 			};
 		}
 
-		const data: StarsResponse = await res.json();
+		const payload = normalizeStarsPayload<StarredModule>(await res.json());
 
 		return {
-			starredModules: data.data.modules,
-			total: data.data.total,
+			starredModules: payload.modules,
+			total: payload.total,
 			isAuthenticated: true,
 			session
 		};

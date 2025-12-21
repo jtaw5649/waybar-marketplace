@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { stars } from '$lib/stores/stars.svelte';
+	import { normalizeStarsPayload } from '$lib/utils/starsResponse';
 	import { fly, fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
@@ -25,8 +26,8 @@
 		try {
 			const res = await fetch('/api/stars');
 			if (res.ok) {
-				const data = await res.json();
-				recentStars = (data.data?.modules || []).slice(0, 5);
+				const payload = normalizeStarsPayload<StarredModule>(await res.json());
+				recentStars = payload.modules.slice(0, 5);
 			}
 		} catch {
 			recentStars = [];

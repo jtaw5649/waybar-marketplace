@@ -11,3 +11,4 @@ dist
 # Claude artifacts
 .claude-flow/
 .claude/
+CHANGELOG.md
