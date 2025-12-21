@@ -1,5 +1,12 @@
 # waybar-marketplace
 
+## [0.5.2](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.5.1...waybar-marketplace-v0.5.2) (2025-12-21)
+
+
+### Bug Fixes
+
+* harden login redirects and module fetches ([#28](https://github.com/jtaw5649/waybar-marketplace/issues/28)) ([c4c159c](https://github.com/jtaw5649/waybar-marketplace/commit/c4c159c87e97b6edefc3e3d5776f6d884742497e))
+
 ## [0.5.1](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.5.0...waybar-marketplace-v0.5.1) (2025-12-21)
 
 
