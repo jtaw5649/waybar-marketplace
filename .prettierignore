@@ -12,3 +12,5 @@ dist
 .claude-flow/
 .claude/
 CHANGELOG.md
+.github/workflows/*.yml
+.github/workflows/*.yaml
