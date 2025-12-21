@@ -55,6 +55,29 @@ describe('login page server', () => {
 			}
 		});
 
+		it('redirects to / when redirectTo is external', async () => {
+			const mockEvent = createMockEvent(
+				{
+					auth: vi.fn().mockResolvedValue({
+						user: { name: 'Test' },
+						accessToken: 'valid-token'
+					})
+				},
+				new URL('http://localhost/login?redirectTo=https://example.com')
+			);
+
+			const { load } = await import('./+page.server');
+
+			try {
+				await load(mockEvent);
+				expect.fail('Expected redirect to be thrown');
+			} catch (e) {
+				const error = e as RedirectError;
+				expect(error.status).toBe(303);
+				expect(error.location).toBe('/');
+			}
+		});
+
 		it('redirects to / when no redirectTo param', async () => {
 			const mockEvent = createMockEvent({
 				auth: vi.fn().mockResolvedValue({

@@ -8,7 +8,9 @@ export const load: PageServerLoad = async (event) => {
 
 	if (session?.user && validation.isValid) {
 		const redirectTo = event.url.searchParams.get('redirectTo') || '/';
-		throw redirect(303, redirectTo);
+		const safeRedirect =
+			redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/';
+		throw redirect(303, safeRedirect);
 	}
 
 	return { session };

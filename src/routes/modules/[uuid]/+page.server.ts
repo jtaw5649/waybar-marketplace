@@ -60,12 +60,12 @@ export const load: PageServerLoad = async (event) => {
 	const uuid = event.params.uuid;
 	const accessToken = session?.accessToken;
 
-	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, indexRes] = await Promise.all([
+	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, relatedRes] = await Promise.all([
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}`),
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/reviews`),
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions`),
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`),
-		event.fetch(`${API_BASE_URL}/api/v1/index`)
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/related?limit=6`)
 	]);
 
 	if (!moduleRes.ok) {
@@ -94,13 +94,9 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	let relatedModules: RelatedModule[] = [];
-	if (indexRes.ok) {
-		const indexData = await indexRes.json();
-		const allModules = (indexData.modules || []) as RelatedModule[];
-		relatedModules = allModules
-			.filter((m) => m.category === module.category && m.uuid !== uuid)
-			.sort((a, b) => b.downloads - a.downloads)
-			.slice(0, 6);
+	if (relatedRes.ok) {
+		const relatedData = await relatedRes.json();
+		relatedModules = relatedData.data?.modules || relatedData.modules || [];
 	}
 
 	let collections: Collection[] = [];
@@ -189,8 +185,9 @@ export const actions: Actions = {
 			return fail(400, { message: 'No file provided' });
 		}
 
-		if (file.size > 2 * 1024 * 1024) {
-			return fail(400, { message: 'File too large (max 2MB)' });
+		const maxSize = 10 * 1024 * 1024;
+		if (file.size > maxSize) {
+			return fail(400, { message: 'File too large (max 10MB)' });
 		}
 
 		const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
@@ -198,22 +195,22 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid file type. Use PNG, JPG, or WebP' });
 		}
 
-		const apiFormData = new FormData();
-		apiFormData.append('file', file);
-		if (altText?.trim()) {
-			apiFormData.append('alt_text', altText.trim());
+		const endpoint = new URL(
+			`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`
+		);
+		const trimmedAlt = altText?.trim();
+		if (trimmedAlt) {
+			endpoint.searchParams.set('alt_text', trimmedAlt);
 		}
 
-		const res = await fetch(
-			`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`,
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${accessToken}`
-				},
-				body: apiFormData
-			}
-		);
+		const res = await fetch(endpoint.toString(), {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				'Content-Type': file.type
+			},
+			body: new Uint8Array(await file.arrayBuffer())
+		});
 
 		if (!res.ok) {
 			const errorText = await res.text();
