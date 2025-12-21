@@ -134,10 +134,9 @@
 		try {
 			const method = userReview ? 'PUT' : 'POST';
 			const res = await fetch(
-				`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(data.uuid)}/reviews`,
+				`/api/modules/${encodeURIComponent(data.uuid)}/reviews`,
 				{
 					method,
-					credentials: 'include',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
 						rating: reviewRating,
@@ -169,10 +168,9 @@
 		reviewLoading = true;
 		try {
 			const res = await fetch(
-				`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(data.uuid)}/reviews`,
+				`/api/modules/${encodeURIComponent(data.uuid)}/reviews`,
 				{
 					method: 'DELETE',
-					credentials: 'include'
 				}
 			);
 

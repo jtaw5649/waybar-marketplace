@@ -59,6 +59,22 @@ describe('recentlyViewed store', () => {
 		expect(list[0].viewedAt).toBeDefined();
 	});
 
+	it('accepts module-style uuids', async () => {
+		const { recentlyViewed } = await import('./recentlyViewed');
+		recentlyViewed.add({
+			uuid: 'cpu-temp@system',
+			name: 'CPU Temp',
+			author: 'system',
+			description: 'CPU temp module',
+			category: 'system',
+			downloads: 0,
+			verified_author: false
+		});
+		const list = get(recentlyViewed);
+		expect(list).toHaveLength(1);
+		expect(list[0].uuid).toBe('cpu-temp@system');
+	});
+
 	it('moves existing module to front on re-view', async () => {
 		const { recentlyViewed } = await import('./recentlyViewed');
 		recentlyViewed.add(createTestModule(1));

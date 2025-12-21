@@ -4,6 +4,7 @@ import { browser } from '$app/environment';
 const STORAGE_KEY = 'recently_viewed_modules';
 const MAX_RECENT = 10;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MODULE_UUID_REGEX = /^[^@]+@[^@]+$/;
 
 export interface RecentModule {
 	uuid: string;
@@ -18,7 +19,7 @@ export interface RecentModule {
 }
 
 function isValidUuid(uuid: string): boolean {
-	return UUID_REGEX.test(uuid);
+	return UUID_REGEX.test(uuid) || MODULE_UUID_REGEX.test(uuid);
 }
 
 function createRecentlyViewedStore() {
