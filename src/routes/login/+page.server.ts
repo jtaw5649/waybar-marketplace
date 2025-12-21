@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { validateSession } from '$lib/utils/sessionValidator';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -13,5 +14,5 @@ export const load: PageServerLoad = async (event) => {
 		throw redirect(303, safeRedirect);
 	}
 
-	return { session };
+	return { session: toPublicSession(session) };
 };

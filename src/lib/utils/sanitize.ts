@@ -37,6 +37,16 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel'];
 
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+	if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+		const rel = node.getAttribute('rel') || '';
+		const relTokens = new Set(rel.split(/\s+/).filter(Boolean));
+		relTokens.add('noopener');
+		relTokens.add('noreferrer');
+		node.setAttribute('rel', Array.from(relTokens).join(' '));
+	}
+});
+
 export function sanitizeHtml(dirty: string): string {
 	return DOMPurify.sanitize(dirty, {
 		ALLOWED_TAGS,

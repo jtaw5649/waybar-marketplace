@@ -101,6 +101,13 @@ describe('sanitizeHtml', () => {
 			expect(clean).toContain('href="https://example.com"');
 		});
 
+		it('adds rel noopener noreferrer to target blank links', () => {
+			const input = '<a href="https://example.com" target="_blank">Link</a>';
+			const clean = sanitizeHtml(input);
+			expect(clean).toContain('target="_blank"');
+			expect(clean).toContain('rel="noopener noreferrer"');
+		});
+
 		it('preserves images with valid src', () => {
 			const input = '<img src="https://example.com/img.png" alt="Image">';
 			const clean = sanitizeHtml(input);

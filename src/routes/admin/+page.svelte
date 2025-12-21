@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { API_BASE_URL } from '$lib';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
@@ -19,10 +18,8 @@
 	async function approveSubmission(id: number) {
 		actionLoading = id;
 		try {
-			const res = await fetch(`${API_BASE_URL}/api/v1/admin/submissions/${id}/approve`, {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${data.session?.accessToken}` },
-				credentials: 'include'
+			const res = await fetch(`/api/admin/submissions/${id}/approve`, {
+				method: 'POST'
 			});
 
 			if (!res.ok) {
@@ -48,12 +45,10 @@
 
 		actionLoading = id;
 		try {
-			const res = await fetch(`${API_BASE_URL}/api/v1/admin/submissions/${id}/reject`, {
+			const res = await fetch(`/api/admin/submissions/${id}/reject`, {
 				method: 'POST',
-				credentials: 'include',
 				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${data.session?.accessToken}`
+					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({ reason: rejectReason })
 			});

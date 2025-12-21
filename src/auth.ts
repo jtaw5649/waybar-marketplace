@@ -78,13 +78,18 @@ export async function authSessionCallback({ session, token }: SessionCallbackPar
 	return session;
 }
 
+export function resolveTrustHost(nodeEnv?: string, trustHostEnv?: string): boolean {
+	if (nodeEnv && nodeEnv !== 'production') return true;
+	return trustHostEnv === 'true';
+}
+
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	providers: [GitHub],
 	callbacks: {
 		jwt: authJwtCallback,
 		session: authSessionCallback
 	},
-	trustHost: true
+	trustHost: resolveTrustHost(env.NODE_ENV, env.AUTH_TRUST_HOST)
 });
 
 async function refreshAccessToken(token: Token) {

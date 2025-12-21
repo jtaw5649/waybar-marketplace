@@ -3,6 +3,7 @@ import { API_BASE_URL } from '$lib';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Module } from '$lib/types';
 import { validateSession } from '$lib/utils/sessionValidator';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 interface UserProfile {
 	id: number;
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async (event) => {
 	const validation = validateSession(session);
 
 	if (!session?.user || !validation.isValid) {
-		return { session, profile: null, modules: [], collections: [] };
+		return { session: toPublicSession(session), profile: null, modules: [], collections: [] };
 	}
 
 	if (validation.shouldReauth) {
@@ -65,9 +66,9 @@ export const load: PageServerLoad = async (event) => {
 			collections = data.collections || [];
 		}
 
-		return { session, profile, modules, collections };
+		return { session: toPublicSession(session), profile, modules, collections };
 	} catch {
-		return { session, profile: null, modules: [], collections: [] };
+		return { session: toPublicSession(session), profile: null, modules: [], collections: [] };
 	}
 };
 

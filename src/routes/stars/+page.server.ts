@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { API_BASE_URL } from '$lib';
 import { normalizeStarsPayload } from '$lib/utils/starsResponse';
 import { validateSession } from '$lib/utils/sessionValidator';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 interface StarredModule {
 	uuid: string;
@@ -20,6 +21,7 @@ interface StarredModule {
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth();
+	const publicSession = toPublicSession(session);
 	const validation = validateSession(session);
 
 	if (!validation.isValid || !session?.accessToken) {
@@ -27,7 +29,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			starredModules: [] as StarredModule[],
 			total: 0,
 			isAuthenticated: false,
-			session: session ?? null
+			session: publicSession
 		};
 	}
 
@@ -43,7 +45,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				starredModules: [] as StarredModule[],
 				total: 0,
 				isAuthenticated: true,
-				session
+				session: publicSession
 			};
 		}
 
@@ -53,14 +55,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			starredModules: payload.modules,
 			total: payload.total,
 			isAuthenticated: true,
-			session
+			session: publicSession
 		};
 	} catch {
 		return {
 			starredModules: [] as StarredModule[],
 			total: 0,
 			isAuthenticated: true,
-			session
+			session: publicSession
 		};
 	}
 };

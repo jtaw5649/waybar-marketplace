@@ -114,7 +114,7 @@ describe('admin page server', () => {
 			const result = await load(event);
 
 			expect(result).toEqual({
-				session: mockSession,
+				session: { user: mockSession.user },
 				submissions: mockSubmissions,
 				stats: mockStats
 			});
@@ -136,7 +136,7 @@ describe('admin page server', () => {
 			const result = await load(event);
 
 			expect(result).toEqual({
-				session: mockSession,
+				session: { user: mockSession.user },
 				submissions: mockSubmissions,
 				stats: mockStats
 			});
