@@ -3,6 +3,7 @@
 	import { API_BASE_URL } from '$lib';
 	import type { PageData } from './$types';
 	import { renderMarkdown } from '$lib/utils/markdown';
+	import { normalizeUsername } from '$lib/utils/username';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -44,7 +45,7 @@
 	let showReviewForm = $state(false);
 	let userReview = $derived.by(() => {
 		if (!data.session?.user) return null;
-		const username = data.session.user.name;
+		const username = normalizeUsername(data.session.user.login);
 		return reviews.find((r) => r.user.username === username) || null;
 	});
 	let reviewRating = $state(5);

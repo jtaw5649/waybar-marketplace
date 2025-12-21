@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { API_BASE_URL } from '$lib';
 import { error, fail } from '@sveltejs/kit';
+import { normalizeUsername } from '$lib/utils/username';
 
 interface CollectionModule {
 	uuid: string;
@@ -31,13 +32,11 @@ interface Collection {
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const collectionId = event.params.id;
-
-	const sessionToken =
-		event.cookies.get('__Secure-authjs.session-token') || event.cookies.get('authjs.session-token');
+	const accessToken = session?.accessToken;
 
 	const headers: Record<string, string> = {};
-	if (sessionToken) {
-		headers['Cookie'] = `authjs.session-token=${sessionToken}`;
+	if (accessToken) {
+		headers['Authorization'] = `Bearer ${accessToken}`;
 	}
 
 	try {
@@ -54,7 +53,7 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		const collection: Collection = await res.json();
-		const isOwner = session?.user?.email === collection.owner?.username;
+		const isOwner = normalizeUsername(session?.user?.login) === collection.owner?.username;
 
 		return { session, collection, isOwner };
 	} catch (e) {
@@ -68,14 +67,8 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	removeModule: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user) {
-			return fail(401, { message: 'Unauthorized' });
-		}
-
-		const sessionToken =
-			event.cookies.get('__Secure-authjs.session-token') ||
-			event.cookies.get('authjs.session-token');
-		if (!sessionToken) {
+		const accessToken = session?.accessToken;
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -92,7 +85,7 @@ export const actions: Actions = {
 			{
 				method: 'DELETE',
 				headers: {
-					Cookie: `authjs.session-token=${sessionToken}`
+					Authorization: `Bearer ${accessToken}`
 				}
 			}
 		);
