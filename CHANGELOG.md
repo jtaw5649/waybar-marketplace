@@ -1,5 +1,12 @@
 # waybar-marketplace
 
+## [0.5.0](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.4.1...waybar-marketplace-v0.5.0) (2025-12-21)
+
+
+### Features
+
+* authentication refactor and bearer token migration ([#24](https://github.com/jtaw5649/waybar-marketplace/issues/24)) ([cbba8b3](https://github.com/jtaw5649/waybar-marketplace/commit/cbba8b3a1c140621c864fdf6adca4031f8e5a5a3))
+
 ## [0.4.1](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.4.0...waybar-marketplace-v0.4.1) (2025-12-21)
 
 ### Bug Fixes
