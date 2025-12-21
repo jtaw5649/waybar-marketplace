@@ -3,6 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import type { Module } from '$lib/types';
 import { validateSession } from '$lib/utils/sessionValidator';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 interface UserProfile {
 	id: number;
@@ -47,5 +48,5 @@ export const load: LayoutServerLoad = async (event) => {
 		console.error('Failed to fetch user data:', e);
 	}
 
-	return { session, profile, modules };
+	return { session: toPublicSession(session), profile, modules };
 };

@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { API_BASE_URL } from '$lib';
 import { error, fail } from '@sveltejs/kit';
 import { normalizeUsername } from '$lib/utils/username';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 interface CollectionModule {
 	uuid: string;
@@ -55,7 +56,7 @@ export const load: PageServerLoad = async (event) => {
 		const collection: Collection = await res.json();
 		const isOwner = normalizeUsername(session?.user?.login) === collection.owner?.username;
 
-		return { session, collection, isOwner };
+		return { session: toPublicSession(session), collection, isOwner };
 	} catch (e) {
 		if ((e as { status?: number }).status) {
 			throw e;

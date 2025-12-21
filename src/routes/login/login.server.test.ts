@@ -125,7 +125,9 @@ describe('login page server', () => {
 			const { load } = await import('./+page.server');
 			const result = await load(mockEvent);
 
-			expect(result).toEqual({ session: sessionWithError });
+			expect(result).toEqual({
+				session: { user: sessionWithError.user, error: sessionWithError.error }
+			});
 		});
 	});
 });

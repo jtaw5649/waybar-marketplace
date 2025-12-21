@@ -1,6 +1,12 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { API_BASE_URL } from '$lib';
+import {
+	ALLOWED_PACKAGE_EXTENSIONS,
+	isAllowedPackageExtension,
+	isPackageSizeAllowed
+} from '$lib/utils/packageValidation';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -10,7 +16,7 @@ export const load: PageServerLoad = async (event) => {
 	if (session.error === 'RefreshTokenError') {
 		throw redirect(302, '/login');
 	}
-	return { session };
+	return { session: toPublicSession(session) };
 };
 
 export const actions: Actions = {
@@ -35,6 +41,22 @@ export const actions: Actions = {
 
 		if (!name || !description || !category || !version || !packageFile) {
 			return fail(400, { message: 'Missing required fields' });
+		}
+
+		if (!isAllowedPackageExtension(packageFile.name)) {
+			return fail(400, {
+				message: `File must be one of: ${ALLOWED_PACKAGE_EXTENSIONS.join(', ')}`
+			});
+		}
+
+		if (!isPackageSizeAllowed(packageFile.size)) {
+			return fail(400, {
+				message: `File size must be less than 10MB (current: ${(
+					packageFile.size /
+					1024 /
+					1024
+				).toFixed(1)}MB)`
+			});
 		}
 
 		const author = session.user.login?.toLowerCase().replace(/[^a-z0-9-]/g, '-') || 'anonymous';

@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import { validateSession } from '$lib/utils/sessionValidator';
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 interface UserProfile {
 	role: 'user' | 'moderator' | 'admin';
@@ -41,7 +42,7 @@ export const load: PageServerLoad = async (event) => {
 	const [submissionsData, statsData] = await Promise.all([submissionsRes.json(), statsRes.json()]);
 
 	return {
-		session,
+		session: toPublicSession(session),
 		submissions: submissionsData.data || [],
 		stats: statsData.data || null
 	};

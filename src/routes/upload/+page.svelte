@@ -2,6 +2,11 @@
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
 	import { renderMarkdown } from '$lib/utils/markdown';
+	import {
+		ALLOWED_PACKAGE_EXTENSIONS,
+		isAllowedPackageExtension,
+		isPackageSizeAllowed
+	} from '$lib/utils/packageValidation';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
@@ -47,9 +52,6 @@
 		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
 	});
 
-	const MAX_FILE_SIZE = 10 * 1024 * 1024;
-	const ALLOWED_EXTENSIONS = ['.tar.gz', '.tgz'];
-
 	function handleFileChange(e: Event) {
 		const target = e.target as HTMLInputElement;
 		const file = target.files?.[0] || null;
@@ -60,17 +62,16 @@
 			return;
 		}
 
-		const fileName = file.name.toLowerCase();
-		const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
+		const hasValidExtension = isAllowedPackageExtension(file.name);
 
 		if (!hasValidExtension) {
-			fileError = 'File must be a .tar.gz or .tgz archive';
+			fileError = `File must be one of: ${ALLOWED_PACKAGE_EXTENSIONS.join(', ')}`;
 			packageFile = null;
 			target.value = '';
 			return;
 		}
 
-		if (file.size > MAX_FILE_SIZE) {
+		if (!isPackageSizeAllowed(file.size)) {
 			fileError = `File size must be less than 10MB (current: ${(file.size / 1024 / 1024).toFixed(1)}MB)`;
 			packageFile = null;
 			target.value = '';
