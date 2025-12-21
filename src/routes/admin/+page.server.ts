@@ -25,7 +25,7 @@ export const load: PageServerLoad = async (event) => {
 
 	const profile: UserProfile = await meRes.json();
 
-	if (profile.role !== 'admin') {
+	if (profile.role !== 'admin' && profile.role !== 'moderator') {
 		throw error(403, 'Access denied. Admin privileges required.');
 	}
 

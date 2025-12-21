@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import type { Module } from '$lib/types';
+import { normalizeUsername } from '$lib/utils/username';
 
 interface ReviewUser {
 	username: string;
@@ -57,9 +58,7 @@ interface RelatedModule {
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const uuid = event.params.uuid;
-
-	const sessionToken =
-		event.cookies.get('__Secure-authjs.session-token') || event.cookies.get('authjs.session-token');
+	const accessToken = session?.accessToken;
 
 	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, indexRes] = await Promise.all([
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}`),
@@ -105,10 +104,10 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	let collections: Collection[] = [];
-	if (session?.user && sessionToken) {
+	if (accessToken) {
 		try {
 			const collectionsRes = await fetch(`${API_BASE_URL}/api/v1/collections`, {
-				headers: { Cookie: `authjs.session-token=${sessionToken}` }
+				headers: { Authorization: `Bearer ${accessToken}` }
 			});
 			if (collectionsRes.ok) {
 				const collectionsData = await collectionsRes.json();
@@ -119,7 +118,7 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-	const isOwner = session?.user?.name === module.author;
+	const isOwner = normalizeUsername(session?.user?.login) === module.author;
 
 	return {
 		session,
@@ -137,14 +136,8 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	addToCollection: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user) {
-			return fail(401, { message: 'Unauthorized' });
-		}
-
-		const sessionToken =
-			event.cookies.get('__Secure-authjs.session-token') ||
-			event.cookies.get('authjs.session-token');
-		if (!sessionToken) {
+		const accessToken = session?.accessToken;
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -161,7 +154,7 @@ export const actions: Actions = {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Cookie: `authjs.session-token=${sessionToken}`
+				Authorization: `Bearer ${accessToken}`
 			},
 			body: JSON.stringify({
 				module_uuid: uuid,
@@ -182,14 +175,8 @@ export const actions: Actions = {
 
 	uploadScreenshot: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user) {
-			return fail(401, { message: 'Unauthorized' });
-		}
-
-		const sessionToken =
-			event.cookies.get('__Secure-authjs.session-token') ||
-			event.cookies.get('authjs.session-token');
-		if (!sessionToken) {
+		const accessToken = session?.accessToken;
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -222,7 +209,7 @@ export const actions: Actions = {
 			{
 				method: 'POST',
 				headers: {
-					Cookie: `authjs.session-token=${sessionToken}`
+					Authorization: `Bearer ${accessToken}`
 				},
 				body: apiFormData
 			}
@@ -241,14 +228,8 @@ export const actions: Actions = {
 
 	deleteScreenshot: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user) {
-			return fail(401, { message: 'Unauthorized' });
-		}
-
-		const sessionToken =
-			event.cookies.get('__Secure-authjs.session-token') ||
-			event.cookies.get('authjs.session-token');
-		if (!sessionToken) {
+		const accessToken = session?.accessToken;
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -265,7 +246,7 @@ export const actions: Actions = {
 			{
 				method: 'DELETE',
 				headers: {
-					Cookie: `authjs.session-token=${sessionToken}`
+					Authorization: `Bearer ${accessToken}`
 				}
 			}
 		);

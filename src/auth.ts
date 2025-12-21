@@ -1,47 +1,93 @@
 import { SvelteKitAuth } from '@auth/sveltekit';
 import GitHub from '@auth/sveltekit/providers/github';
+import type { JWT } from '@auth/core/jwt';
+import type { Account, Profile, Session } from '@auth/core/types';
 import { env } from '$env/dynamic/private';
+
+type Token = JWT & {
+	accessToken?: string;
+	expiresAt?: number;
+	refreshToken?: string;
+	login?: string;
+	error?: string;
+};
+
+type JwtCallbackParams = {
+	token: Token;
+	account?: Account | null;
+	profile?: Profile;
+};
+
+type SessionWithExtras = Session & {
+	accessToken?: string;
+	error?: string;
+};
+
+type SessionCallbackParams = {
+	session: SessionWithExtras;
+	token: Token;
+};
+
+export async function authJwtCallback({
+	token,
+	account,
+	profile
+}: JwtCallbackParams): Promise<Token> {
+	if (account) {
+		const accessToken = typeof account.access_token === 'string' ? account.access_token : undefined;
+		const expiresAt = typeof account.expires_at === 'number' ? account.expires_at : undefined;
+		const refreshToken =
+			typeof account.refresh_token === 'string' ? account.refresh_token : undefined;
+		const login = typeof profile?.login === 'string' ? profile.login : undefined;
+
+		return {
+			...token,
+			accessToken,
+			expiresAt,
+			refreshToken,
+			login,
+			error: undefined
+		};
+	}
+
+	const FIVE_MINUTES_MS = 5 * 60 * 1000;
+	const expiresAt = typeof token.expiresAt === 'number' ? token.expiresAt : null;
+
+	if (expiresAt && Date.now() < expiresAt * 1000 - FIVE_MINUTES_MS) {
+		return token;
+	}
+
+	if (expiresAt && token.refreshToken) {
+		return refreshAccessToken(token);
+	}
+
+	if (expiresAt) {
+		return { ...token, error: 'RefreshTokenError', accessToken: undefined };
+	}
+
+	return token;
+}
+
+export async function authSessionCallback({ session, token }: SessionCallbackParams) {
+	if (session.user) {
+		session.user.id = typeof token.sub === 'string' ? token.sub : '';
+		session.user.login = typeof token.login === 'string' ? token.login : undefined;
+	}
+	session.accessToken = typeof token.accessToken === 'string' ? token.accessToken : undefined;
+	session.error = typeof token.error === 'string' ? token.error : undefined;
+	return session;
+}
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	providers: [GitHub],
 	callbacks: {
-		async jwt({ token, account, profile }) {
-			if (account) {
-				return {
-					...token,
-					accessToken: account.access_token,
-					expiresAt: account.expires_at,
-					refreshToken: account.refresh_token,
-					login: (profile as { login?: string })?.login,
-					error: undefined
-				};
-			}
-
-			const FIVE_MINUTES_MS = 5 * 60 * 1000;
-			if (token.expiresAt && Date.now() < (token.expiresAt as number) * 1000 - FIVE_MINUTES_MS) {
-				return token;
-			}
-
-			if (token.refreshToken) {
-				return refreshAccessToken(token);
-			}
-
-			return { ...token, error: 'RefreshTokenError', accessToken: undefined };
-		},
-		async session({ session, token }) {
-			if (session.user) {
-				session.user.id = token.sub ?? '';
-				session.user.login = token.login as string | undefined;
-			}
-			session.accessToken = token.accessToken as string | undefined;
-			session.error = token.error as string | undefined;
-			return session;
-		}
+		jwt: authJwtCallback,
+		session: authSessionCallback
 	},
 	trustHost: true
 });
 
-async function refreshAccessToken(token: Record<string, unknown>) {
+async function refreshAccessToken(token: Token) {
 	try {
 		const response = await fetch('https://github.com/login/oauth/access_token', {
 			method: 'POST',
@@ -53,7 +99,7 @@ async function refreshAccessToken(token: Record<string, unknown>) {
 				client_id: env.AUTH_GITHUB_ID ?? '',
 				client_secret: env.AUTH_GITHUB_SECRET ?? '',
 				grant_type: 'refresh_token',
-				refresh_token: token.refreshToken as string
+				refresh_token: String(token.refreshToken ?? '')
 			})
 		});
 

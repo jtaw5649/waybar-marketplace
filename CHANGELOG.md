@@ -2,11 +2,10 @@
 
 ## [0.4.1](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.4.0...waybar-marketplace-v0.4.1) (2025-12-21)
 
-
 ### Bug Fixes
 
-* **ci:** bypass checks for release-please PRs ([#21](https://github.com/jtaw5649/waybar-marketplace/issues/21)) ([d3ac639](https://github.com/jtaw5649/waybar-marketplace/commit/d3ac63916d0f8346d60482e66e7a162f6b337f12))
-* **ci:** use RELEASE_PLEASE_TOKEN for workflow triggers ([#23](https://github.com/jtaw5649/waybar-marketplace/issues/23)) ([2ef5209](https://github.com/jtaw5649/waybar-marketplace/commit/2ef5209fd847d7be3da6065bc97f33bd824e2b59))
+- **ci:** bypass checks for release-please PRs ([#21](https://github.com/jtaw5649/waybar-marketplace/issues/21)) ([d3ac639](https://github.com/jtaw5649/waybar-marketplace/commit/d3ac63916d0f8346d60482e66e7a162f6b337f12))
+- **ci:** use RELEASE_PLEASE_TOKEN for workflow triggers ([#23](https://github.com/jtaw5649/waybar-marketplace/issues/23)) ([2ef5209](https://github.com/jtaw5649/waybar-marketplace/commit/2ef5209fd847d7be3da6065bc97f33bd824e2b59))
 
 ## [0.4.0](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.3.5...waybar-marketplace-v0.4.0) (2025-12-20)
 
