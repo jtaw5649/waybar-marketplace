@@ -53,7 +53,12 @@ export const load: PageServerLoad = async (event) => {
 			throw error(res.status, 'Failed to load collection');
 		}
 
-		const collection: Collection = await res.json();
+		const responseData = await res.json();
+		const data = responseData.data || responseData;
+		const collection: Collection = {
+			...data.collection,
+			modules: data.modules || []
+		};
 		const isOwner = normalizeUsername(session?.user?.login) === collection.owner?.username;
 
 		return { session: toPublicSession(session), collection, isOwner };
