@@ -1,5 +1,12 @@
 # waybar-marketplace
 
+## [0.5.4](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.5.3...waybar-marketplace-v0.5.4) (2025-12-22)
+
+
+### Bug Fixes
+
+* **auth:** default trustHost in production when unset ([#32](https://github.com/jtaw5649/waybar-marketplace/issues/32)) ([f29cb24](https://github.com/jtaw5649/waybar-marketplace/commit/f29cb2471afb973ea7dc4a03b45e44a43d102af6))
+
 ## [0.5.3](https://github.com/jtaw5649/waybar-marketplace/compare/waybar-marketplace-v0.5.2...waybar-marketplace-v0.5.3) (2025-12-21)
 
 
