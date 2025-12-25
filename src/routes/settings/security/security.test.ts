@@ -9,7 +9,11 @@ const baseData = {
 			name: 'Test User',
 			image: 'https://example.com/avatar.jpg'
 		}
-	}
+	},
+	isAdmin: false,
+	userProfile: null,
+	profile: null,
+	modules: []
 };
 
 describe('Security settings page', () => {
