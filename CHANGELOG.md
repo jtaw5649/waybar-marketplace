@@ -1,5 +1,19 @@
 # barforge-web
 
+## [0.9.0](https://github.com/jtaw5649/barforge-web/compare/barforge-web-v0.8.0...barforge-web-v0.9.0) (2025-12-25)
+
+
+### Features
+
+* add barforge ecosystem page ([#45](https://github.com/jtaw5649/barforge-web/issues/45)) ([812e86b](https://github.com/jtaw5649/barforge-web/commit/812e86bddf977365d84cc24804af81ed72a4f3d6))
+* add terms and privacy pages ([#43](https://github.com/jtaw5649/barforge-web/issues/43)) ([c0ec600](https://github.com/jtaw5649/barforge-web/commit/c0ec6007be465cf9346c020c6442e88650345f37))
+* implement GDPR data export via email ([#44](https://github.com/jtaw5649/barforge-web/issues/44)) ([efa77dd](https://github.com/jtaw5649/barforge-web/commit/efa77dd1620db9157c5e59190a6a18f655d8d037))
+
+
+### Bug Fixes
+
+* UI polish and test improvements ([#46](https://github.com/jtaw5649/barforge-web/issues/46)) ([22ebe14](https://github.com/jtaw5649/barforge-web/commit/22ebe14f53d42d2257aea197b7990068a1758bda))
+
 ## [0.8.0](https://github.com/jtaw5649/barforge-web/compare/barforge-web-v0.7.0...barforge-web-v0.8.0) (2025-12-25)
 
 
