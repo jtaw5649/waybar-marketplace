@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { Github } from 'lucide-svelte';
+</script>
+
 <footer>
 	<div class="footer-content">
 		<a href="/" class="footer-brand">
@@ -23,15 +27,16 @@
 		</a>
 
 		<nav class="footer-nav" aria-label="Footer navigation">
-			<a href="https://github.com/jtaw5649/barforge-app" target="_blank" rel="noopener"
-				>Desktop App</a
-			>
-			<a href="/modules">Registry</a>
-			<a href="https://github.com/jtaw5649/barforge-web" target="_blank" rel="noopener">GitHub</a>
-			<a href="https://github.com/Alexays/Waybar" target="_blank" rel="noopener">Waybar</a>
+			<a href="/terms">Terms</a>
+			<a href="/privacy">Privacy</a>
 		</nav>
 
-		<div class="footer-license">GPL-3.0</div>
+		<div class="footer-license">
+			<a href="/barforge" class="github-link" aria-label="View source on GitHub">
+				<Github size={16} />
+			</a>
+			<span>GPL-3.0</span>
+		</div>
 	</div>
 </footer>
 
@@ -54,9 +59,14 @@
 
 	@media (min-width: 768px) {
 		.footer-content {
-			flex-direction: row;
-			justify-content: space-between;
+			display: grid;
+			grid-template-columns: 1fr auto 1fr;
 			align-items: center;
+			gap: var(--space-lg);
+		}
+
+		.footer-license {
+			justify-self: end;
 		}
 	}
 
@@ -102,8 +112,22 @@
 	}
 
 	.footer-license {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
 		color: var(--color-text-faint);
 		font-size: 0.875rem;
 		opacity: 0.7;
+	}
+
+	.github-link {
+		display: flex;
+		color: var(--color-text-faint);
+		transition: color var(--duration-fast) var(--ease-out);
+	}
+
+	.github-link:hover {
+		color: var(--color-primary);
+		text-decoration: none;
 	}
 </style>
