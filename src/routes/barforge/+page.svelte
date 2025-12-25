@@ -30,10 +30,7 @@
 			name: 'barforge-app',
 			desc: 'Barforge App — install and configure modules',
 			url: 'https://github.com/jtaw5649/barforge-app',
-			tech: [
-				{ icon: 'simple-icons:rust', color: '#dea584' },
-				{ localIcon: '/iced-logo.svg' }
-			]
+			tech: [{ icon: 'simple-icons:rust', color: '#dea584' }, { localIcon: '/iced-logo.svg' }]
 		}
 	];
 
@@ -87,8 +84,8 @@
 		</div>
 		<h1>Barforge Ecosystem</h1>
 		<p>
-			A complete toolkit for discovering, installing, and managing Waybar modules. Browse
-			Barforge Hub to find community modules, then use Barforge App for seamless installation and
+			A complete toolkit for discovering, installing, and managing Waybar modules. Browse Barforge
+			Hub to find community modules, then use Barforge App for seamless installation and
 			configuration.
 		</p>
 	</section>
@@ -126,14 +123,20 @@
 					<div class="repo-content">
 						<span class="repo-name">{repo.name}</span>
 						<span class="repo-desc">{repo.desc}</span>
-												<div class="repo-tech-icons">
+						<div class="repo-tech-icons">
 							{#each repo.tech as tech, i (i)}
 								{#if tech.icon}
 									<span class="repo-tech-icon" style="color: {tech.color}">
 										<Icon name={tech.icon} size={14} />
 									</span>
 								{:else if tech.localIcon}
-									<img src={tech.localIcon} alt="" class="repo-tech-local-icon" width="14" height="14" />
+									<img
+										src={tech.localIcon}
+										alt=""
+										class="repo-tech-local-icon"
+										width="14"
+										height="14"
+									/>
 								{/if}
 							{/each}
 						</div>
@@ -164,7 +167,6 @@
 			{/each}
 		</div>
 	</section>
-
 </main>
 
 <Footer />
