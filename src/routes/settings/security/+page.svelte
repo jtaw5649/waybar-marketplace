@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { PageData, ActionData } from './$types';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { signOut } from '@auth/sveltekit/client';
+	import { enhance } from '$app/forms';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let showDeleteModal = $state(false);
 	let showExportModal = $state(false);
@@ -16,18 +17,14 @@
 
 	let canDelete = $derived(deleteConfirmation === requiredConfirmation);
 
-	async function handleExportData() {
-		exporting = true;
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			toast.success('Your data export has been prepared. Check your email for the download link.');
+	$effect(() => {
+		if (form?.success) {
+			toast.success('Your data export has been sent to your email.');
 			showExportModal = false;
-		} catch {
-			toast.error('Failed to export data. Please try again.');
-		} finally {
-			exporting = false;
+		} else if (form?.message) {
+			toast.error(form.message);
 		}
-	}
+	});
 
 	async function handleDeleteAccount() {
 		if (!canDelete) return;
@@ -116,6 +113,36 @@
 	</div>
 </section>
 
+<section class="settings-section data-export-section">
+	<h3 class="section-title">Data Export</h3>
+	<p class="section-description">Download a copy of your data.</p>
+
+	<div class="export-action">
+		<div class="export-action-info">
+			<span class="export-action-title">Export Your Data</span>
+			<span class="export-action-description">
+				Download a copy of all your data including modules, collections, and profile information.
+			</span>
+		</div>
+		<button class="btn btn-outline" onclick={() => (showExportModal = true)}>
+			<svg
+				viewBox="0 0 24 24"
+				width="16"
+				height="16"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				aria-hidden="true"
+			>
+				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+				<polyline points="7 10 12 15 17 10" />
+				<line x1="12" y1="15" x2="12" y2="3" />
+			</svg>
+			Export Data
+		</button>
+	</div>
+</section>
+
 <section class="settings-section danger-zone">
 	<h3 class="section-title danger">
 		<svg
@@ -138,31 +165,6 @@
 	<p class="section-description">Irreversible and destructive actions.</p>
 
 	<div class="danger-actions">
-		<div class="danger-action">
-			<div class="danger-action-info">
-				<span class="danger-action-title">Export Your Data</span>
-				<span class="danger-action-description">
-					Download a copy of all your data including modules, collections, and profile information.
-				</span>
-			</div>
-			<button class="btn btn-outline" onclick={() => (showExportModal = true)}>
-				<svg
-					viewBox="0 0 24 24"
-					width="16"
-					height="16"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					aria-hidden="true"
-				>
-					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-					<polyline points="7 10 12 15 17 10" />
-					<line x1="12" y1="15" x2="12" y2="3" />
-				</svg>
-				Export Data
-			</button>
-		</div>
-
 		<div class="danger-action delete">
 			<div class="danger-action-info">
 				<span class="danger-action-title">Delete Account</span>
@@ -200,26 +202,37 @@
 			<ul class="export-list">
 				<li>Profile information</li>
 				<li>Your modules and their metadata</li>
-				<li>Collections</li>
 				<li>Starred modules</li>
-				<li>Comments and reviews</li>
 			</ul>
 			<p class="modal-note">
 				You'll receive an email with a download link when your export is ready (usually within a few
 				minutes).
 			</p>
 		</div>
-		<div class="modal-actions">
-			<button class="btn btn-secondary" onclick={() => (showExportModal = false)}>Cancel</button>
-			<button class="btn btn-primary" onclick={handleExportData} disabled={exporting}>
+		<form
+			method="POST"
+			action="?/exportData"
+			class="modal-actions"
+			use:enhance={() => {
+				exporting = true;
+				return async ({ update }) => {
+					exporting = false;
+					await update();
+				};
+			}}
+		>
+			<button type="button" class="btn btn-secondary" onclick={() => (showExportModal = false)}>
+				Cancel
+			</button>
+			<button type="submit" class="btn btn-primary" disabled={exporting}>
 				{#if exporting}
 					<span class="spinner"></span>
-					Preparing...
+					Sending...
 				{:else}
 					Request Export
 				{/if}
 			</button>
-		</div>
+		</form>
 	</Modal>
 {/if}
 
@@ -328,7 +341,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
-		color: var(--color-danger);
+		color: var(--color-error);
 	}
 
 	.section-description {
@@ -440,11 +453,11 @@
 	}
 
 	.danger-zone {
-		background-color: color-mix(in srgb, var(--color-danger) 5%, transparent);
+		background-color: color-mix(in srgb, var(--color-error) 5%, transparent);
 		margin: 0 calc(-1 * var(--space-xl));
 		padding: var(--space-xl);
 		border-radius: var(--radius-lg);
-		border: 1px solid color-mix(in srgb, var(--color-danger) 20%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
 	}
 
 	.danger-actions {
@@ -464,7 +477,7 @@
 	}
 
 	.danger-action.delete {
-		border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+		border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
 	}
 
 	.danger-action-info {
@@ -479,6 +492,32 @@
 	}
 
 	.danger-action-description {
+		font-size: var(--font-size-sm);
+		color: var(--color-text-muted);
+	}
+
+	.export-action {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: var(--space-md);
+		background-color: var(--color-bg-base);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+	}
+
+	.export-action-info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2xs);
+	}
+
+	.export-action-title {
+		font-weight: 500;
+		color: var(--color-text-normal);
+	}
+
+	.export-action-description {
 		font-size: var(--font-size-sm);
 		color: var(--color-text-muted);
 	}
@@ -529,12 +568,12 @@
 	}
 
 	.btn-danger {
-		background-color: var(--color-danger);
+		background-color: var(--color-error);
 		color: white;
 	}
 
 	.btn-danger:hover:not(:disabled) {
-		background-color: color-mix(in srgb, var(--color-danger) 85%, black);
+		background-color: color-mix(in srgb, var(--color-error) 85%, black);
 	}
 
 	.btn:disabled {
@@ -600,8 +639,8 @@
 		display: flex;
 		gap: var(--space-md);
 		padding: var(--space-md);
-		background-color: color-mix(in srgb, var(--color-danger) 8%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-danger) 20%, transparent);
+		background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
 		border-radius: var(--radius-md);
 		margin-bottom: var(--space-lg);
 	}
@@ -612,8 +651,8 @@
 		justify-content: center;
 		width: 48px;
 		height: 48px;
-		background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
-		color: var(--color-danger);
+		background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+		color: var(--color-error);
 		border-radius: 50%;
 		flex-shrink: 0;
 	}
@@ -624,7 +663,7 @@
 
 	.warning-text strong {
 		display: block;
-		color: var(--color-danger);
+		color: var(--color-error);
 		margin-bottom: var(--space-sm);
 	}
 
@@ -667,14 +706,15 @@
 
 	.delete-confirmation input:focus {
 		outline: none;
-		border-color: var(--color-danger);
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 20%, transparent);
+		border-color: var(--color-error);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 20%, transparent);
 	}
 
 	@media (max-width: 640px) {
 		.connected-account,
 		.session-current,
-		.danger-action {
+		.danger-action,
+		.export-action {
 			flex-direction: column;
 			align-items: flex-start;
 			gap: var(--space-md);
