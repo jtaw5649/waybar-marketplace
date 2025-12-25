@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="static/og.png" alt="Waybar Marketplace" width="800">
+  <img src="static/og.png" alt="Barforge" width="800">
 </p>
 
 <p align="center">
-  <b>Web frontend for the Waybar Modules marketplace.</b>
+  <b>Web frontend for Barforge, the Waybar modules marketplace.</b>
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 
 ## Features
 
-🔍 **Browse Modules** — Discover waybar modules from the community registry
+🔍 **Browse Modules** — Discover Waybar modules from the Barforge registry
 
 👤 **GitHub Authentication** — Sign in with GitHub to submit and review modules
 
@@ -31,7 +31,7 @@
 
 📦 **Module Submissions** — Submit your own modules to the registry
 
-🎨 **Dark Theme** — Consistent design with Waybar Manager desktop app
+🎨 **Dark Theme** — Consistent design with Barforge desktop app
 
 ## Development
 
@@ -77,7 +77,7 @@ wrangler pages deploy .svelte-kit/cloudflare
 
 | Project                                                      | Description                                     |
 | ------------------------------------------------------------ | ----------------------------------------------- |
-| [waybar-manager](https://github.com/jtaw5649/waybar-manager) | Desktop application for managing waybar modules |
+| [barforge-app](https://github.com/jtaw5649/barforge-app) | Desktop application for managing Waybar modules |
 
 ## License
 

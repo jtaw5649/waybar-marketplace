@@ -1,5 +1,5 @@
 {
-	"name": "waybar-marketplace",
+	"name": "barforge-web",
 	"version": "0.5.5",
 	"private": true,
 	"scripts": {
@@ -16,12 +16,14 @@
 		"@sveltejs/adapter-cloudflare": "^7.2.4",
 		"@sveltejs/kit": "^2.49.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@testing-library/svelte": "^5.2.10",
 		"@types/node": "^25.0.3",
 		"eslint": "^9.39.2",
 		"eslint-plugin-svelte": "^3.13.1",
 		"globals": "^16.5.0",
 		"prettier": "^3.7.4",
 		"prettier-plugin-svelte": "^3.4.1",
+		"pyright": "^1.1.407",
 		"svelte": "^5.46.0",
 		"svelte-check": "^4.3.4",
 		"tdd-guard-vitest": "^0.1.6",
@@ -33,10 +35,14 @@
 	"dependencies": {
 		"@auth/core": "^0.38.0",
 		"@auth/sveltekit": "^1.11.1",
+		"@iconify-json/simple-icons": "^1.2.63",
+		"@iconify/svelte": "^5.1.0",
 		"@leeoniya/ufuzzy": "^1.0.19",
 		"@types/marked": "^5.0.2",
 		"isomorphic-dompurify": "^2.34.0",
-		"marked": "^17.0.1"
+		"lucide-svelte": "^0.562.0",
+		"marked": "^17.0.1",
+		"svelte-typewrite": "^3.0.0"
 	},
 	"overrides": {
 		"cookie": "^1.0.2"
