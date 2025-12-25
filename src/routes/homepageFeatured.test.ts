@@ -28,8 +28,7 @@ describe('Homepage TUI structure', () => {
 			data: { session: null, isAdmin: false, userProfile: null, landing, error: null }
 		});
 
-		expect(screen.getByText('[ WAYBAR MANAGER ]')).toBeTruthy();
-		expect(screen.getByText('[ INSTALL ]')).toBeTruthy();
+		expect(screen.getByText('[ BARFORGE ]')).toBeTruthy();
 		expect(screen.getByText('[ FEATURES ]')).toBeTruthy();
 		expect(screen.getByText('[ DESKTOP APP ]')).toBeTruthy();
 		expect(screen.getByText('[ NAVIGATION ]')).toBeTruthy();
