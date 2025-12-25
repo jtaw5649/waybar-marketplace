@@ -10,7 +10,7 @@ describe('Toast', () => {
 	});
 
 	it('positions toast container with bottom offset above footer', async () => {
-		toast.add({ message: 'Test message', variant: 'success' });
+		toast.add('success', 'Test message');
 
 		const { container } = render(Toast);
 		const toastContainer = container.querySelector('.toast-container');
