@@ -1,5 +1,12 @@
 # barforge-web
 
+## [0.8.0](https://github.com/jtaw5649/barforge-web/compare/barforge-web-v0.7.0...barforge-web-v0.8.0) (2025-12-25)
+
+
+### Features
+
+* update OG image and README branding ([#41](https://github.com/jtaw5649/barforge-web/issues/41)) ([57f99e1](https://github.com/jtaw5649/barforge-web/commit/57f99e14540ade4d004a123cfbaa310e73a7a59e))
+
 ## [0.7.0](https://github.com/jtaw5649/barforge-web/compare/barforge-web-v0.6.0...barforge-web-v0.7.0) (2025-12-25)
 
 
