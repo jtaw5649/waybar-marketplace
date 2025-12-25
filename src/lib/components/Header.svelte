@@ -2,11 +2,14 @@
 	import { signOut } from '@auth/sveltekit/client';
 	import { page } from '$app/state';
 	import type { Session } from '@auth/sveltekit';
+	import { Sun, Moon, Monitor, Search, Menu, X } from 'lucide-svelte';
 	import { open } from '$lib/stores/commandPalette';
-	import ThemeToggle from './ThemeToggle.svelte';
+	import { fromStore } from 'svelte/store';
+	import { theme } from '$lib/stores/theme';
 	import Button from './Button.svelte';
 	import Avatar from './Avatar.svelte';
-	import StarsDropdown from './StarsDropdown.svelte';
+	import SearchInput from './SearchInput.svelte';
+	import AvatarDropdown from './AvatarDropdown.svelte';
 
 	interface Props {
 		session: Session | null;
@@ -15,6 +18,7 @@
 	let { session }: Props = $props();
 
 	let mobileMenuOpen = $state(false);
+	const themeState = fromStore(theme);
 
 	function toggleMobileMenu() {
 		mobileMenuOpen = !mobileMenuOpen;
@@ -34,10 +38,17 @@
 	);
 </script>
 
-<header>
-	<div class="header-content">
+<header class="site-header">
+	<div class="header-container">
 		<a href="/" class="logo" onclick={closeMobileMenu}>
-			<svg width="28" height="28" viewBox="8 8 112 112" fill="none" aria-hidden="true">
+			<svg
+				class="logo-mark"
+				width="32"
+				height="32"
+				viewBox="8 8 112 112"
+				fill="none"
+				aria-hidden="true"
+			>
 				<defs>
 					<linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
 						<stop offset="0%" stop-color="#617DFA" />
@@ -66,99 +77,80 @@
 					fill-opacity="0.5"
 				/>
 			</svg>
-			<span>Waybar Marketplace</span>
+			<span class="logo-text">
+				<span class="logo-title">Barforge</span>
+				<span class="logo-subtitle">MODULE REGISTRY</span>
+			</span>
 		</a>
 
-		<nav class="desktop-nav" aria-label="Main navigation">
-			<a href="/browse" class:active={page.url.pathname.startsWith('/browse')}>Browse</a>
+		<nav class="nav-links" aria-label="Main navigation">
+			<a href="/modules" class:active={page.url.pathname.startsWith('/modules')}>Modules</a>
 			{#if session?.user}
 				<a href="/dashboard" class:active={page.url.pathname === '/dashboard'}>Dashboard</a>
 			{/if}
 		</nav>
 
-		<div class="header-actions desktop-actions">
-			<ThemeToggle />
-			<StarsDropdown />
-			<button class="search-trigger" onclick={open} aria-label="Search">
-				<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
+		<div class="header-actions">
+			<div class="header-search">
+				<SearchInput size="sm" />
+			</div>
+			<button
+				class="theme-toggle"
+				onclick={theme.cycle}
+				aria-label="Toggle theme (currently {themeState.current})"
+				title="Theme: {themeState.current}"
+			>
+				{#key themeState.current}
+					<div class="icon-wrapper">
+						{#if themeState.current === 'light'}
+							<Sun size={18} />
+						{:else if themeState.current === 'dark'}
+							<Moon size={18} />
+						{:else}
+							<Monitor size={18} />
+						{/if}
+					</div>
+				{/key}
 			</button>
 			{#if session?.user}
-				<Button href="/upload" size="sm">Upload</Button>
-				<a href="/dashboard" class="user-link">
-					<Avatar src={session.user.image} name={session.user.name || 'U'} size="sm" />
-					<span class="user-name">{session.user.name}</span>
-				</a>
-				<Button variant="ghost" size="sm" onclick={() => signOut()}>Sign Out</Button>
+				<AvatarDropdown user={session.user} />
 			{:else}
-				<Button href={loginUrl} variant="primary" size="sm">Log In</Button>
+				<a href={loginUrl} class="header-btn header-btn-primary">Log In</a>
 			{/if}
 		</div>
 
-		<button
-			class="mobile-menu-toggle"
-			onclick={toggleMobileMenu}
-			aria-expanded={mobileMenuOpen}
-			aria-controls="mobile-menu"
-			aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-		>
-			{#if mobileMenuOpen}
-				<svg
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<line x1="18" y1="6" x2="6" y2="18" />
-					<line x1="6" y1="6" x2="18" y2="18" />
-				</svg>
-			{:else}
-				<svg
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<line x1="3" y1="6" x2="21" y2="6" />
-					<line x1="3" y1="12" x2="21" y2="12" />
-					<line x1="3" y1="18" x2="21" y2="18" />
-				</svg>
-			{/if}
-		</button>
+		<div class="mobile-controls">
+			<button class="mobile-search" onclick={open} aria-label="Open command palette">
+				<Search size={20} />
+			</button>
+			<button
+				class="mobile-menu-toggle"
+				onclick={toggleMobileMenu}
+				aria-expanded={mobileMenuOpen}
+				aria-controls="mobile-menu"
+				aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+			>
+				{#if mobileMenuOpen}
+					<X size={24} />
+				{:else}
+					<Menu size={24} />
+				{/if}
+			</button>
+		</div>
 	</div>
 
 	{#if mobileMenuOpen}
 		<div class="mobile-menu-backdrop" onclick={closeMobileMenu} aria-hidden="true"></div>
 		<nav id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation">
-			<a href="/browse" class="mobile-link" onclick={closeMobileMenu}>Browse</a>
-			<a href="/stars" class="mobile-link" onclick={closeMobileMenu}>
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					style="display: inline; vertical-align: -2px; margin-right: 6px;"
-				>
-					<path
-						d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-					/>
-				</svg>
-				Stars
-			</a>
+			<a href="/modules" class="mobile-link" onclick={closeMobileMenu}>Modules</a>
 			{#if session?.user}
 				<a href="/dashboard" class="mobile-link" onclick={closeMobileMenu}>Dashboard</a>
-				<a href="/upload" class="mobile-link" onclick={closeMobileMenu}>Upload Module</a>
 				<div class="mobile-divider"></div>
 				<div class="mobile-user">
 					<Avatar src={session.user.image} name={session.user.name || 'U'} size="sm" />
 					<span>{session.user.name}</span>
 				</div>
-				<button class="mobile-link mobile-button" onclick={handleSignOut}>Sign Out</button>
+				<button class="mobile-link mobile-button" onclick={handleSignOut}>Log Out</button>
 			{:else}
 				<div class="mobile-divider"></div>
 				<Button href={loginUrl} variant="primary" onclick={closeMobileMenu}>Log In</Button>
@@ -169,143 +161,229 @@
 
 <style>
 	header {
-		position: sticky;
+		position: fixed;
 		top: 0;
+		left: 0;
+		right: 0;
 		z-index: 100;
-		background-color: var(--color-bg-base);
+	}
+
+	.header-container {
+		display: flex;
+		align-items: center;
+		gap: var(--space-lg);
+		padding: var(--space-md) var(--space-xl);
+		background: var(--color-bg-surface);
 		border-bottom: 1px solid var(--color-border);
 	}
 
-	.header-content {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: var(--space-md) var(--space-2xl);
-		max-width: 1400px;
-		margin: 0 auto;
-	}
-
 	.logo {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		gap: var(--space-sm);
-		font-size: 1.25rem;
-		font-weight: 600;
-		color: var(--color-text-normal);
 		text-decoration: none;
+		color: var(--color-text-normal);
+		flex-shrink: 0;
+		transition: transform var(--duration-fast) var(--ease-out);
 	}
 
 	.logo:hover {
-		color: var(--color-primary);
+		transform: scale(1.02);
 	}
 
-	.logo svg {
+	.logo-mark {
 		color: var(--color-primary);
+		filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 	}
 
-	.desktop-nav {
+	.logo-text {
 		display: flex;
-		gap: var(--space-xl);
+		flex-direction: column;
+		line-height: 1;
 	}
 
-	.desktop-nav a {
+	.logo-title {
+		font-size: 1.05rem;
+		font-weight: 700;
+		letter-spacing: 0.01em;
+	}
+
+	.logo-subtitle {
+		margin-top: 4px;
+		font-size: 0.65rem;
+		text-transform: uppercase;
+		letter-spacing: 0.2em;
+		color: var(--color-text-faint);
+	}
+
+	.nav-links {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.nav-links a {
+		position: relative;
+		font-size: 0.875rem;
+		font-weight: 500;
 		color: var(--color-text-muted);
 		text-decoration: none;
-		font-size: 0.9rem;
-		font-weight: 500;
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
+		padding: var(--space-sm) var(--space-md);
+		border-radius: 9999px;
+		border: 1px solid transparent;
 		transition:
 			color var(--duration-fast) var(--ease-out),
-			background-color var(--duration-fast) var(--ease-out);
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out);
 	}
 
-	.desktop-nav a:hover {
+	.nav-links a:hover {
 		color: var(--color-text-normal);
-		background-color: var(--color-bg-surface);
+		background-color: var(--color-bg-elevated);
+		border-color: color-mix(in srgb, var(--color-border) 50%, transparent);
+		transform: translateY(-1px);
 	}
 
-	.desktop-nav a.active {
-		color: var(--color-text-normal);
-		background-color: var(--color-bg-surface);
+	.nav-links a.active {
+		color: var(--color-primary);
+		background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+		border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
 	}
 
 	.header-actions {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
-	}
-
-	.user-link {
-		display: flex;
-		align-items: center;
 		gap: var(--space-sm);
-		text-decoration: none;
-		color: inherit;
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		transition: background-color var(--duration-fast) var(--ease-out);
+		margin-left: auto;
+		flex-shrink: 0;
 	}
 
-	.user-link:hover {
-		background-color: var(--color-bg-surface);
-	}
-
-	.user-name {
-		color: var(--color-text-muted);
-		font-size: 0.875rem;
-	}
-
-	.search-trigger {
+	.theme-toggle {
 		display: flex;
 		align-items: center;
-		gap: 2px;
+		justify-content: center;
+		width: 38px;
+		height: 38px;
 		padding: 0;
-		background: none;
-		border: none;
-		border-radius: var(--radius-md);
-		cursor: pointer;
-	}
-
-	.search-trigger:hover kbd {
-		border-color: var(--color-text-faint);
+		background: var(--color-bg-elevated);
+		border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+		border-radius: 9999px;
 		color: var(--color-text-muted);
+		cursor: pointer;
+		transition:
+			transform var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out);
+		overflow: hidden;
 	}
 
-	.search-trigger:focus-visible {
+	.theme-toggle:hover {
+		transform: scale(1.05);
+		background-color: var(--color-bg-surface);
+		border-color: var(--color-border);
+		color: var(--color-text-normal);
+	}
+
+	.theme-toggle:active {
+		transform: scale(0.95);
+	}
+
+	.theme-toggle:focus-visible {
 		box-shadow: var(--focus-ring);
 	}
 
-	.search-trigger kbd {
+	.icon-wrapper {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		animation: rotateIn 0.2s var(--ease-out);
+	}
+
+	@keyframes rotateIn {
+		from {
+			transform: rotate(-90deg);
+			opacity: 0;
+		}
+		to {
+			transform: rotate(0deg);
+			opacity: 1;
+		}
+	}
+
+	.header-btn {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
-		height: 36px;
+		padding: var(--space-sm) var(--space-md);
+		border-radius: 9999px;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		text-decoration: none;
+		cursor: pointer;
+		border: 1px solid transparent;
+		transition:
+			transform var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out),
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out),
+			box-shadow var(--duration-fast) var(--ease-out);
+	}
+
+	.header-btn:hover {
+		transform: translateY(-1px);
+	}
+
+	.header-btn:active {
+		transform: scale(0.98);
+	}
+
+	.header-btn:focus-visible {
+		box-shadow: var(--focus-ring);
+	}
+
+	.header-btn-primary {
+		background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+		color: white;
+		border-color: transparent;
+		box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 30%, transparent);
+	}
+
+	.header-btn-primary:hover {
+		box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 40%, transparent);
+	}
+
+	.mobile-controls {
+		display: none;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.mobile-search,
+	.mobile-menu-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
 		padding: 0;
-		background-color: var(--color-bg-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		font-size: 1rem;
-		font-family: inherit;
-		color: var(--color-text-faint);
+		background: var(--color-bg-elevated);
+		border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+		border-radius: 999px;
+		color: var(--color-text-muted);
+		cursor: pointer;
 		transition:
 			border-color var(--duration-fast) var(--ease-out),
-			color var(--duration-fast) var(--ease-out);
+			color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out);
 	}
 
-	.mobile-menu-toggle {
-		display: none;
-		padding: var(--space-sm);
-		background: none;
-		border: none;
-		color: var(--color-text-normal);
-		cursor: pointer;
-		border-radius: var(--radius-sm);
-	}
-
+	.mobile-search:hover,
 	.mobile-menu-toggle:hover {
-		background-color: var(--color-bg-surface);
+		border-color: var(--color-primary);
+		color: var(--color-text-normal);
+		transform: scale(1.05);
 	}
 
 	.mobile-menu-backdrop {
@@ -316,40 +394,59 @@
 		display: none;
 	}
 
-	@media (max-width: 768px) {
-		.header-content {
+	@media (max-width: 1024px) {
+		.header-container {
 			padding: var(--space-md) var(--space-lg);
 		}
 
-		.desktop-nav,
-		.desktop-actions {
+		.logo-subtitle {
+			display: none;
+		}
+	}
+
+	@media (max-width: 768px) {
+		header {
+			top: 0;
+			left: 0;
+			right: 0;
+		}
+
+		.header-container {
+			padding: var(--space-sm) var(--space-md);
+		}
+
+		.nav-links,
+		.header-actions {
 			display: none;
 		}
 
-		.mobile-menu-toggle {
-			display: block;
+		.mobile-controls {
+			display: flex;
+			margin-left: auto;
 		}
 
 		.mobile-menu-backdrop {
 			display: block;
 			position: fixed;
 			inset: 0;
-			top: 57px;
-			background-color: rgba(0, 0, 0, 0.5);
-			z-index: 99;
+			background: rgba(0, 0, 0, 0.6);
+			backdrop-filter: blur(4px);
+			z-index: 90;
 		}
 
 		.mobile-menu {
 			display: flex;
 			flex-direction: column;
 			position: absolute;
-			top: 100%;
+			top: calc(100% + 0.5rem);
 			left: 0;
 			right: 0;
-			background-color: var(--color-bg-base);
-			border-bottom: 1px solid var(--color-border);
+			background: var(--color-bg-surface);
+			border: 1px solid var(--color-border);
+			border-radius: 0.75rem;
 			padding: var(--space-md);
-			z-index: 100;
+			z-index: 101;
+			box-shadow: var(--shadow-lg);
 			animation: slideDown 0.2s ease-out;
 		}
 
@@ -374,7 +471,7 @@
 		}
 
 		.mobile-link:hover {
-			background-color: var(--color-bg-surface);
+			background: var(--color-bg-elevated);
 		}
 
 		.mobile-button {
@@ -388,7 +485,7 @@
 
 		.mobile-divider {
 			height: 1px;
-			background-color: var(--color-border);
+			background: var(--color-border);
 			margin: var(--space-md) 0;
 		}
 
@@ -399,6 +496,26 @@
 			padding: var(--space-md) var(--space-lg);
 			color: var(--color-text-muted);
 			font-size: 0.9rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.icon-wrapper {
+			animation: none;
+		}
+
+		.theme-toggle:hover,
+		.theme-toggle:active {
+			transform: none;
+		}
+
+		.logo:hover,
+		.nav-links a:hover,
+		.header-btn:hover,
+		.header-btn:active,
+		.mobile-search:hover,
+		.mobile-menu-toggle:hover {
+			transform: none;
 		}
 	}
 </style>

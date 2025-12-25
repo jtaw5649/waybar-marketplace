@@ -1,45 +1,17 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { registerSearchInput, unregisterSearchInput } from '$lib/stores/search';
+	import { open as openCommandPalette } from '$lib/stores/commandPalette';
+	import { platform, getModifierKey } from '$lib/stores/theme';
+	import { TypeWriter } from 'svelte-typewrite';
+	import { Search } from 'lucide-svelte';
+	import { fromStore } from 'svelte/store';
+	import Kbd from './Kbd.svelte';
+	import KbdGroup from './KbdGroup.svelte';
 
 	interface Props {
-		value?: string;
-		placeholder?: string;
 		size?: 'sm' | 'md' | 'lg';
-		autofocus?: boolean;
-		debounce?: number;
-		onsubmit?: (query: string) => void;
-		oninput?: (query: string) => void;
 	}
 
-	let {
-		value = $bindable(''),
-		placeholder = 'Search modules...',
-		size = 'md',
-		autofocus = false,
-		debounce = 0,
-		onsubmit,
-		oninput
-	}: Props = $props();
-
-	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-	function handleInput() {
-		if (!oninput) return;
-
-		if (debounceTimer) {
-			clearTimeout(debounceTimer);
-		}
-
-		if (debounce > 0) {
-			debounceTimer = setTimeout(() => {
-				oninput(value);
-			}, debounce);
-		} else {
-			oninput(value);
-		}
-	}
+	let { size = 'md' }: Props = $props();
 
 	const placeholders = [
 		'Search modules...',
@@ -49,214 +21,124 @@
 		'Browse media controls...'
 	];
 
-	let displayPlaceholder = $state('');
-	let placeholderIndex = $state(0);
-	let charIndex = $state(0);
-	let isDeleting = $state(false);
-	let isFocused = $state(false);
-	let inputRef: HTMLInputElement | null = $state(null);
+	const platformState = fromStore(platform);
+	const modifierKey = $derived(getModifierKey(platformState.current));
 
-	onMount(() => {
-		displayPlaceholder = placeholder;
-		registerSearchInput(() => inputRef?.focus());
+	const prefersReducedMotion =
+		typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-		if (autofocus && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-			inputRef?.focus();
-		}
-
-		return () => {
-			unregisterSearchInput();
-			if (debounceTimer) clearTimeout(debounceTimer);
-		};
-	});
-
-	$effect(() => {
-		if (isFocused || value) return;
-
-		const typeSpeed = isDeleting ? 30 : 80;
-		const pauseTime =
-			isDeleting && charIndex === 0
-				? 500
-				: isDeleting
-					? 0
-					: charIndex === placeholders[placeholderIndex].length
-						? 2000
-						: 0;
-
-		const timeout = setTimeout(() => {
-			if (!isDeleting && charIndex === placeholders[placeholderIndex].length) {
-				isDeleting = true;
-			} else if (isDeleting && charIndex === 0) {
-				isDeleting = false;
-				placeholderIndex = (placeholderIndex + 1) % placeholders.length;
-			} else {
-				charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
-				displayPlaceholder = placeholders[placeholderIndex].slice(0, charIndex);
-			}
-		}, pauseTime || typeSpeed);
-
-		return () => clearTimeout(timeout);
-	});
-
-	function handleSubmit(e: Event) {
-		e.preventDefault();
-		if (onsubmit) {
-			onsubmit(value);
-		} else if (value.trim()) {
-			goto(`/browse?q=${encodeURIComponent(value.trim())}`);
-		}
-	}
-
-	function handleFocus() {
-		isFocused = true;
-		displayPlaceholder = placeholders[0];
-	}
-
-	function handleBlur() {
-		isFocused = false;
-	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			(e.target as HTMLInputElement).blur();
-		}
+	function handleClick() {
+		openCommandPalette();
 	}
 </script>
 
-<form class="search-form search-{size}" onsubmit={handleSubmit}>
+<button
+	type="button"
+	class="search-trigger search-{size}"
+	onclick={handleClick}
+	aria-label="Open search"
+>
 	<div class="search-icon" aria-hidden="true">
-		<svg
-			width="18"
-			height="18"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-		>
-			<circle cx="11" cy="11" r="8" />
-			<line x1="21" y1="21" x2="16.65" y2="16.65" />
-		</svg>
+		<Search size={18} />
 	</div>
-	<input
-		type="search"
-		bind:this={inputRef}
-		bind:value
-		placeholder={displayPlaceholder}
-		class="search-input"
-		onfocus={handleFocus}
-		onblur={handleBlur}
-		onkeydown={handleKeydown}
-		oninput={handleInput}
-		aria-label="Search modules"
-	/>
-	<div id="search-shortcut-hint" class="search-shortcut" aria-hidden="true">
-		<kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd>
+	<span class="search-placeholder" aria-hidden="true">
+		{#if prefersReducedMotion}
+			{placeholders[0]}
+		{:else}
+			<TypeWriter
+				texts={placeholders}
+				typeSpeed={70}
+				deleteSpeed={35}
+				afterTyped={{ wait: 1800 }}
+				afterDeleted={{ wait: 150 }}
+				repeat={0}
+			/>
+		{/if}
+	</span>
+	<div class="search-shortcut" aria-hidden="true">
+		<KbdGroup>
+			<Kbd>{modifierKey}</Kbd>
+			<Kbd>⇧</Kbd>
+			<Kbd>K</Kbd>
+		</KbdGroup>
 	</div>
-</form>
+</button>
 
 <style>
-	.search-form {
-		position: relative;
+	.search-trigger {
 		display: flex;
 		align-items: center;
+		gap: var(--space-sm);
 		width: 100%;
-		max-width: 480px;
-	}
-
-	.search-icon {
-		position: absolute;
-		left: var(--space-md);
-		color: var(--color-text-faint);
-		pointer-events: none;
-		display: flex;
-		align-items: center;
-	}
-
-	.search-input {
-		width: 100%;
+		min-width: 300px;
+		max-width: 350px;
+		padding: var(--space-md) var(--space-lg);
 		background-color: var(--color-bg-surface);
 		border: 1px solid var(--color-border);
 		border-radius: 9999px;
-		color: var(--color-text-normal);
+		color: var(--color-text-faint);
 		font-size: 0.9rem;
+		cursor: pointer;
 		transition:
 			border-color var(--duration-fast) var(--ease-out),
-			box-shadow var(--duration-fast) var(--ease-out),
 			background-color var(--duration-fast) var(--ease-out);
 	}
 
-	.search-input::placeholder {
-		color: var(--color-text-faint);
-	}
-
-	.search-input:focus {
-		outline: none;
+	.search-trigger:hover {
 		border-color: var(--color-primary);
-		box-shadow: var(--focus-ring);
-		background-color: var(--color-bg-base);
+		background-color: var(--color-bg-surface);
 	}
 
-	.search-input::-webkit-search-cancel-button {
-		-webkit-appearance: none;
+	.search-trigger:focus {
+		outline: none;
+	}
+
+	.search-trigger:focus-visible {
+		border-color: var(--color-primary);
+	}
+
+	.search-icon {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.search-placeholder {
+		flex: 1;
+		text-align: left;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		contain: content;
+		will-change: contents;
+	}
+
+	.search-placeholder :global(span > span) {
+		display: none;
 	}
 
 	.search-shortcut {
-		position: absolute;
-		right: var(--space-md);
 		display: flex;
-		gap: 2px;
-		pointer-events: none;
-	}
-
-	.search-shortcut kbd {
-		display: inline-flex;
 		align-items: center;
-		justify-content: center;
-		min-width: 22px;
-		height: 22px;
-		padding: 0 var(--space-xs);
-		background-color: var(--color-bg-elevated);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		font-size: 0.7rem;
-		font-family: inherit;
-		color: var(--color-text-faint);
+		flex-shrink: 0;
 	}
 
-	.search-sm .search-input {
-		padding: var(--space-sm) var(--space-lg);
-		padding-left: 38px;
-		padding-right: 60px;
+	.search-sm {
+		padding: var(--space-sm) var(--space-md);
 		font-size: 0.85rem;
 	}
 
-	.search-sm .search-icon {
-		left: var(--space-sm);
-	}
-
-	.search-sm .search-icon svg {
+	.search-sm .search-icon :global(svg) {
 		width: 16px;
 		height: 16px;
 	}
 
-	.search-md .search-input {
-		padding: var(--space-md) var(--space-xl);
-		padding-left: 44px;
-		padding-right: 70px;
-	}
-
-	.search-lg .search-input {
+	.search-lg {
 		padding: var(--space-lg) var(--space-xl);
-		padding-left: 48px;
-		padding-right: 80px;
 		font-size: 1rem;
 	}
 
-	.search-lg .search-icon {
-		left: var(--space-lg);
-	}
-
-	.search-lg .search-icon svg {
+	.search-lg .search-icon :global(svg) {
 		width: 20px;
 		height: 20px;
 	}
@@ -264,10 +146,6 @@
 	@media (max-width: 768px) {
 		.search-shortcut {
 			display: none;
-		}
-
-		.search-input {
-			padding-right: var(--space-lg) !important;
 		}
 	}
 </style>
