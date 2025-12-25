@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
+import type { Module } from '$lib/types';
 
 const baseData = {
 	session: {
@@ -8,25 +9,26 @@ const baseData = {
 			login: 'testuser',
 			name: 'Test User',
 			image: 'https://example.com/avatar.jpg'
-		}
+		},
+		expires: '2099-12-31T23:59:59.999Z'
 	},
 	isAdmin: false,
 	userProfile: null,
 	profile: null,
-	modules: []
+	modules: [] as Module[]
 };
 
 describe('Security settings page', () => {
 	it('renders security heading', async () => {
 		const { default: Page } = await import('./+page.svelte');
-		render(Page, { data: baseData });
+		render(Page, { data: baseData, form: null });
 
 		expect(screen.getByRole('heading', { name: /security/i })).toBeTruthy();
 	}, 15000);
 
 	it('shows export data section outside danger zone', async () => {
 		const { default: Page } = await import('./+page.svelte');
-		const { container } = render(Page, { data: baseData });
+		const { container } = render(Page, { data: baseData, form: null });
 
 		const dangerZone = container.querySelector('.danger-zone');
 		const exportSection = container.querySelector('.data-export-section');
@@ -37,7 +39,7 @@ describe('Security settings page', () => {
 
 	it('shows delete account in danger zone', async () => {
 		const { default: Page } = await import('./+page.svelte');
-		const { container } = render(Page, { data: baseData });
+		const { container } = render(Page, { data: baseData, form: null });
 
 		const dangerZone = container.querySelector('.danger-zone');
 		expect(dangerZone).toBeTruthy();
@@ -46,7 +48,7 @@ describe('Security settings page', () => {
 
 	it('shows disconnect option for connected accounts', async () => {
 		const { default: Page } = await import('./+page.svelte');
-		render(Page, { data: baseData });
+		render(Page, { data: baseData, form: null });
 
 		expect(screen.getByRole('button', { name: /log out/i })).toBeTruthy();
 	});
