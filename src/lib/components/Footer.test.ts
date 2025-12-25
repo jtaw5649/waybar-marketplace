@@ -9,7 +9,9 @@ describe('Footer', () => {
 
 		const navLinks = screen.getAllByRole('link');
 		const githubTextLink = navLinks.find(
-			(link) => link.textContent === 'GitHub' && link.getAttribute('href')?.includes('github.com')
+			(link) =>
+				link.textContent === 'GitHub' &&
+				link.getAttribute('href')?.startsWith('https://github.com/')
 		);
 		expect(githubTextLink).toBeUndefined();
 	});
