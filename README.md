@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Web frontend for Barforge, the Waybar modules marketplace.</b>
+  <b>Barforge Hub — Browse and discover Waybar modules</b>
 </p>
 
 <p align="center">
@@ -81,10 +81,6 @@ wrangler pages deploy .svelte-kit/cloudflare
 
 ## Related
 
-| Project                                                  | Description                                     |
-| -------------------------------------------------------- | ----------------------------------------------- |
-| [barforge-app](https://github.com/jtaw5649/barforge-app) | Desktop application for managing Waybar modules |
-
-## License
-
-GPL-3.0 — See [LICENSE](LICENSE) for details.
+| Project                                                  | Description                                         |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| [barforge-app](https://github.com/jtaw5649/barforge-app) | Barforge App — Install and configure Waybar modules |
