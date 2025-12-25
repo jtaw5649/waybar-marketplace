@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	import CharacterCounter from '$lib/components/CharacterCounter.svelte';
+	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import ProfileCompleteness from '$lib/components/ProfileCompleteness.svelte';
 	import ProfilePreviewCard from '$lib/components/ProfilePreviewCard.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
@@ -18,6 +19,8 @@
 	let websiteUrl = $state('');
 	let githubUrl = $state('');
 	let twitterUrl = $state('');
+	let blueskyUrl = $state('');
+	let discordUrl = $state('');
 	let sponsorUrl = $state('');
 	let saving = $state(false);
 	let activeSection: 'profile' | 'social' | 'featured' = $state('profile');
@@ -34,6 +37,8 @@
 
 	let githubValid = $derived(validateSocialUrl('github', githubUrl));
 	let twitterValid = $derived(validateSocialUrl('twitter', twitterUrl));
+	let blueskyValid = $derived(validateSocialUrl('bluesky', blueskyUrl));
+	let discordValid = $derived(validateSocialUrl('discord', discordUrl));
 
 	let previewDisplayName = $derived(
 		getDisplayName(
@@ -56,11 +61,16 @@
 		displayName = data.profile?.display_name || '';
 		bio = data.profile?.bio || '';
 		websiteUrl = data.profile?.website_url || '';
+		githubUrl = data.profile?.github_url || '';
+		twitterUrl = data.profile?.twitter_url || '';
+		blueskyUrl = data.profile?.bluesky_url || '';
+		discordUrl = data.profile?.discord_url || '';
+		sponsorUrl = data.profile?.sponsor_url || '';
 	});
 </script>
 
 <svelte:head>
-	<title>Profile Settings - Waybar Marketplace</title>
+	<title>Profile Settings - Barforge</title>
 </svelte:head>
 
 <div class="settings-header">
@@ -181,15 +191,14 @@
 					<label for="bio">Bio</label>
 					<CharacterCounter current={bio.length} max={500} />
 				</div>
-				<textarea
+				<MarkdownEditor
 					id="bio"
 					name="bio"
 					bind:value={bio}
 					placeholder="Tell us about yourself..."
-					rows="3"
-					maxlength="500"
-					aria-describedby="bio-help"
-				></textarea>
+					rows={3}
+					maxlength={500}
+				/>
 				<p id="bio-help" class="help-text">A short bio to display on your profile page.</p>
 			</div>
 		</fieldset>
@@ -249,6 +258,48 @@
 						<span class="error-text">Enter a valid Twitter/X profile URL</span>
 					{:else}
 						Your Twitter or X profile.
+					{/if}
+				</p>
+			</div>
+
+			<div class="form-group">
+				<label for="blueskyUrl">Bluesky</label>
+				<input
+					type="url"
+					id="blueskyUrl"
+					name="bluesky_url"
+					bind:value={blueskyUrl}
+					placeholder="https://bsky.app/profile/username.bsky.social"
+					aria-describedby="blueskyUrl-help"
+					aria-invalid={Boolean(blueskyUrl) && !blueskyValid}
+					class:input-error={blueskyUrl && !blueskyValid}
+				/>
+				<p id="blueskyUrl-help" class="help-text">
+					{#if blueskyUrl && !blueskyValid}
+						<span class="error-text">Enter a valid Bluesky profile URL</span>
+					{:else}
+						Your Bluesky profile.
+					{/if}
+				</p>
+			</div>
+
+			<div class="form-group">
+				<label for="discordUrl">Discord</label>
+				<input
+					type="url"
+					id="discordUrl"
+					name="discord_url"
+					bind:value={discordUrl}
+					placeholder="https://discord.gg/invite-code"
+					aria-describedby="discordUrl-help"
+					aria-invalid={Boolean(discordUrl) && !discordValid}
+					class:input-error={discordUrl && !discordValid}
+				/>
+				<p id="discordUrl-help" class="help-text">
+					{#if discordUrl && !discordValid}
+						<span class="error-text">Enter a valid Discord invite URL</span>
+					{:else}
+						Your Discord server invite link.
 					{/if}
 				</p>
 			</div>
@@ -478,8 +529,7 @@
 	}
 
 	input[type='text'],
-	input[type='url'],
-	textarea {
+	input[type='url'] {
 		width: 100%;
 		padding: var(--space-sm) var(--space-md);
 		background-color: var(--color-bg-base);
@@ -492,8 +542,7 @@
 			box-shadow var(--duration-fast) var(--ease-out);
 	}
 
-	input:focus,
-	textarea:focus {
+	input:focus {
 		outline: none;
 		border-color: var(--color-primary);
 		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
@@ -557,21 +606,6 @@
 	.btn:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
-	}
-
-	.spinner {
-		width: 14px;
-		height: 14px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	.featured-section {

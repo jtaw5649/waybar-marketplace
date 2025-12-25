@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { load, actions } from './+page.server';
+import type { actions, load } from './+page.server';
+
+vi.mock('$lib/server/token', () => ({
+	getServerToken: vi.fn(),
+	resolveAccessToken: vi.fn()
+}));
 
 type LoadEvent = Parameters<typeof load>[0];
 type ActionEvent = Parameters<typeof actions.addToCollection>[0];
@@ -8,6 +13,7 @@ type UploadEvent = Parameters<typeof actions.uploadScreenshot>[0];
 describe('module page server', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
+		vi.resetModules();
 	});
 
 	afterEach(() => {
@@ -16,6 +22,9 @@ describe('module page server', () => {
 	});
 
 	it('uses Authorization header for collections fetch', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { load } = await import('./+page.server');
 		const moduleData = {
 			uuid: 'module@test',
 			name: 'Test',
@@ -29,12 +38,11 @@ describe('module page server', () => {
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue({
-					user: { login: 'Test' },
-					accessToken: 'token'
+					user: { login: 'Test' }
 				})
 			},
 			params: { uuid: 'module@test' },
-			cookies: { get: vi.fn().mockReturnValue(null) },
+			cookies: {},
 			fetch: vi.fn().mockResolvedValue({
 				ok: true,
 				json: async () => ({ data: moduleData })
@@ -50,22 +58,25 @@ describe('module page server', () => {
 		await load(event);
 
 		expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/v1/collections'), {
-			headers: { Authorization: 'Bearer token' }
+			headers: { Accept: 'application/json', Authorization: 'Bearer token' }
 		});
 	});
 
 	it('uses Authorization header for addToCollection', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { actions } = await import('./+page.server');
 		const formData = new FormData();
 		formData.set('collection_id', '1');
 
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue({
-					user: { login: 'test' },
-					accessToken: 'token'
+					user: { login: 'test' }
 				})
 			},
 			params: { uuid: 'module@test' },
+			cookies: {},
 			request: { formData: vi.fn().mockResolvedValue(formData) }
 		} as unknown as ActionEvent;
 
@@ -78,12 +89,18 @@ describe('module page server', () => {
 			expect.stringContaining('/api/v1/collections/1/modules'),
 			expect.objectContaining({
 				method: 'POST',
-				headers: expect.objectContaining({ Authorization: 'Bearer token' })
+				headers: expect.objectContaining({
+					Accept: 'application/json',
+					Authorization: 'Bearer token'
+				})
 			})
 		);
 	});
 
 	it('returns unauthorized when access token is missing for addToCollection', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue(null);
+		const { actions } = await import('./+page.server');
 		const formData = new FormData();
 		formData.set('collection_id', '1');
 
@@ -92,6 +109,7 @@ describe('module page server', () => {
 				auth: vi.fn().mockResolvedValue({ user: { login: 'test' } })
 			},
 			params: { uuid: 'module@test' },
+			cookies: {},
 			request: { formData: vi.fn().mockResolvedValue(formData) }
 		} as unknown as ActionEvent;
 
@@ -101,6 +119,9 @@ describe('module page server', () => {
 	});
 
 	it('allows screenshot uploads up to 10mb', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { actions } = await import('./+page.server');
 		const file = {
 			size: 3 * 1024 * 1024,
 			type: 'image/png',
@@ -118,11 +139,11 @@ describe('module page server', () => {
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue({
-					user: { login: 'test' },
-					accessToken: 'token'
+					user: { login: 'test' }
 				})
 			},
 			params: { uuid: 'module@test' },
+			cookies: {},
 			request: { formData: vi.fn().mockResolvedValue(formData) }
 		} as unknown as UploadEvent;
 
@@ -136,6 +157,9 @@ describe('module page server', () => {
 	});
 
 	it('uploads screenshot bytes with content-type and alt text query', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { actions } = await import('./+page.server');
 		const file = {
 			size: 3,
 			type: 'image/png',
@@ -153,11 +177,11 @@ describe('module page server', () => {
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue({
-					user: { login: 'test' },
-					accessToken: 'token'
+					user: { login: 'test' }
 				})
 			},
 			params: { uuid: 'module@test' },
+			cookies: {},
 			request: { formData: vi.fn().mockResolvedValue(formData) }
 		} as unknown as UploadEvent;
 
@@ -167,10 +191,11 @@ describe('module page server', () => {
 		await actions.uploadScreenshot(event);
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			expect.stringContaining('/api/v1/modules/module%40test/screenshots'),
+			expect.stringContaining('/api/v1/modules/module@test/screenshots'),
 			expect.objectContaining({
 				method: 'POST',
 				headers: expect.objectContaining({
+					Accept: 'application/json',
 					Authorization: 'Bearer token',
 					'Content-Type': 'image/png'
 				})
@@ -184,7 +209,48 @@ describe('module page server', () => {
 		expect(options.body).toBeInstanceOf(Uint8Array);
 	});
 
+	it('does not expose accessToken in returned session', async () => {
+		const { load } = await import('./+page.server');
+		const moduleData = {
+			uuid: 'module@test',
+			name: 'Test',
+			description: 'Test',
+			category: 'system',
+			author: 'test',
+			downloads: 0,
+			verified_author: false
+		};
+
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({
+					user: { login: 'Test' },
+					accessToken: 'secret-token-should-not-leak'
+				})
+			},
+			params: { uuid: 'module@test' },
+			cookies: { get: vi.fn().mockReturnValue(null) },
+			fetch: vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ data: moduleData })
+			})
+		} as unknown as LoadEvent;
+
+		const fetchMock = vi.mocked(fetch);
+		fetchMock.mockResolvedValue({
+			ok: true,
+			json: async () => ({ collections: [] })
+		} as Response);
+
+		const result = await load(event);
+		if (!result) throw new Error('expected result');
+
+		expect(result.session).toBeDefined();
+		expect(result.session).not.toHaveProperty('accessToken');
+	});
+
 	it('fetches related modules from api', async () => {
+		const { load } = await import('./+page.server');
 		const moduleData = {
 			uuid: 'module@test',
 			name: 'Test',
@@ -213,7 +279,7 @@ describe('module page server', () => {
 		await load(event);
 
 		expect(event.fetch).toHaveBeenCalledWith(
-			expect.stringContaining('/api/v1/modules/module%40test/related')
+			expect.stringContaining('/api/v1/modules/module@test/related')
 		);
 	});
 });

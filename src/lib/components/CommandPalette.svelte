@@ -1,20 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { fade, scale } from 'svelte/transition';
-	import {
-		isOpen,
-		mode,
-		query,
-		modules,
-		close,
-		setMode,
-		setQuery,
-		setModules
-	} from '$lib/stores/commandPalette';
-	import { toast } from '$lib/stores/toast.svelte';
+	import { isOpen, mode, query, close, setMode, setQuery } from '$lib/stores/commandPalette';
 	import { fuzzySearch } from '$lib/utils/fuzzySearch';
-	import { API_BASE_URL } from '$lib';
-	import type { PaletteMode, PaletteItem, Module } from '$lib/types';
+
+	import type { PaletteMode, PaletteItem } from '$lib/types';
+	import type { Session } from '@auth/sveltekit';
+
+	interface Props {
+		session?: Session | null;
+		isAdmin?: boolean;
+	}
+
+	let { session = null, isAdmin = false }: Props = $props();
 
 	interface PaletteResult {
 		item: PaletteItem;
@@ -22,7 +20,15 @@
 		highlights: Record<string, string>;
 	}
 
-	const pages: PaletteItem[] = [
+	const isAuthenticated = $derived(!!session?.user);
+
+	interface PageItemWithAuth extends PaletteItem {
+		requiresAuth?: boolean;
+		requiresAdmin?: boolean;
+		hideWhenAuth?: boolean;
+	}
+
+	const allPages: PageItemWithAuth[] = [
 		{
 			id: 'home',
 			name: 'Home',
@@ -32,20 +38,20 @@
 			icon: 'home'
 		},
 		{
-			id: 'browse',
-			name: 'Browse Modules',
-			description: 'Explore all modules',
+			id: 'get-started',
+			name: 'Get Started',
+			description: 'Install Barforge',
 			type: 'page',
-			path: '/browse',
-			icon: 'grid'
+			path: 'https://github.com/jtaw5649/barforge-app',
+			icon: 'download'
 		},
 		{
-			id: 'upload',
-			name: 'Upload Module',
-			description: 'Submit a new module',
+			id: 'docs',
+			name: 'Waybar Docs',
+			description: 'Read the official Waybar docs',
 			type: 'page',
-			path: '/upload',
-			icon: 'upload'
+			path: 'https://github.com/Alexays/Waybar',
+			icon: 'external'
 		},
 		{
 			id: 'dashboard',
@@ -53,7 +59,8 @@
 			description: 'Your personal dashboard',
 			type: 'page',
 			path: '/dashboard',
-			icon: 'dashboard'
+			icon: 'dashboard',
+			requiresAuth: true
 		},
 		{
 			id: 'admin',
@@ -61,7 +68,9 @@
 			description: 'Administration settings',
 			type: 'page',
 			path: '/admin',
-			icon: 'settings'
+			icon: 'settings',
+			requiresAuth: true,
+			requiresAdmin: true
 		},
 		{
 			id: 'login',
@@ -69,9 +78,19 @@
 			description: 'Log in to your account',
 			type: 'page',
 			path: '/login',
-			icon: 'login'
+			icon: 'login',
+			hideWhenAuth: true
 		}
 	];
+
+	const pages = $derived(
+		allPages.filter((page) => {
+			if (page.hideWhenAuth && isAuthenticated) return false;
+			if (page.requiresAuth && !isAuthenticated) return false;
+			if (page.requiresAdmin && !isAdmin) return false;
+			return true;
+		}) as PaletteItem[]
+	);
 
 	const commands: PaletteItem[] = [
 		{
@@ -104,24 +123,10 @@
 		[key: string]: unknown;
 	}
 
-	const moduleItems = $derived(
-		$modules.map(
-			(m: Module): PaletteItem => ({
-				id: m.uuid,
-				name: m.name,
-				description: m.description,
-				type: 'module' as const,
-				path: `/modules/${m.uuid}`,
-				icon: 'module'
-			})
-		)
-	);
-
-	const allItems = $derived([...moduleItems, ...pages, ...commands] as PaletteItem[]);
+	const allItems = $derived([...pages, ...commands] as PaletteItem[]);
 
 	const filteredByMode = $derived.by(() => {
 		if ($mode === 'all') return allItems;
-		if ($mode === 'modules') return moduleItems;
 		if ($mode === 'pages') return pages;
 		return commands;
 	});
@@ -151,16 +156,7 @@
 	});
 
 	async function fetchModules() {
-		if ($modules.length > 0) return;
-		try {
-			const res = await fetch(`${API_BASE_URL}/api/v1/index`);
-			if (res.ok) {
-				const data = await res.json();
-				setModules(data.modules || []);
-			}
-		} catch {
-			toast.error('Failed to load modules for search');
-		}
+		return;
 	}
 
 	function trapFocus(e: KeyboardEvent) {
@@ -214,7 +210,7 @@
 		if (e.key === 'Tab') {
 			if (e.altKey) {
 				e.preventDefault();
-				const modes: PaletteMode[] = ['all', 'modules', 'pages', 'commands'];
+				const modes: PaletteMode[] = ['all', 'pages', 'commands'];
 				const currentIdx = modes.indexOf($mode);
 				const nextIdx = e.shiftKey
 					? (currentIdx - 1 + modes.length) % modes.length
@@ -257,10 +253,9 @@
 				'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1',
 			copy: 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z',
 			refresh:
-				'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
-			module: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
+				'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
 		};
-		return icons[icon || 'module'] || icons.module;
+		return icons[icon || 'grid'] || icons.grid;
 	}
 
 	function getTypeLabel(type: string) {
@@ -305,10 +300,10 @@
 						type="text"
 						value={$query}
 						oninput={(e) => setQuery(e.currentTarget.value)}
-						placeholder="Search modules, pages, commands..."
+						placeholder="Find pages and commands..."
 						class="search-input"
 						role="combobox"
-						aria-label="Search modules, pages, and commands"
+						aria-label="Find pages and commands"
 						aria-haspopup="listbox"
 						aria-expanded={results.length > 0}
 						aria-controls="palette-results"
@@ -319,7 +314,7 @@
 					/>
 				</div>
 				<div class="mode-chips">
-					{#each ['all', 'modules', 'pages', 'commands'] as m (m)}
+					{#each ['all', 'pages', 'commands'] as m (m)}
 						<button
 							class="chip"
 							class:active={$mode === m}
@@ -331,7 +326,7 @@
 				</div>
 			</div>
 
-			<div class="palette-results" role="listbox" id="palette-results" aria-label="Search results">
+			<div class="palette-results" role="listbox" id="palette-results" aria-label="Results">
 				{#if results.length === 0}
 					<div class="no-results" role="status">
 						<span class="no-results-text">No results found</span>
@@ -446,10 +441,12 @@
 		padding: var(--space-md) var(--space-lg);
 		padding-left: 48px;
 		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border);
+		border: none;
 		border-radius: var(--radius-md);
 		color: var(--color-text-normal);
 		font-size: 1rem;
+		box-shadow: inset 0 0 0 1px var(--color-border);
+		transition: box-shadow var(--duration-fast) var(--ease-out);
 	}
 
 	.search-input::placeholder {
@@ -458,7 +455,9 @@
 
 	.search-input:focus {
 		outline: none;
-		border-color: var(--color-text-faint);
+		box-shadow:
+			inset 0 0 0 1px var(--color-primary),
+			0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 	}
 
 	.mode-chips {

@@ -17,7 +17,7 @@ describe('calculateProfileCompleteness', () => {
 		it('returns 100% for fully complete profile', () => {
 			const profile: ProfileData = {
 				display_name: 'John Doe',
-				bio: 'A developer who loves Waybar',
+				bio: 'A developer who loves Barforge',
 				website_url: 'https://example.com',
 				avatar_url: 'https://github.com/user.png'
 			};

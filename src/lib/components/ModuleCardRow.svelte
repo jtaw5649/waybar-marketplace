@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import { CheckCircle, Download, Star } from 'lucide-svelte';
+	import AuthorLink from './AuthorLink.svelte';
 	import Tag from './Tag.svelte';
 	import StarFavorite from './StarFavorite.svelte';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
 	import { useModuleCard } from '$lib/hooks/useModuleCard.svelte';
+	import { encodeModuleUuid } from '$lib/utils/url';
 
 	interface Props {
 		uuid: string;
@@ -40,13 +43,15 @@
 </script>
 
 <div class="row-wrapper" in:fly={{ y: 10, duration: 200, delay }}>
-	<a href="/modules/{encodeURIComponent(uuid)}" class="row" style="--row-color: {categoryColor}">
+	<a href="/modules/{encodeModuleUuid(uuid)}" class="row" style="--row-color: {categoryColor}">
 		<div class="row-icon">
-			{#if icon}
-				<img src={icon} alt="" />
-			{:else}
-				<span class="icon-placeholder">{name.charAt(0).toUpperCase()}</span>
-			{/if}
+			<div class="row-icon-frame">
+				{#if icon}
+					<img class="row-icon-image" src={icon} alt="" />
+				{:else}
+					<span class="row-icon-initial">{name.charAt(0).toUpperCase()}</span>
+				{/if}
+			</div>
 		</div>
 
 		<div class="row-main">
@@ -59,29 +64,17 @@
 					<span class="new-badge">New</span>
 				{/if}
 				{#if verified}
-					<svg
-						class="verified-icon"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						aria-label="Verified author"
-					>
-						<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-						<polyline points="22 4 12 14.01 9 11.01" />
-					</svg>
+					<span class="verified-icon" aria-label="Verified author">
+						<CheckCircle size={14} />
+					</span>
 				{/if}
 				{#if isStarred}
-					<span class="starred-badge">
-						<svg viewBox="0 0 24 24" fill="currentColor" aria-label="Starred">
-							<path
-								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-							/>
-						</svg>
+					<span class="starred-badge" aria-label="Starred">
+						<Star size={14} />
 					</span>
 				{/if}
 			</div>
-			<p class="row-author">by {author}</p>
+			<p class="row-author">by <AuthorLink username={author} /></p>
 		</div>
 
 		<div class="row-category">
@@ -89,11 +82,7 @@
 		</div>
 
 		<div class="row-downloads">
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-				<polyline points="7 10 12 15 17 10" />
-				<line x1="12" y1="15" x2="12" y2="3" />
-			</svg>
+			<Download size={14} />
 			{formatDownloads(downloads)}
 		</div>
 	</a>
@@ -125,7 +114,7 @@
 	}
 
 	.row:hover {
-		border-color: var(--row-color);
+		border-color: color-mix(in srgb, var(--row-color) 45%, var(--color-border));
 		box-shadow: var(--shadow-sm);
 	}
 
@@ -138,26 +127,41 @@
 		width: 40px;
 		height: 40px;
 		border-radius: var(--radius-sm);
-		overflow: hidden;
 		flex-shrink: 0;
-	}
-
-	.row-icon img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.icon-placeholder {
-		width: 100%;
-		height: 100%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
-		color: white;
+	}
+
+	.row-icon-frame {
+		width: 100%;
+		height: 100%;
+		border-radius: var(--radius-sm);
+		background: linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--color-primary) 16%, var(--color-bg-elevated)),
+			color-mix(in srgb, var(--color-info) 10%, var(--color-bg-elevated))
+		);
+		border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+
+	.row-icon-image {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		padding: 6px;
+		filter: drop-shadow(0 6px 10px rgba(6, 9, 18, 0.35));
+	}
+
+	.row-icon-initial {
 		font-size: 1rem;
 		font-weight: 600;
+		color: var(--color-text-normal);
 	}
 
 	.row-main {
@@ -179,8 +183,7 @@
 	}
 
 	.verified-icon {
-		width: 16px;
-		height: 16px;
+		display: inline-flex;
 		color: var(--color-success);
 		flex-shrink: 0;
 	}
@@ -189,7 +192,7 @@
 		font-size: 0.6875rem;
 		font-weight: 500;
 		color: var(--color-text-faint);
-		background-color: var(--color-bg-elevated);
+		background-color: color-mix(in srgb, var(--color-bg-elevated) 80%, transparent);
 		padding: 2px 6px;
 		border-radius: var(--radius-sm);
 		flex-shrink: 0;
@@ -199,7 +202,7 @@
 		font-size: 0.6875rem;
 		font-weight: 600;
 		color: var(--color-primary);
-		background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+		background-color: rgba(111, 125, 255, 0.16);
 		padding: 2px 6px;
 		border-radius: var(--radius-sm);
 		flex-shrink: 0;
@@ -213,9 +216,8 @@
 		flex-shrink: 0;
 	}
 
-	.starred-badge svg {
-		width: 14px;
-		height: 14px;
+	.starred-badge :global(svg) {
+		fill: currentColor;
 	}
 
 	.row-author {
@@ -233,14 +235,12 @@
 		gap: 6px;
 		font-size: 0.8125rem;
 		font-weight: 500;
-		color: #fbbf24;
+		color: var(--color-primary);
 		flex-shrink: 0;
 	}
 
-	.row-downloads svg {
-		width: 14px;
-		height: 14px;
-		color: #fb923c;
+	.row-downloads :global(svg) {
+		color: var(--color-primary);
 	}
 
 	.row-favorite {

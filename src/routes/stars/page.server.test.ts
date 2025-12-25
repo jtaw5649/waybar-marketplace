@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { load } from './+page.server';
+import type { load } from './+page.server';
+
+vi.mock('$lib/server/token', () => ({
+	getServerToken: vi.fn(),
+	resolveAccessToken: vi.fn()
+}));
 
 type LoadEvent = Parameters<typeof load>[0];
 type LoadResult = {
@@ -12,6 +17,7 @@ type LoadResult = {
 describe('stars page server', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
+		vi.resetModules();
 	});
 
 	afterEach(() => {
@@ -20,6 +26,9 @@ describe('stars page server', () => {
 	});
 
 	it('returns unauthenticated when session is missing', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue(null);
+		const { load } = await import('./+page.server');
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue(null)
@@ -37,6 +46,9 @@ describe('stars page server', () => {
 	});
 
 	it('strips access token when refresh error occurs', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { load } = await import('./+page.server');
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue({
@@ -57,13 +69,16 @@ describe('stars page server', () => {
 	});
 
 	it('returns sanitized session when authenticated', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { load } = await import('./+page.server');
 		const event = {
 			locals: {
 				auth: vi.fn().mockResolvedValue({
-					user: { login: 'test' },
-					accessToken: 'token'
+					user: { login: 'test' }
 				})
-			}
+			},
+			cookies: {}
 		} as unknown as LoadEvent;
 
 		const fetchMock = vi.mocked(fetch);
@@ -77,7 +92,7 @@ describe('stars page server', () => {
 		expect(result.isAuthenticated).toBe(true);
 		expect(result.session).toEqual({ user: { login: 'test' } });
 		expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/v1/users/me/stars'), {
-			headers: { Authorization: 'Bearer token' }
+			headers: { Accept: 'application/json', Authorization: 'Bearer token' }
 		});
 	});
 });

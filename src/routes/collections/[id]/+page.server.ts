@@ -1,44 +1,20 @@
 import type { PageServerLoad, Actions } from './$types';
+import type { CollectionDetail } from '$lib/types';
 import { API_BASE_URL } from '$lib';
 import { error, fail } from '@sveltejs/kit';
 import { normalizeUsername } from '$lib/utils/username';
 import { toPublicSession } from '$lib/utils/sessionPublic';
-
-interface CollectionModule {
-	uuid: string;
-	name: string;
-	author: string;
-	category: string;
-	note: string | null;
-	position: number;
-	added_at: string;
-}
-
-interface Collection {
-	id: number;
-	name: string;
-	description: string | null;
-	visibility: 'private' | 'public' | 'unlisted';
-	module_count: number;
-	modules: CollectionModule[];
-	owner: {
-		username: string;
-		display_name: string | null;
-		avatar_url: string | null;
-	};
-	created_at: string;
-	updated_at: string;
-}
+import { encodeModuleUuid } from '$lib/utils/url';
+import { acceptHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
+import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const collectionId = event.params.id;
-	const accessToken = session?.accessToken;
+	const accessToken = await resolveAccessToken(event.cookies);
 
-	const headers: Record<string, string> = {};
-	if (accessToken) {
-		headers['Authorization'] = `Bearer ${accessToken}`;
-	}
+	const headers = acceptHeaders(accessToken ?? undefined);
 
 	try {
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${collectionId}`, { headers });
@@ -55,7 +31,7 @@ export const load: PageServerLoad = async (event) => {
 
 		const responseData = await res.json();
 		const data = responseData.data || responseData;
-		const collection: Collection = {
+		const collection: CollectionDetail = {
 			...data.collection,
 			modules: data.modules || []
 		};
@@ -72,11 +48,11 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	removeModule: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = session?.accessToken;
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
+		const { accessToken } = authResult;
 
 		const collectionId = event.params.id;
 		const formData = await event.request.formData();
@@ -87,12 +63,10 @@ export const actions: Actions = {
 		}
 
 		const res = await fetch(
-			`${API_BASE_URL}/api/v1/collections/${collectionId}/modules/${encodeURIComponent(moduleUuid)}`,
+			`${API_BASE_URL}/api/v1/collections/${collectionId}/modules/${encodeModuleUuid(moduleUuid)}`,
 			{
 				method: 'DELETE',
-				headers: {
-					Authorization: `Bearer ${accessToken}`
-				}
+				headers: acceptHeaders(accessToken)
 			}
 		);
 

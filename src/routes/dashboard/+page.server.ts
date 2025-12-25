@@ -1,37 +1,19 @@
 import type { PageServerLoad, Actions } from './$types';
 import { API_BASE_URL } from '$lib';
 import { fail, redirect } from '@sveltejs/kit';
-import type { Module } from '$lib/types';
+import type { Module, UserProfile, Collection } from '$lib/types';
 import { validateSession } from '$lib/utils/sessionValidator';
 import { toPublicSession } from '$lib/utils/sessionPublic';
-
-interface UserProfile {
-	id: number;
-	username: string;
-	display_name: string | null;
-	avatar_url: string | null;
-	bio: string | null;
-	website_url: string | null;
-	verified_author: boolean;
-	module_count: number;
-	created_at: string;
-}
-
-interface Collection {
-	id: number;
-	name: string;
-	description: string | null;
-	visibility: 'private' | 'public' | 'unlisted';
-	module_count: number;
-	created_at: string;
-	updated_at: string;
-}
+import { acceptHeaders, jsonHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
+import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
-	const validation = validateSession(session);
+	const accessToken = await resolveAccessToken(event.cookies);
+	const validation = validateSession(session, !!accessToken);
 
-	if (!session?.user || !validation.isValid) {
+	if (!session?.user || !validation.isValid || !accessToken) {
 		return { session: toPublicSession(session), profile: null, modules: [], collections: [] };
 	}
 
@@ -39,7 +21,7 @@ export const load: PageServerLoad = async (event) => {
 		throw redirect(302, '/login');
 	}
 
-	const authHeader = { Authorization: `Bearer ${session.accessToken}` };
+	const authHeader = acceptHeaders(accessToken);
 
 	try {
 		const [profileRes, modulesRes, collectionsRes] = await Promise.all([
@@ -74,14 +56,11 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	updateProfile: async (event) => {
-		const session = await event.locals.auth();
-		if (!session?.user || !session.accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
-
-		if (session.error === 'RefreshTokenError') {
-			return fail(401, { message: 'Session expired' });
-		}
+		const { accessToken } = authResult;
 
 		const formData = await event.request.formData();
 		const display_name = formData.get('display_name') as string | null;
@@ -90,10 +69,7 @@ export const actions: Actions = {
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
 			method: 'PATCH',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${session.accessToken}`
-			},
+			headers: jsonHeaders(accessToken),
 			body: JSON.stringify({
 				display_name: display_name || null,
 				bio: bio || null,
@@ -110,7 +86,8 @@ export const actions: Actions = {
 
 	createCollection: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user || !session.accessToken) {
+		const accessToken = await resolveAccessToken(event.cookies);
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -129,10 +106,7 @@ export const actions: Actions = {
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections`, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${session.accessToken}`
-			},
+			headers: jsonHeaders(accessToken),
 			body: JSON.stringify({
 				name: name.trim(),
 				description: description?.trim() || null,
@@ -150,7 +124,8 @@ export const actions: Actions = {
 
 	updateCollection: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user || !session.accessToken) {
+		const accessToken = await resolveAccessToken(event.cookies);
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -170,10 +145,7 @@ export const actions: Actions = {
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${id}`, {
 			method: 'PATCH',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${session.accessToken}`
-			},
+			headers: jsonHeaders(accessToken),
 			body: JSON.stringify({
 				name: name?.trim() || undefined,
 				description: description?.trim() || null,
@@ -190,7 +162,8 @@ export const actions: Actions = {
 
 	deleteCollection: async (event) => {
 		const session = await event.locals.auth();
-		if (!session?.user || !session.accessToken) {
+		const accessToken = await resolveAccessToken(event.cookies);
+		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
 
@@ -207,9 +180,7 @@ export const actions: Actions = {
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${id}`, {
 			method: 'DELETE',
-			headers: {
-				Authorization: `Bearer ${session.accessToken}`
-			}
+			headers: acceptHeaders(accessToken)
 		});
 
 		if (!res.ok) {

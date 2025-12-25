@@ -1,37 +1,23 @@
-import { API_BASE_URL } from '$lib';
-import { classifyApiError } from '$lib/utils/apiError';
-import type { Module } from '$lib/types';
+import { privateCacheHeaders } from '$lib/server/cacheHeaders';
+import { fetchApiJson } from '$lib/server/apiClient';
+import type { LandingData, LandingResponse } from '$lib/types';
 import type { PageServerLoad } from './$types';
 
-interface FeaturedData {
-	featured: Module[];
-	popular: Module[];
-	recent: Module[];
-}
-
-export const load: PageServerLoad = async ({ fetch }) => {
-	try {
-		const res = await fetch(`${API_BASE_URL}/api/v1/featured`);
-
-		if (!res.ok) {
-			const classified = classifyApiError(null, res.status);
-			return {
-				featuredData: null as FeaturedData | null,
-				error: classified.userMessage
-			};
-		}
-
-		const data: FeaturedData = await res.json();
-
+export const load: PageServerLoad = async ({ fetch, setHeaders }) => {
+	setHeaders(privateCacheHeaders);
+	const result = await fetchApiJson<LandingResponse>(fetch, '/api/v1/landing');
+	if (result.error || !result.data) {
 		return {
-			featuredData: data,
-			error: null as string | null
-		};
-	} catch (e) {
-		const classified = classifyApiError(e);
-		return {
-			featuredData: null as FeaturedData | null,
-			error: classified.userMessage
+			landing: null as LandingData | null,
+			error: result.error
 		};
 	}
+
+	return {
+		landing: {
+			stats: result.data.stats,
+			install_methods: result.data.install_methods
+		},
+		error: null as string | null
+	};
 };

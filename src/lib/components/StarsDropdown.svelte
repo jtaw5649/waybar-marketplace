@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { Star } from 'lucide-svelte';
 	import { stars } from '$lib/stores/stars.svelte';
 	import { normalizeStarsPayload } from '$lib/utils/starsResponse';
+	import { encodeModuleUuid } from '$lib/utils/url';
 	import { fly, fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
@@ -18,9 +20,14 @@
 	let loading = $state(false);
 
 	const starCount = $derived(stars.starred.size);
-
 	async function loadRecentStars() {
 		if (!stars.isAuthenticated || recentStars.length > 0) return;
+
+		const cached = stars.getCachedModules();
+		if (cached.length > 0) {
+			recentStars = cached.slice(0, 5);
+			return;
+		}
 
 		loading = true;
 		try {
@@ -81,13 +88,9 @@
 		onclick={toggle}
 		aria-expanded={isOpen}
 		aria-haspopup="true"
-		aria-label="Your starred modules"
+		aria-label="Your starred items"
 	>
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-			<path
-				d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-			/>
-		</svg>
+		<Star size={18} />
 		{#if starCount > 0}
 			<span class="badge" in:fly={{ y: -5, duration: 150 }}
 				>{starCount > 99 ? '99+' : starCount}</span
@@ -115,7 +118,7 @@
 					</div>
 				{:else if recentStars.length > 0}
 					{#each recentStars as module (module.uuid)}
-						<a href="/modules/{encodeURIComponent(module.uuid)}" class="star-item" onclick={close}>
+						<a href="/modules/{encodeModuleUuid(module.uuid)}" class="star-item" onclick={close}>
 							{#if module.icon_url}
 								<img src={module.icon_url} alt="" class="item-icon" />
 							{:else}
@@ -131,17 +134,13 @@
 					{/each}
 				{:else if starCount > 0}
 					<div class="empty-local">
-						<p>You have {starCount} starred module{starCount !== 1 ? 's' : ''}</p>
-						<p class="hint">Sign in to see details</p>
+						<p>You have {starCount} starred item{starCount !== 1 ? 's' : ''}</p>
+						<p class="hint">Log in to see details</p>
 					</div>
 				{:else}
 					<div class="empty">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-							<path
-								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-							/>
-						</svg>
-						<span>No starred modules</span>
+						<Star size={24} />
+						<span>No starred items</span>
 					</div>
 				{/if}
 			</div>
@@ -175,11 +174,6 @@
 			color var(--duration-fast) var(--ease-out),
 			border-color var(--duration-fast) var(--ease-out),
 			background-color var(--duration-fast) var(--ease-out);
-	}
-
-	.trigger svg {
-		width: 18px;
-		height: 18px;
 	}
 
 	.trigger:hover {
@@ -335,12 +329,6 @@
 		text-align: center;
 		color: var(--color-text-faint);
 		font-size: 0.875rem;
-	}
-
-	.empty svg {
-		width: 32px;
-		height: 32px;
-		margin-bottom: var(--space-sm);
 	}
 
 	.empty-local p {

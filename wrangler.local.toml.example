@@ -3,5 +3,5 @@
 
 [[d1_databases]]
 binding = "DB"
-database_name = "waybar-registry"
+database_name = "barforge-registry"
 database_id = "your-database-id-here"

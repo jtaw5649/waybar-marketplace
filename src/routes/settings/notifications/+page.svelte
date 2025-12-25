@@ -48,7 +48,7 @@
 		{
 			id: 'announcements',
 			label: 'Platform announcements',
-			description: 'Important updates about Waybar Marketplace',
+			description: 'Important updates about Barforge',
 			email: true,
 			inApp: true,
 			icon: 'announce'
@@ -64,7 +64,7 @@
 </script>
 
 <svelte:head>
-	<title>Notification Settings - Waybar Marketplace</title>
+	<title>Notification Settings - Barforge</title>
 </svelte:head>
 
 <div class="settings-header">

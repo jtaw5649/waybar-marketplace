@@ -1,9 +1,15 @@
 import { error } from '@sveltejs/kit';
+import type { Session } from '@auth/sveltekit';
+import type { Cookies } from '@sveltejs/kit';
+import { resolveAccessToken } from '$lib/server/token';
 
-export async function requireAccessToken(locals: App.Locals): Promise<string> {
-	const session = await locals.auth();
-	if (!session?.accessToken) {
+export async function requireAccessToken(
+	cookies?: Cookies,
+	session?: Session | { accessToken?: string } | null
+): Promise<string> {
+	const token = await resolveAccessToken(cookies, session);
+	if (!token) {
 		error(401, 'Unauthorized');
 	}
-	return session.accessToken;
+	return token;
 }

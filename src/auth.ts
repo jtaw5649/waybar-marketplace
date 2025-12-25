@@ -19,7 +19,6 @@ type JwtCallbackParams = {
 };
 
 type SessionWithExtras = Session & {
-	accessToken?: string;
 	error?: string;
 };
 
@@ -73,7 +72,6 @@ export async function authSessionCallback({ session, token }: SessionCallbackPar
 		session.user.id = typeof token.sub === 'string' ? token.sub : '';
 		session.user.login = typeof token.login === 'string' ? token.login : undefined;
 	}
-	session.accessToken = typeof token.accessToken === 'string' ? token.accessToken : undefined;
 	session.error = typeof token.error === 'string' ? token.error : undefined;
 	return session;
 }
@@ -82,6 +80,24 @@ export function resolveTrustHost(nodeEnv?: string, trustHostEnv?: string): boole
 	if (nodeEnv && nodeEnv !== 'production') return true;
 	if (trustHostEnv === undefined || trustHostEnv === '') return true;
 	return trustHostEnv === 'true';
+}
+
+type RefreshResponse = {
+	error?: string;
+	error_description?: string;
+	[key: string]: unknown;
+};
+
+type SanitizedError = {
+	error: string;
+	error_description: string | undefined;
+};
+
+export function sanitizeRefreshError(tokens: RefreshResponse): SanitizedError {
+	return {
+		error: tokens.error ?? 'unknown',
+		error_description: tokens.error_description
+	};
 }
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
@@ -112,7 +128,7 @@ async function refreshAccessToken(token: Token) {
 		const tokens = await response.json();
 
 		if (!response.ok) {
-			console.error('[AUTH] Refresh failed:', tokens);
+			console.error('[AUTH] Refresh failed:', sanitizeRefreshError(tokens));
 			return { ...token, error: 'RefreshTokenError', accessToken: undefined };
 		}
 

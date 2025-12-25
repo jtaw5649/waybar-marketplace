@@ -132,6 +132,29 @@ describe('theme store', () => {
 		});
 	});
 
+	describe('cycle', () => {
+		it('cycles from system to light', async () => {
+			mockStorage['theme'] = 'system';
+			const { theme } = await import('./theme');
+			theme.cycle();
+			expect(get(theme)).toBe('light');
+		});
+
+		it('cycles from light to dark', async () => {
+			mockStorage['theme'] = 'light';
+			const { theme } = await import('./theme');
+			theme.cycle();
+			expect(get(theme)).toBe('dark');
+		});
+
+		it('cycles from dark to system', async () => {
+			mockStorage['theme'] = 'dark';
+			const { theme } = await import('./theme');
+			theme.cycle();
+			expect(get(theme)).toBe('system');
+		});
+	});
+
 	describe('cleanup', () => {
 		it('removes event listener', async () => {
 			const { theme } = await import('./theme');

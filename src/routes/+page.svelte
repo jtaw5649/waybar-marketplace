@@ -1,276 +1,189 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { fromStore } from 'svelte/store';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import ModuleCard from '$lib/components/ModuleCard.svelte';
-	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
-	import SearchInput from '$lib/components/SearchInput.svelte';
-	import { getHomepageCategories } from '$lib/constants/categories';
-	import { recentlyViewed } from '$lib/stores/recentlyViewed';
-	import { viewMode } from '$lib/stores/viewMode';
+	import Icon from '$lib/components/Icon.svelte';
+	import InstallSnippet from '$lib/components/InstallSnippet.svelte';
+	import {
+		Package,
+		Download,
+		Zap,
+		Settings,
+		ChevronRight,
+		MousePointer,
+		RefreshCw,
+		Users,
+		ArrowRight
+	} from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const categories = getHomepageCategories();
+	const stats = $derived(
+		data.landing?.stats ?? { total_modules: 0, total_downloads: 0, total_authors: 0 }
+	);
 
-	const viewModeState = fromStore(viewMode);
-	const recentModulesState = fromStore(recentlyViewed);
-
-	const recommendedModules = $derived.by(() => {
-		if (recentModulesState.current.length === 0 || !data.featuredData) return [];
-
-		const viewedCategories = [
-			...new Set(recentModulesState.current.map((m) => m.category.toLowerCase()))
-		];
-		const viewedUuids = new Set(recentModulesState.current.map((m) => m.uuid));
-
-		const allModules = [...(data.featuredData.popular || []), ...(data.featuredData.recent || [])];
-
-		const uniqueModules = allModules.filter(
-			(module, index, self) => self.findIndex((m) => m.uuid === module.uuid) === index
-		);
-
-		return uniqueModules
-			.filter(
-				(m) => viewedCategories.includes(m.category.toLowerCase()) && !viewedUuids.has(m.uuid)
-			)
-			.slice(0, 6);
-	});
+	function formatNumber(num: number): string {
+		if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+		if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+		return num.toString();
+	}
 </script>
 
 <Header session={data.session} />
 
 <main id="main-content">
-	<section class="hero">
-		<div class="hero-content">
-			<h1>
-				Discover <span class="gradient-text">modules</span> for your Waybar
-			</h1>
-			<p>
-				Find community-created modules to enhance your Waybar experience. Download with a single
-				click using Waybar Manager.
+	<!-- Hero Panel -->
+	<section class="tui-panel hero-panel">
+		<div class="tui-panel-header">
+			<span class="tui-panel-title">[ BARFORGE ]</span>
+			<span class="tui-panel-status">v1.0</span>
+		</div>
+		<div class="tui-panel-body hero-body">
+			<p class="hero-tagline">Desktop manager for Waybar modules</p>
+			<p class="hero-desc">
+				Browse, install, and manage community modules for your Waybar status bar.<br />
+				Native desktop app with one-click installs.
 			</p>
-			<div class="hero-search">
-				<SearchInput size="lg" />
-			</div>
-			<div class="hero-actions">
-				<a href="/browse" class="btn btn-primary btn-large">Browse All Modules</a>
-				{#if data.session?.user}
-					<a href="/upload" class="btn btn-secondary btn-large">Upload Module</a>
-				{:else}
-					<a href="/login" class="btn btn-secondary btn-large">Log In to Upload</a>
-				{/if}
-			</div>
-		</div>
-	</section>
 
-	<section class="categories-section">
-		<div class="section-header">
-			<h2>Browse by Category</h2>
-		</div>
-		<div class="categories-grid">
-			{#each categories as cat (cat.slug)}
-				<a
-					href="/browse?category={cat.slug}"
-					class="category-card"
-					style="--cat-color: {cat.color}"
-				>
-					<img src={cat.icon} alt="" class="category-icon" />
-					<span class="category-name">{cat.name}</span>
-				</a>
-			{/each}
-		</div>
-	</section>
-
-	{#if recommendedModules.length > 0}
-		<section class="modules-section recommended-section">
-			<div class="section-header">
-				<div>
-					<h2>
-						<svg
-							width="20"
-							height="20"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<path
-								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-							/>
-						</svg>
-						Recommended for You
-					</h2>
-					<p>Based on modules you've viewed</p>
-				</div>
-				<a href="/browse" class="see-all">Browse all →</a>
-			</div>
-			<div
-				class="module-container"
-				class:grid={viewModeState.current === 'grid'}
-				class:list={viewModeState.current === 'list'}
-			>
-				{#each recommendedModules as module, i (module.uuid)}
-					{#if viewModeState.current === 'grid'}
-						<ModuleCard
-							uuid={module.uuid}
-							name={module.name}
-							author={module.author}
-							description={module.description}
-							category={module.category}
-							downloads={module.downloads}
-							verified={module.verified_author}
-							delay={i * 50}
-						/>
-					{:else}
-						<ModuleCardRow
-							uuid={module.uuid}
-							name={module.name}
-							author={module.author}
-							description={module.description}
-							category={module.category}
-							downloads={module.downloads}
-							verified={module.verified_author}
-							delay={i * 30}
-						/>
-					{/if}
-				{/each}
-			</div>
-		</section>
-	{/if}
-
-	{#if data.error}
-		<section class="modules-section">
-			<div class="error-state">
-				<p>{data.error}</p>
-				<a href="/" class="btn btn-primary">Try Again</a>
-			</div>
-		</section>
-	{:else if data.featuredData}
-		{#if data.featuredData.featured.length > 0}
-			<section class="modules-section">
-				<div class="section-header">
-					<div>
-						<h2>Featured Modules</h2>
-						<p>Hand-picked by our team</p>
+			<!-- Stats Grid -->
+			<div class="stats-grid">
+				<div class="stat-box">
+					<div class="stat-icon"><Package size={16} /></div>
+					<div class="stat-info">
+						<span class="stat-value">{stats.total_modules}</span>
+						<span class="stat-label">modules</span>
 					</div>
 				</div>
-				<div
-					class="module-container"
-					class:grid={viewModeState.current === 'grid'}
-					class:list={viewModeState.current === 'list'}
-					class:featured-grid={viewModeState.current === 'grid'}
-				>
-					{#each data.featuredData.featured as module, i (module.uuid)}
-						{#if viewModeState.current === 'grid'}
-							<ModuleCard
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 50}
-							/>
-						{:else}
-							<ModuleCardRow
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 30}
-							/>
-						{/if}
-					{/each}
+				<div class="stat-box">
+					<div class="stat-icon"><Users size={16} /></div>
+					<div class="stat-info">
+						<span class="stat-value">{stats.total_authors}</span>
+						<span class="stat-label">authors</span>
+					</div>
 				</div>
-			</section>
-		{/if}
+				<div class="stat-box">
+					<div class="stat-icon"><Download size={16} /></div>
+					<div class="stat-info">
+						<span class="stat-value">{formatNumber(stats.total_downloads)}</span>
+						<span class="stat-label">downloads</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
 
-		{#if data.featuredData.popular.length > 0}
-			<section class="modules-section">
-				<div class="section-header">
-					<h2>Popular Modules</h2>
-					<a href="/browse?sort=popular" class="see-all">See all →</a>
-				</div>
-				<div
-					class="module-container"
-					class:grid={viewModeState.current === 'grid'}
-					class:list={viewModeState.current === 'list'}
-				>
-					{#each data.featuredData.popular as module, i (module.uuid)}
-						{#if viewModeState.current === 'grid'}
-							<ModuleCard
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 50}
-							/>
-						{:else}
-							<ModuleCardRow
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 30}
-							/>
-						{/if}
-					{/each}
-				</div>
-			</section>
-		{/if}
+	<!-- Install Panel -->
+	<InstallSnippet />
 
-		{#if data.featuredData.recent.length > 0}
-			<section class="modules-section">
-				<div class="section-header">
-					<h2>Recently Added</h2>
-					<a href="/browse?sort=recent" class="see-all">See all →</a>
+	<!-- Features Panel -->
+	<section class="tui-panel">
+		<div class="tui-panel-header">
+			<span class="tui-panel-title">[ FEATURES ]</span>
+		</div>
+		<div class="tui-panel-body">
+			<div class="features-grid">
+				<div class="feature-box">
+					<div class="feature-header">
+						<MousePointer size={14} />
+						<span>One-Click Install</span>
+					</div>
+					<div class="feature-body">No config editing required</div>
 				</div>
-				<div
-					class="module-container"
-					class:grid={viewModeState.current === 'grid'}
-					class:list={viewModeState.current === 'list'}
-				>
-					{#each data.featuredData.recent as module, i (module.uuid)}
-						{#if viewModeState.current === 'grid'}
-							<ModuleCard
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 50}
-							/>
-						{:else}
-							<ModuleCardRow
-								uuid={module.uuid}
-								name={module.name}
-								author={module.author}
-								description={module.description}
-								category={module.category}
-								downloads={module.downloads}
-								verified={module.verified_author}
-								delay={i * 30}
-							/>
-						{/if}
-					{/each}
+				<div class="feature-box">
+					<div class="feature-header">
+						<Package size={14} />
+						<span>Module Registry</span>
+					</div>
+					<div class="feature-body">Community-driven collection</div>
 				</div>
-			</section>
-		{/if}
-	{/if}
+				<div class="feature-box">
+					<div class="feature-header">
+						<Settings size={14} />
+						<span>Auto Configuration</span>
+					</div>
+					<div class="feature-body">Generated preferences UI</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Desktop App Panel -->
+	<section class="tui-panel">
+		<div class="tui-panel-header">
+			<span class="tui-panel-title">[ DESKTOP APP ]</span>
+			<a
+				href="https://github.com/jtaw5649/barforge-app"
+				class="tui-panel-link"
+				target="_blank"
+				rel="noopener"
+			>
+				GitHub <ArrowRight size={12} />
+			</a>
+		</div>
+		<div class="tui-panel-body">
+			<div class="app-features">
+				<div class="app-feature">
+					<Download size={14} class="app-feature-icon" />
+					<div class="app-feature-text">
+						<span class="app-feature-title">Browse & Install</span>
+						<span class="app-feature-desc">Discover and install modules from the registry</span>
+					</div>
+				</div>
+				<div class="app-feature">
+					<RefreshCw size={14} class="app-feature-icon" />
+					<div class="app-feature-text">
+						<span class="app-feature-title">Update Manager</span>
+						<span class="app-feature-desc">Keep your modules up to date</span>
+					</div>
+				</div>
+				<div class="app-feature">
+					<Settings size={14} class="app-feature-icon" />
+					<div class="app-feature-text">
+						<span class="app-feature-title">Module Preferences</span>
+						<span class="app-feature-desc">Auto-generated settings for each module</span>
+					</div>
+				</div>
+				<div class="app-feature">
+					<Zap size={14} class="app-feature-icon" />
+					<div class="app-feature-text">
+						<span class="app-feature-title">Enable / Disable</span>
+						<span class="app-feature-desc">Toggle modules without uninstalling</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Navigation Panel -->
+	<section class="tui-panel">
+		<div class="tui-panel-header">
+			<span class="tui-panel-title">[ NAVIGATION ]</span>
+		</div>
+		<div class="tui-panel-body nav-body">
+			<a href="/modules" class="nav-card">
+				<div class="nav-card-icon"><Package size={20} /></div>
+				<div class="nav-card-content">
+					<span class="nav-card-title">Browse Modules</span>
+					<span class="nav-card-desc"
+						>{stats.total_modules} community modules across all categories</span
+					>
+				</div>
+				<div class="nav-card-arrow">
+					<ChevronRight size={20} />
+				</div>
+			</a>
+			<a href="/upload" class="nav-card">
+				<div class="nav-card-icon"><Icon name="simple-icons:github" size={20} /></div>
+				<div class="nav-card-content">
+					<span class="nav-card-title">Publish a Module</span>
+					<span class="nav-card-desc">Share your work with the community</span>
+				</div>
+				<div class="nav-card-arrow">
+					<ChevronRight size={20} />
+				</div>
+			</a>
+		</div>
+	</section>
 </main>
 
 <Footer />
@@ -280,245 +193,273 @@
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
-	}
-
-	.hero {
-		padding: var(--space-3xl) var(--space-2xl);
-		text-align: center;
-		background: linear-gradient(180deg, var(--color-bg-surface) 0%, var(--color-bg-base) 100%);
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	.hero-content {
-		max-width: 700px;
+		padding: 5rem var(--space-lg) var(--space-2xl);
+		gap: var(--space-lg);
+		max-width: 1000px;
 		margin: 0 auto;
+		width: 100%;
+		box-sizing: border-box;
+		overflow-x: hidden;
 	}
 
-	.hero-content h1 {
-		font-size: 3rem;
+	@media (max-width: 768px) {
+		main {
+			padding: 4rem var(--space-md) var(--space-xl);
+		}
+	}
+
+	@media (max-width: 480px) {
+		main {
+			padding: 4rem var(--space-sm) var(--space-lg);
+		}
+	}
+
+	/* Hero Panel */
+	.hero-panel {
+		border-color: var(--color-primary);
+		border-width: 2px;
+	}
+
+	.hero-body {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.hero-tagline {
+		font-family: var(--font-mono);
+		font-size: 1.5rem;
 		font-weight: 700;
-		margin: var(--space-lg) 0;
-		line-height: 1.15;
+		color: var(--color-text-normal);
+		margin-bottom: var(--space-sm);
 	}
 
-	.gradient-text {
-		background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 50%, #ec4899 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.hero-content p {
+	.hero-desc {
+		font-size: 0.875rem;
 		color: var(--color-text-muted);
-		font-size: 1.25rem;
+		max-width: 500px;
 		margin-bottom: var(--space-xl);
 		line-height: 1.6;
 	}
 
-	.hero-search {
-		display: flex;
-		justify-content: center;
-		margin-bottom: var(--space-xl);
-	}
-
-	.hero-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-md);
-		justify-content: center;
-	}
-
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-md) var(--space-xl);
-		border-radius: var(--radius-md);
-		font-weight: 500;
-		font-size: 1rem;
-		transition: background-color var(--duration-fast) var(--ease-out);
-		text-decoration: none;
-		border: none;
-		cursor: pointer;
-	}
-
-	.btn-large {
-		padding: var(--space-lg) var(--space-2xl);
-		font-size: 1.125rem;
-	}
-
-	.btn-primary {
-		background-color: var(--color-primary);
-		color: white;
-	}
-
-	.btn-primary:hover {
-		background-color: #5068d9;
-	}
-
-	.btn-secondary {
-		background-color: var(--color-bg-surface);
-		color: var(--color-text-normal);
-		border: 1px solid var(--color-border);
-	}
-
-	.btn-secondary:hover {
-		background-color: var(--color-bg-elevated);
-	}
-
-	.categories-section {
-		padding: var(--space-2xl);
-		max-width: 1400px;
-		margin: 0 auto;
-		width: 100%;
-	}
-
-	.categories-grid {
+	/* Stats Grid */
+	.stats-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-md);
+		width: 100%;
+		max-width: 500px;
 	}
 
-	.category-card {
+	@media (max-width: 500px) {
+		.stats-grid {
+			grid-template-columns: 1fr;
+			max-width: 280px;
+			margin: 0 auto;
+		}
+	}
+
+	.stat-box {
 		display: flex;
-		flex-direction: column;
 		align-items: center;
 		gap: var(--space-sm);
-		padding: var(--space-lg);
-		background-color: var(--color-bg-surface);
+		padding: var(--space-md);
+		background: var(--color-bg-base);
 		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		text-decoration: none;
-		transition:
-			border-color var(--duration-fast) var(--ease-out),
-			transform var(--duration-fast) var(--ease-out),
-			box-shadow var(--duration-fast) var(--ease-out);
+		transition: border-color var(--duration-fast);
 	}
 
-	.category-card:hover {
-		border-color: var(--cat-color);
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	.stat-box:hover {
+		border-color: var(--color-primary);
 	}
 
-	.category-icon {
-		width: 32px;
-		height: 32px;
+	.stat-icon {
+		color: var(--color-text-faint);
 	}
 
-	.category-name {
-		font-size: 0.875rem;
-		font-weight: 500;
+	.stat-info {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.stat-value {
+		font-family: var(--font-mono);
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--color-primary);
+		line-height: 1;
+	}
+
+	.stat-label {
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		color: var(--color-text-faint);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	/* Features Grid */
+	.features-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-md);
+	}
+
+	@media (max-width: 640px) {
+		.features-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.feature-box {
+		background: var(--color-bg-base);
+		padding: var(--space-md);
+		border: 1px solid var(--color-border);
+		transition: border-color var(--duration-fast);
+	}
+
+	.feature-box:hover {
+		border-color: var(--color-primary);
+	}
+
+	.feature-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		font-weight: 600;
 		color: var(--color-text-normal);
-	}
-
-	.modules-section {
-		padding: var(--space-2xl);
-		max-width: 1400px;
-		margin: 0 auto;
-		width: 100%;
-	}
-
-	.recommended-section {
-		background: linear-gradient(180deg, var(--color-bg-surface) 0%, var(--color-bg-base) 100%);
-		border-top: 1px solid var(--color-border);
+		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-sm);
 		border-bottom: 1px solid var(--color-border);
 	}
 
-	.recommended-section .section-header h2 {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-	}
-
-	.recommended-section .section-header h2 svg {
-		color: var(--color-warning);
-	}
-
-	.section-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		margin-bottom: var(--space-lg);
-	}
-
-	.section-header h2 {
-		font-size: 1.5rem;
-		font-weight: 600;
-	}
-
-	.section-header p {
-		color: var(--color-text-muted);
-		font-size: 0.875rem;
-		margin-top: var(--space-xs);
-	}
-
-	.see-all {
-		color: var(--color-primary);
-		font-size: 0.875rem;
-		text-decoration: none;
-		font-weight: 500;
-	}
-
-	.see-all:hover {
-		text-decoration: underline;
-	}
-
-	.error-state {
-		text-align: center;
-		padding: var(--space-2xl);
+	.feature-header :global(svg) {
 		color: var(--color-text-muted);
 	}
 
-	.error-state p {
-		margin-bottom: var(--space-lg);
-		color: var(--color-error);
+	.feature-body {
+		font-size: 0.8125rem;
+		color: var(--color-text-faint);
 	}
 
-	.module-container.grid {
+	/* App Features */
+	.app-features {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: var(--space-lg);
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-md);
 	}
 
-	.module-container.list {
+	@media (max-width: 640px) {
+		.app-features {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.app-feature {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		padding: var(--space-md);
+		border: 1px solid var(--color-border);
+		background: var(--color-bg-base);
+	}
+
+	.app-feature:hover {
+		border-color: var(--color-primary);
+	}
+
+	:global(.app-feature-icon) {
+		color: var(--color-text-muted);
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.app-feature-text {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.app-feature-title {
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--color-text-normal);
+	}
+
+	.app-feature-desc {
+		font-size: 0.75rem;
+		color: var(--color-text-faint);
+	}
+
+	/* Navigation Cards */
+	.nav-body {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-sm);
+		padding: var(--space-md);
 	}
 
-	.module-container.featured-grid {
-		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	.nav-card {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+		padding: var(--space-md);
+		border: 1px solid var(--color-border);
+		background: var(--color-bg-base);
+		text-decoration: none;
 	}
 
-	@media (max-width: 768px) {
-		.hero {
-			padding: var(--space-2xl) var(--space-lg);
-		}
+	.nav-card:hover {
+		border-color: var(--color-primary);
+		background: var(--color-bg-elevated);
+		text-decoration: none;
+	}
 
-		.hero-content h1 {
-			font-size: 2rem;
-		}
+	.nav-card-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border: 1px solid var(--color-border);
+		background: var(--color-bg-surface);
+		color: var(--color-text-faint);
+		flex-shrink: 0;
+	}
 
-		.hero-content p {
-			font-size: 1rem;
-		}
+	.nav-card:hover .nav-card-icon {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
 
-		.hero-actions {
-			flex-direction: column;
-		}
+	.nav-card-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
 
-		.categories-section,
-		.modules-section {
-			padding: var(--space-lg);
-		}
+	.nav-card-title {
+		font-family: var(--font-mono);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--color-text-normal);
+	}
 
-		.categories-grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
+	.nav-card-desc {
+		font-size: 0.75rem;
+		color: var(--color-text-faint);
+	}
 
-		.module-container.grid {
-			grid-template-columns: 1fr;
-		}
+	.nav-card-arrow {
+		color: var(--color-text-faint);
+	}
+
+	.nav-card:hover .nav-card-arrow {
+		color: var(--color-primary);
 	}
 </style>

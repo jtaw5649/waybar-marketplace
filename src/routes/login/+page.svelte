@@ -30,7 +30,7 @@
 			<div class="login-icon">
 				<img src="/icons/favicon.svg" alt="" width="80" height="80" />
 			</div>
-			<h1>Log in to Waybar Marketplace</h1>
+			<h1>Log in to Barforge</h1>
 			<p>Log in with your GitHub account to submit modules, write reviews, and more.</p>
 
 			<button class="github-btn" onclick={handleSignIn} disabled={loading}>

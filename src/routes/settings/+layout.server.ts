@@ -1,31 +1,22 @@
 import type { LayoutServerLoad } from './$types';
+import type { Module, UserProfile } from '$lib/types';
 import { redirect } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
-import type { Module } from '$lib/types';
 import { validateSession } from '$lib/utils/sessionValidator';
 import { toPublicSession } from '$lib/utils/sessionPublic';
-
-interface UserProfile {
-	id: number;
-	username: string;
-	display_name: string | null;
-	avatar_url: string | null;
-	bio: string | null;
-	website_url: string | null;
-	verified_author: boolean;
-	module_count: number;
-	created_at: string;
-}
+import { acceptHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
 
 export const load: LayoutServerLoad = async (event) => {
 	const session = await event.locals.auth();
-	const validation = validateSession(session);
+	const accessToken = await resolveAccessToken(event.cookies);
+	const validation = validateSession(session, !!accessToken);
 
-	if (!session?.user || validation.shouldReauth) {
+	if (!session?.user || validation.shouldReauth || !accessToken) {
 		throw redirect(302, '/login');
 	}
 
-	const authHeader = { Authorization: `Bearer ${session.accessToken}` };
+	const authHeader = acceptHeaders(accessToken);
 
 	let profile: UserProfile | null = null;
 	let modules: Module[] = [];

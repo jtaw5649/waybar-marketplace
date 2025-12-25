@@ -1,31 +1,8 @@
 import type { PageServerLoad } from './$types';
+import type { Module, UserProfile, CollectionBase } from '$lib/types';
 import { error } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
-import type { Module } from '$lib/types';
-
-interface UserProfile {
-	id: number;
-	username: string;
-	display_name: string | null;
-	avatar_url: string | null;
-	bio: string | null;
-	website_url: string | null;
-	github_url: string | null;
-	twitter_url: string | null;
-	mastodon_url: string | null;
-	verified_author: boolean;
-	module_count: number;
-	created_at: string;
-}
-
-interface Collection {
-	id: number;
-	name: string;
-	description: string | null;
-	visibility: 'public' | 'unlisted' | 'private';
-	module_count: number;
-	created_at: string;
-}
+import { toPublicSession } from '$lib/utils/sessionPublic';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -49,7 +26,7 @@ export const load: PageServerLoad = async (event) => {
 		modules = modulesData.modules || [];
 	}
 
-	let collections: Collection[] = [];
+	let collections: CollectionBase[] = [];
 	const collectionsRes = await event.fetch(
 		`${API_BASE_URL}/api/v1/users/${username}/collections?visibility=public`
 	);
@@ -61,7 +38,7 @@ export const load: PageServerLoad = async (event) => {
 	const totalDownloads = modules.reduce((sum, m) => sum + m.downloads, 0);
 
 	return {
-		session,
+		session: toPublicSession(session),
 		profile,
 		modules,
 		collections,

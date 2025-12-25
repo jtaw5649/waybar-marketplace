@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { load } from './+page.server';
 
+vi.mock('$lib/server/token', () => ({
+	getServerToken: vi.fn(),
+	resolveAccessToken: vi.fn()
+}));
+
+import { resolveAccessToken } from '$lib/server/token';
+
 type LoadEvent = Parameters<typeof load>[0];
 
 interface RedirectError {
@@ -19,19 +26,21 @@ vi.mock('@sveltejs/kit', async () => {
 });
 
 function createMockEvent(locals: { auth: ReturnType<typeof vi.fn> }): LoadEvent {
-	return { locals } as unknown as LoadEvent;
+	vi.mocked(resolveAccessToken).mockResolvedValue(null);
+	return { locals, cookies: {} } as unknown as LoadEvent;
 }
 
 function createAuthorizedEvent(role: 'admin' | 'moderator') {
+	vi.mocked(resolveAccessToken).mockResolvedValue('valid-token');
 	const mockSession = {
-		user: { name: role },
-		accessToken: 'valid-token'
+		user: { name: role }
 	};
 
 	const mockSubmissions = [{ id: 1, name: 'Test Module' }];
 	const mockStats = { total_modules: 10, total_users: 5 };
 
 	const event = {
+		cookies: {},
 		locals: {
 			auth: vi.fn().mockResolvedValue(mockSession)
 		},
@@ -120,10 +129,10 @@ describe('admin page server', () => {
 			});
 
 			expect(event.fetch).toHaveBeenCalledWith(expect.stringContaining('/admin/submissions'), {
-				headers: { Authorization: 'Bearer valid-token' }
+				headers: { Accept: 'application/json', Authorization: 'Bearer valid-token' }
 			});
 			expect(event.fetch).toHaveBeenCalledWith(expect.stringContaining('/admin/stats'), {
-				headers: { Authorization: 'Bearer valid-token' }
+				headers: { Accept: 'application/json', Authorization: 'Bearer valid-token' }
 			});
 		});
 	});

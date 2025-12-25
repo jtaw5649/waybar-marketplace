@@ -1,15 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from './+server';
 
+vi.mock('$lib/server/token', () => ({
+	getServerToken: vi.fn(),
+	resolveAccessToken: vi.fn()
+}));
+
+import { resolveAccessToken } from '$lib/server/token';
+
 type ApproveEvent = Parameters<typeof POST>[0];
 
-const makeEvent = (accessToken?: string) =>
-	({
+const makeEvent = (accessToken?: string) => {
+	vi.mocked(resolveAccessToken).mockResolvedValue(accessToken ?? null);
+	return {
 		params: { id: '123' },
+		cookies: {},
 		locals: {
-			auth: vi.fn().mockResolvedValue(accessToken ? { accessToken } : null)
+			auth: vi.fn().mockResolvedValue(accessToken ? { user: { login: 'test' } } : null)
 		}
-	}) as unknown as ApproveEvent;
+	} as unknown as ApproveEvent;
+};
 
 describe('admin submission approve api', () => {
 	beforeEach(() => {
@@ -32,7 +42,10 @@ describe('admin submission approve api', () => {
 			expect.stringContaining('/api/v1/admin/submissions/123/approve'),
 			expect.objectContaining({
 				method: 'POST',
-				headers: expect.objectContaining({ Authorization: 'Bearer token' })
+				headers: expect.objectContaining({
+					Accept: 'application/json',
+					Authorization: 'Bearer token'
+				})
 			})
 		);
 	});

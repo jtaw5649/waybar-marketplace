@@ -3,7 +3,8 @@ import { validateSession, type SessionValidation } from './sessionValidator';
 
 describe('validateSession', () => {
 	it('returns shouldReauth true for null session', () => {
-		const result = validateSession(null);
+		const result = validateSession(null, false);
+
 		expect(result).toEqual<SessionValidation>({
 			isValid: false,
 			hasToken: false,
@@ -13,8 +14,8 @@ describe('validateSession', () => {
 	});
 
 	it('returns valid for session with token and no error', () => {
-		const session = { accessToken: 'valid-token' };
-		const result = validateSession(session);
+		const session = { error: undefined };
+		const result = validateSession(session, true);
 		expect(result).toEqual<SessionValidation>({
 			isValid: true,
 			hasToken: true,
@@ -24,8 +25,8 @@ describe('validateSession', () => {
 	});
 
 	it('returns invalid for session with RefreshTokenError', () => {
-		const session = { accessToken: undefined, error: 'RefreshTokenError' };
-		const result = validateSession(session);
+		const session = { error: 'RefreshTokenError' };
+		const result = validateSession(session, false);
 		expect(result).toEqual<SessionValidation>({
 			isValid: false,
 			hasToken: false,
@@ -35,8 +36,8 @@ describe('validateSession', () => {
 	});
 
 	it('returns invalid for session with token but RefreshTokenError', () => {
-		const session = { accessToken: 'stale-token', error: 'RefreshTokenError' };
-		const result = validateSession(session);
+		const session = { error: 'RefreshTokenError' };
+		const result = validateSession(session, true);
 		expect(result).toEqual<SessionValidation>({
 			isValid: false,
 			hasToken: true,
@@ -46,8 +47,8 @@ describe('validateSession', () => {
 	});
 
 	it('returns shouldReauth for session without token', () => {
-		const session = { accessToken: undefined };
-		const result = validateSession(session);
+		const session = { error: undefined };
+		const result = validateSession(session, false);
 		expect(result).toEqual<SessionValidation>({
 			isValid: false,
 			hasToken: false,

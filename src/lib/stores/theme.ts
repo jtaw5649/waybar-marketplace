@@ -1,7 +1,29 @@
-import { writable } from 'svelte/store';
+import { writable, readable } from 'svelte/store';
 import { browser } from '$app/environment';
 
 export type Theme = 'light' | 'dark' | 'system';
+export type Platform = 'mac' | 'windows' | 'linux';
+
+function detectPlatform(): Platform {
+	if (!browser) return 'linux';
+	const ua = navigator.userAgent.toLowerCase();
+	if (ua.includes('mac')) return 'mac';
+	if (ua.includes('win')) return 'windows';
+	return 'linux';
+}
+
+export const platform = readable<Platform>(detectPlatform());
+
+export function getModifierKey(p: Platform): string {
+	switch (p) {
+		case 'mac':
+			return '⌘';
+		case 'windows':
+			return '⊞';
+		case 'linux':
+			return '❖';
+	}
+}
 
 function getSystemTheme(): 'light' | 'dark' {
 	if (!browser) return 'dark';
@@ -63,6 +85,14 @@ function createThemeStore() {
 		setSystem: () => {
 			set('system');
 			applyTheme('system');
+		},
+		cycle: () => {
+			const order: Theme[] = ['system', 'light', 'dark'];
+			const current = getStoredTheme();
+			const currentIndex = order.indexOf(current);
+			const next = order[(currentIndex + 1) % order.length];
+			set(next);
+			applyTheme(next);
 		},
 		cleanup: () => {
 			if (mediaQuery && mediaQueryHandler) {

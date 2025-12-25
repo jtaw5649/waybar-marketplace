@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { Star } from 'lucide-svelte';
 	import { API_BASE_URL } from '$lib';
 	import type { PageData } from './$types';
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { normalizeUsername } from '$lib/utils/username';
+	import { formatDate } from '$lib/utils/formatDate';
+	import { encodeModuleUuid } from '$lib/utils/url';
+	import AuthorLink from '$lib/components/AuthorLink.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -14,6 +18,7 @@
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import CollapsibleSection from '$lib/components/CollapsibleSection.svelte';
 	import BentoScreenshots from '$lib/components/BentoScreenshots.svelte';
+	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
@@ -119,7 +124,7 @@
 
 	async function fetchReviews() {
 		const res = await fetch(
-			`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(data.uuid)}/reviews`
+			`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(data.uuid)}/reviews`
 		);
 		if (res.ok) {
 			const reviewsData = await res.json();
@@ -133,7 +138,7 @@
 
 		try {
 			const method = userReview ? 'PUT' : 'POST';
-			const res = await fetch(`/api/modules/${encodeURIComponent(data.uuid)}/reviews`, {
+			const res = await fetch(`/api/modules/${encodeModuleUuid(data.uuid)}/reviews`, {
 				method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -164,7 +169,7 @@
 
 		reviewLoading = true;
 		try {
-			const res = await fetch(`/api/modules/${encodeURIComponent(data.uuid)}/reviews`, {
+			const res = await fetch(`/api/modules/${encodeModuleUuid(data.uuid)}/reviews`, {
 				method: 'DELETE'
 			});
 
@@ -182,14 +187,6 @@
 		} finally {
 			reviewLoading = false;
 		}
-	}
-
-	function formatDate(dateStr: string): string {
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
 	}
 
 	let showAllVersions = $state(false);
@@ -241,8 +238,8 @@
 		<div class="sticky-install-content">
 			<span class="sticky-module-name">{data.module.name}</span>
 			<div class="sticky-command">
-				<code>waybar-mod install {data.module.uuid}</code>
-				<CopyButton text={`waybar-mod install ${data.module.uuid}`} />
+				<code>barforge install {data.module.uuid}</code>
+				<CopyButton text={`barforge install ${data.module.uuid}`} />
 			</div>
 		</div>
 	</div>
@@ -252,9 +249,9 @@
 	<div class="module-header">
 		<div class="module-header-content">
 			<div class="breadcrumb">
-				<a href="/browse">Browse</a>
+				<a href="/modules">Browse</a>
 				<span>/</span>
-				<a href="/browse?category={data.module.category}">{data.module.category}</a>
+				<a href="/modules?category={data.module.category}">{data.module.category}</a>
 				<span>/</span>
 				<span>{data.module.name}</span>
 			</div>
@@ -266,7 +263,7 @@
 				<div class="module-title-info">
 					<h1>{data.module.name}</h1>
 					<p class="author">
-						by <a href="/users/{data.module.author}">{data.module.author}</a>
+						by <AuthorLink username={data.module.author} />
 						{#if data.module.verified_author}
 							<Badge variant="success" size="sm" dot>Verified</Badge>
 						{/if}
@@ -309,8 +306,8 @@
 
 			<div class="module-actions" bind:this={moduleActionsRef}>
 				<div class="download-command">
-					<code>waybar-mod install {data.module.uuid}</code>
-					<CopyButton text={`waybar-mod install ${data.module.uuid}`} />
+					<code>barforge install {data.module.uuid}</code>
+					<CopyButton text={`barforge install ${data.module.uuid}`} />
 				</div>
 				<a href={data.module.repo_url} target="_blank" rel="noopener" class="btn btn-secondary">
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -502,12 +499,12 @@
 
 					<div class="form-group">
 						<label for="review-body">Review (optional)</label>
-						<textarea
+						<MarkdownEditor
 							id="review-body"
 							bind:value={reviewBody}
 							placeholder="Share your experience with this module..."
-							rows="4"
-						></textarea>
+							rows={4}
+						/>
 					</div>
 
 					<div class="form-actions">
@@ -537,18 +534,7 @@
 
 			{#if reviews.length === 0}
 				<div class="no-reviews">
-					<svg
-						width="40"
-						height="40"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-					>
-						<path
-							d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-						/>
-					</svg>
+					<Star size={40} />
 					<p>No reviews yet. Be the first to review!</p>
 				</div>
 			{:else}
@@ -564,7 +550,7 @@
 											{review.user.username.charAt(0).toUpperCase()}
 										</div>
 									{/if}
-									<span class="review-author">{review.user.username}</span>
+									<AuthorLink username={review.user.username} class="review-author" />
 								</div>
 								<div class="review-meta">
 									<StarRating value={review.rating} readonly size="sm" />
@@ -820,6 +806,7 @@
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		padding-top: 5rem;
 	}
 
 	.module-header {
@@ -946,7 +933,7 @@
 		background-color: var(--color-bg-elevated);
 		padding: var(--space-sm) var(--space-md);
 		border-radius: var(--radius-md);
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.875rem;
 	}
 
@@ -1110,7 +1097,7 @@
 		padding: 0.2em 0.4em;
 		border-radius: var(--radius-sm);
 		font-size: 0.875em;
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 	}
 
 	.description :global(pre) {
@@ -1214,10 +1201,6 @@
 		color: var(--color-text-muted);
 	}
 
-	.no-reviews svg {
-		opacity: 0.3;
-	}
-
 	.reviews-list {
 		display: flex;
 		flex-direction: column;
@@ -1263,7 +1246,7 @@
 		font-weight: 600;
 	}
 
-	.review-author {
+	:global(.review-author) {
 		font-weight: 500;
 	}
 
@@ -1612,7 +1595,7 @@
 		background-color: var(--color-bg-elevated);
 		padding: var(--space-xs) var(--space-md);
 		border-radius: var(--radius-md);
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.8125rem;
 		flex-shrink: 0;
 	}

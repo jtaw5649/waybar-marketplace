@@ -1,22 +1,22 @@
 import type { PageServerLoad } from './$types';
+import type { UserProfile } from '$lib/types';
 import { redirect, error } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import { validateSession } from '$lib/utils/sessionValidator';
 import { toPublicSession } from '$lib/utils/sessionPublic';
-
-interface UserProfile {
-	role: 'user' | 'moderator' | 'admin';
-}
+import { acceptHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
-	const validation = validateSession(session);
+	const accessToken = await resolveAccessToken(event.cookies);
+	const validation = validateSession(session, !!accessToken);
 
-	if (!session?.user || validation.shouldReauth) {
+	if (!session?.user || validation.shouldReauth || !accessToken) {
 		throw redirect(302, '/login?redirectTo=/admin');
 	}
 
-	const headers = { Authorization: `Bearer ${session.accessToken}` };
+	const headers = acceptHeaders(accessToken);
 
 	const meRes = await event.fetch(`${API_BASE_URL}/api/v1/users/me`, { headers });
 

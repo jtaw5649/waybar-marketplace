@@ -1,11 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from './+server';
 
+vi.mock('$lib/server/token', () => ({
+	getServerToken: vi.fn(),
+	resolveAccessToken: vi.fn()
+}));
+
+import { resolveAccessToken } from '$lib/server/token';
+
 type RejectEvent = Parameters<typeof POST>[0];
 
-const makeEvent = (options?: { accessToken?: string; body?: unknown }) =>
-	({
+const makeEvent = (options?: { accessToken?: string; body?: unknown }) => {
+	vi.mocked(resolveAccessToken).mockResolvedValue(options?.accessToken ?? null);
+	return {
 		params: { id: '123' },
+		cookies: {},
 		locals: {
 			auth: vi
 				.fn()
@@ -14,7 +23,8 @@ const makeEvent = (options?: { accessToken?: string; body?: unknown }) =>
 		request: {
 			json: vi.fn().mockResolvedValue(options?.body ?? { reason: 'Nope' })
 		}
-	}) as unknown as RejectEvent;
+	} as unknown as RejectEvent;
+};
 
 describe('admin submission reject api', () => {
 	beforeEach(() => {
@@ -38,6 +48,7 @@ describe('admin submission reject api', () => {
 			expect.objectContaining({
 				method: 'POST',
 				headers: expect.objectContaining({
+					Accept: 'application/json',
 					Authorization: 'Bearer token',
 					'Content-Type': 'application/json'
 				})

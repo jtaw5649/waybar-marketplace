@@ -6,6 +6,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
+	import { formatDateTime } from '$lib/utils/formatDate';
 
 	let { data }: { data: PageData } = $props();
 
@@ -68,16 +69,6 @@
 		} finally {
 			actionLoading = null;
 		}
-	}
-
-	function formatDate(dateStr: string): string {
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
 	}
 
 	function formatNumber(n: number): string {
@@ -247,7 +238,7 @@
 										<line x1="8" y1="2" x2="8" y2="6" />
 										<line x1="3" y1="10" x2="21" y2="10" />
 									</svg>
-									{formatDate(submission.submitted_at)}
+									{formatDateTime(submission.submitted_at)}
 								</span>
 							</div>
 							<div class="submission-actions">
@@ -356,6 +347,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		padding-top: 5rem;
 	}
 
 	.page-header {
@@ -499,7 +491,7 @@
 	.uuid {
 		font-size: 0.75rem;
 		color: var(--color-text-faint);
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 		margin-bottom: var(--space-md);
 	}
 
@@ -531,54 +523,6 @@
 		flex-wrap: wrap;
 	}
 
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: var(--space-xs);
-		padding: var(--space-sm) var(--space-lg);
-		border-radius: var(--radius-md);
-		font-weight: 500;
-		font-size: 0.875rem;
-		border: none;
-		cursor: pointer;
-		text-decoration: none;
-		transition: background-color var(--duration-fast) var(--ease-out);
-	}
-
-	.btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.btn-secondary {
-		background-color: var(--color-bg-elevated);
-		color: var(--color-text-normal);
-		border: 1px solid var(--color-border);
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		background-color: var(--color-bg-base);
-	}
-
-	.btn-success {
-		background-color: #22c55e;
-		color: white;
-	}
-
-	.btn-success:hover:not(:disabled) {
-		background-color: #16a34a;
-	}
-
-	.btn-danger {
-		background-color: var(--color-error);
-		color: white;
-	}
-
-	.btn-danger:hover:not(:disabled) {
-		background-color: #dc2626;
-	}
-
 	.modal-text {
 		color: var(--color-text-muted);
 		font-size: 0.875rem;
@@ -601,27 +545,6 @@
 		outline: none;
 		border-color: var(--color-primary);
 		box-shadow: 0 0 0 3px rgba(97, 125, 250, 0.15);
-	}
-
-	.modal-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: var(--space-md);
-	}
-
-	.spinner {
-		width: 14px;
-		height: 14px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	@media (max-width: 768px) {

@@ -5,6 +5,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
+	import { formatDate } from '$lib/utils/formatDate';
 
 	let { data }: { data: PageData } = $props();
 
@@ -21,21 +22,14 @@
 				return 'Private';
 		}
 	}
-
-	function formatDate(dateString: string): string {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	}
 </script>
 
 <svelte:head>
-	<title>{collection.name} - Waybar Modules</title>
+	<title>{collection.name} - Barforge Modules</title>
 	<meta
 		name="description"
-		content={collection.description || `A collection of ${collection.module_count} waybar modules`}
+		content={collection.description ||
+			`A collection of ${collection.module_count} Barforge modules`}
 	/>
 </svelte:head>
 
@@ -145,6 +139,7 @@
 <style>
 	main {
 		flex: 1;
+		padding-top: 5rem;
 	}
 
 	.collection-page {

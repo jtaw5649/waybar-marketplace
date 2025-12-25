@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const DEFAULT_API_BASE_URL = 'https://api.waybarmodules.dev';
+const DEFAULT_API_BASE_URL = 'https://api.barforge.dev';
 const envMock: { PUBLIC_API_BASE_URL?: string } = {};
 
 vi.mock('$env/dynamic/public', () => ({

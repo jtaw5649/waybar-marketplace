@@ -15,12 +15,64 @@ describe('validateSocialUrl', () => {
 			expect(validateSocialUrl('github', 'https://github.com/user/repo')).toBe(false);
 		});
 
-		it('rejects non-github URL', () => {
-			expect(validateSocialUrl('github', 'https://gitlab.com/username')).toBe(false);
+		it('accepts gitlab profile URL', () => {
+			expect(validateSocialUrl('github', 'https://gitlab.com/username')).toBe(true);
+		});
+
+		it('accepts gitlab URL with trailing slash', () => {
+			expect(validateSocialUrl('github', 'https://gitlab.com/username/')).toBe(true);
+		});
+
+		it('rejects non-github-or-gitlab URL', () => {
+			expect(validateSocialUrl('github', 'https://bitbucket.org/username')).toBe(false);
 		});
 
 		it('accepts empty string', () => {
 			expect(validateSocialUrl('github', '')).toBe(true);
+		});
+	});
+
+	describe('bluesky', () => {
+		it('accepts valid bluesky profile URL', () => {
+			expect(validateSocialUrl('bluesky', 'https://bsky.app/profile/username.bsky.social')).toBe(
+				true
+			);
+		});
+
+		it('accepts bluesky URL with trailing slash', () => {
+			expect(validateSocialUrl('bluesky', 'https://bsky.app/profile/username.bsky.social/')).toBe(
+				true
+			);
+		});
+
+		it('accepts custom domain bluesky handle', () => {
+			expect(validateSocialUrl('bluesky', 'https://bsky.app/profile/user.example.com')).toBe(true);
+		});
+
+		it('rejects non-bluesky URL', () => {
+			expect(validateSocialUrl('bluesky', 'https://twitter.com/username')).toBe(false);
+		});
+
+		it('accepts empty string', () => {
+			expect(validateSocialUrl('bluesky', '')).toBe(true);
+		});
+	});
+
+	describe('discord', () => {
+		it('accepts discord.gg invite URL', () => {
+			expect(validateSocialUrl('discord', 'https://discord.gg/abc123')).toBe(true);
+		});
+
+		it('accepts discord.com invite URL', () => {
+			expect(validateSocialUrl('discord', 'https://discord.com/invite/abc123')).toBe(true);
+		});
+
+		it('rejects non-discord URL', () => {
+			expect(validateSocialUrl('discord', 'https://slack.com/team')).toBe(false);
+		});
+
+		it('accepts empty string', () => {
+			expect(validateSocialUrl('discord', '')).toBe(true);
 		});
 	});
 

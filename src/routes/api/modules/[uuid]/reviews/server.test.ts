@@ -1,18 +1,28 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST, PUT, DELETE } from './+server';
 
+vi.mock('$lib/server/token', () => ({
+	getServerToken: vi.fn(),
+	resolveAccessToken: vi.fn()
+}));
+
+import { resolveAccessToken } from '$lib/server/token';
+
 type ReviewEvent = Parameters<typeof POST>[0];
 
-const makeEvent = (accessToken?: string) =>
-	({
+const makeEvent = (accessToken?: string) => {
+	vi.mocked(resolveAccessToken).mockResolvedValue(accessToken ?? null);
+	return {
 		params: { uuid: 'module@test' },
+		cookies: {},
 		locals: {
-			auth: vi.fn().mockResolvedValue(accessToken ? { accessToken } : null)
+			auth: vi.fn().mockResolvedValue(accessToken ? { user: { login: 'test' } } : null)
 		},
 		request: {
 			json: vi.fn().mockResolvedValue({ rating: 5, title: 'Title', body: 'Body' })
 		}
-	}) as unknown as ReviewEvent;
+	} as unknown as ReviewEvent;
+};
 
 describe('reviews api', () => {
 	beforeEach(() => {
@@ -35,7 +45,7 @@ describe('reviews api', () => {
 		await handler(event);
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			expect.stringContaining('/api/v1/modules/module%40test/reviews'),
+			expect.stringContaining('/api/v1/modules/module@test/reviews'),
 			expect.objectContaining({
 				method,
 				headers: expect.objectContaining({
@@ -54,7 +64,7 @@ describe('reviews api', () => {
 		await DELETE(event);
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			expect.stringContaining('/api/v1/modules/module%40test/reviews'),
+			expect.stringContaining('/api/v1/modules/module@test/reviews'),
 			expect.objectContaining({
 				method: 'DELETE',
 				headers: expect.objectContaining({ Authorization: 'Bearer token' })

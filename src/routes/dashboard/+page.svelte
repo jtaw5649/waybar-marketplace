@@ -9,12 +9,14 @@
 	import CharacterCounter from '$lib/components/CharacterCounter.svelte';
 	import ProfileCompleteness from '$lib/components/ProfileCompleteness.svelte';
 	import ProfilePreviewCard from '$lib/components/ProfilePreviewCard.svelte';
+	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { validateSocialUrl } from '$lib/utils/socialLinks';
 	import { getDisplayName, getProfileUsername } from '$lib/utils/displayName';
 	import { fromStore } from 'svelte/store';
 	import { pinnedModules, MAX_PINNED_MODULES } from '$lib/stores/pinnedModules';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
+	import { encodeModuleUuid } from '$lib/utils/url';
 
 	let { data }: { data: PageData } = $props();
 
@@ -322,7 +324,7 @@
 					{:else}
 						<div class="modules-list">
 							{#each modules as module (module.uuid)}
-								<a href="/modules/{encodeURIComponent(module.uuid)}" class="module-row">
+								<a href="/modules/{encodeModuleUuid(module.uuid)}" class="module-row">
 									<div class="module-info">
 										<h3>{module.name}</h3>
 										<p class="module-uuid">{module.uuid}</p>
@@ -562,15 +564,14 @@
 										<label for="bio">Bio</label>
 										<CharacterCounter current={bio.length} max={500} />
 									</div>
-									<textarea
+									<MarkdownEditor
 										id="bio"
 										name="bio"
 										bind:value={bio}
 										placeholder="Tell us about yourself..."
-										rows="3"
-										maxlength="500"
-										aria-describedby="bio-help"
-									></textarea>
+										rows={3}
+										maxlength={500}
+									/>
 									<p id="bio-help" class="help-text">
 										A short bio to display on your profile page.
 									</p>
@@ -781,14 +782,14 @@
 
 			<div class="form-group">
 				<label for="collection-description">Description</label>
-				<textarea
+				<MarkdownEditor
 					id="collection-description"
 					name="description"
 					bind:value={newCollectionDescription}
 					placeholder="A collection of my favorite modules..."
-					rows="3"
-					maxlength="500"
-				></textarea>
+					rows={3}
+					maxlength={500}
+				/>
 			</div>
 
 			<div class="form-group">
@@ -850,14 +851,14 @@
 
 			<div class="form-group">
 				<label for="edit-collection-description">Description</label>
-				<textarea
+				<MarkdownEditor
 					id="edit-collection-description"
 					name="description"
 					bind:value={newCollectionDescription}
 					placeholder="A collection of my favorite modules..."
-					rows="3"
-					maxlength="500"
-				></textarea>
+					rows={3}
+					maxlength={500}
+				/>
 			</div>
 
 			<div class="form-group">
@@ -929,6 +930,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		padding-top: 5rem;
 	}
 
 	.auth-required {
@@ -1197,7 +1199,7 @@
 	.module-uuid {
 		font-size: 0.75rem;
 		color: var(--color-text-faint);
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 	}
 
 	.module-meta {
@@ -1209,7 +1211,7 @@
 	}
 
 	.version {
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 	}
 
 	.category {
@@ -1320,8 +1322,7 @@
 		margin-bottom: var(--space-sm);
 	}
 
-	.form-group input,
-	.form-group textarea {
+	.form-group input {
 		width: 100%;
 		padding: var(--space-md);
 		background-color: var(--color-bg-base);
@@ -1332,8 +1333,7 @@
 		transition: border-color var(--duration-fast) var(--ease-out);
 	}
 
-	.form-group input:focus,
-	.form-group textarea:focus {
+	.form-group input:focus {
 		outline: none;
 		border-color: var(--color-primary);
 		box-shadow: 0 0 0 3px rgba(97, 125, 250, 0.15);
@@ -1459,16 +1459,6 @@
 	.spinner {
 		width: 16px;
 		height: 16px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	.collections-list {

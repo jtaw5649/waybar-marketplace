@@ -9,6 +9,7 @@
 	} from '$lib/utils/packageValidation';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { getCategorySlugs, getCategoryName } from '$lib/constants/categories';
 
@@ -89,7 +90,7 @@
 		<div class="page-header-content">
 			<div class="page-header-text">
 				<h1>Upload Module</h1>
-				<p>Share your Waybar module with the community</p>
+				<p>Share your module with the community</p>
 			</div>
 		</div>
 	</div>
@@ -132,7 +133,7 @@
 				<h2>Module Published!</h2>
 				<p>Your module has been successfully published to the registry.</p>
 				<div class="success-actions">
-					<a href="/browse" class="btn btn-primary">Browse Modules</a>
+					<a href="/modules" class="btn btn-primary">Browse Modules</a>
 					<a href="/dashboard" class="btn btn-secondary">Go to Dashboard</a>
 				</div>
 			</div>
@@ -274,13 +275,13 @@ Supports **Markdown** formatting:
 
 				<div class="form-group">
 					<label for="changelog">Changelog (optional)</label>
-					<textarea
+					<MarkdownEditor
 						id="changelog"
 						name="changelog"
 						bind:value={changelog}
 						placeholder="What's new in this version..."
-						rows="2"
-					></textarea>
+						rows={3}
+					/>
 				</div>
 
 				<button type="submit" class="btn btn-primary btn-submit" disabled={loading}>
@@ -303,6 +304,7 @@ Supports **Markdown** formatting:
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		padding-top: 5rem;
 	}
 
 	.page-header {
@@ -480,7 +482,7 @@ Supports **Markdown** formatting:
 		padding: 0.2em 0.4em;
 		border-radius: var(--radius-sm);
 		font-size: 0.875em;
-		font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		font-family: var(--font-mono);
 	}
 
 	.markdown-preview :global(pre) {
@@ -636,16 +638,6 @@ Supports **Markdown** formatting:
 	.spinner {
 		width: 16px;
 		height: 16px;
-		border: 2px solid rgba(255, 255, 255, 0.3);
-		border-top-color: white;
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	@media (max-width: 768px) {

@@ -9,7 +9,7 @@
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
 	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
 	import ViewToggle from '$lib/components/ViewToggle.svelte';
-	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { Search } from 'lucide-svelte';
 	import { calculatePopularityScore, calculateTrendingScore } from '$lib/utils/popularity';
 	import { getBrowseCategories } from '$lib/constants/categories';
 	import { viewMode } from '$lib/stores/viewMode';
@@ -125,18 +125,12 @@
 		if (selectedSort !== 'popular') params.set('sort', selectedSort);
 		if (currentPage > 1) params.set('page', currentPage.toString());
 
-		const newUrl = params.toString() ? `/browse?${params.toString()}` : '/browse';
+		const newUrl = params.toString() ? `/modules?${params.toString()}` : '/modules';
 		goto(newUrl, {
 			replaceState: options.replaceState ?? false,
 			noScroll: true,
 			keepFocus: true
 		});
-	}
-
-	function handleSearch(query: string) {
-		searchQuery = query;
-		currentPage = 1;
-		updateUrl({ replaceState: true });
 	}
 
 	function handleCategoryChange(slug: string) {
@@ -200,14 +194,19 @@
 			</div>
 			<div class="browse-controls">
 				<div class="browse-search">
-					<SearchInput
-						bind:value={searchQuery}
-						placeholder="Search modules..."
-						size="md"
-						debounce={300}
-						oninput={handleSearch}
-						onsubmit={handleSearch}
-					/>
+					<div class="filter-input-wrapper">
+						<Search size={18} class="filter-input-icon" />
+						<input
+							type="text"
+							class="filter-input"
+							placeholder="Filter modules..."
+							bind:value={searchQuery}
+							oninput={() => {
+								currentPage = 1;
+								updateUrl({ replaceState: true });
+							}}
+						/>
+					</div>
 				</div>
 				<ViewToggle />
 				<SidebarToggle />
@@ -363,7 +362,7 @@
 				{#if error}
 					<div class="empty-state">
 						<p class="error">{error}</p>
-						<a href="/browse" class="btn btn-primary">Refresh</a>
+						<a href="/modules" class="btn btn-primary">Refresh</a>
 					</div>
 				{:else if paginatedModules.length === 0}
 					<div class="empty-state">
@@ -502,6 +501,7 @@
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
+		padding-top: 5rem;
 	}
 
 	.browse-header {
@@ -541,6 +541,47 @@
 		flex: 1;
 		max-width: 400px;
 		min-width: 250px;
+	}
+
+	.filter-input-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	.filter-input-wrapper :global(.filter-input-icon) {
+		position: absolute;
+		left: var(--space-md);
+		color: var(--color-text-faint);
+		pointer-events: none;
+	}
+
+	.filter-input {
+		width: 100%;
+		padding: var(--space-md) var(--space-lg);
+		padding-left: calc(var(--space-md) + 18px + var(--space-sm));
+		background-color: var(--color-bg-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 9999px;
+		color: var(--color-text-normal);
+		font-size: 0.9rem;
+		transition:
+			border-color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out);
+	}
+
+	.filter-input::placeholder {
+		color: var(--color-text-faint);
+	}
+
+	.filter-input:hover {
+		border-color: var(--color-primary);
+		background-color: var(--color-bg-base);
+	}
+
+	.filter-input:focus {
+		outline: none;
+		border-color: var(--color-primary);
 	}
 
 	.browse-layout {

@@ -3,6 +3,8 @@ import { API_BASE_URL } from '$lib';
 import { normalizeStarsPayload } from '$lib/utils/starsResponse';
 import { validateSession } from '$lib/utils/sessionValidator';
 import { toPublicSession } from '$lib/utils/sessionPublic';
+import { acceptHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
 
 interface StarredModule {
 	uuid: string;
@@ -19,12 +21,13 @@ interface StarredModule {
 	starred_at: string;
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const session = await locals.auth();
+	const accessToken = await resolveAccessToken(cookies);
 	const publicSession = toPublicSession(session);
-	const validation = validateSession(session);
+	const validation = validateSession(session, !!accessToken);
 
-	if (!validation.isValid || !session?.accessToken) {
+	if (!validation.isValid || !accessToken) {
 		return {
 			starredModules: [] as StarredModule[],
 			total: 0,
@@ -35,9 +38,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	try {
 		const res = await fetch(`${API_BASE_URL}/api/v1/users/me/stars`, {
-			headers: {
-				Authorization: `Bearer ${session.accessToken}`
-			}
+			headers: acceptHeaders(accessToken)
 		});
 
 		if (!res.ok) {

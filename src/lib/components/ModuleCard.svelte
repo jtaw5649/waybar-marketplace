@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import { CheckCircle, Download, Star } from 'lucide-svelte';
+	import AuthorLink from './AuthorLink.svelte';
 	import Badge from './Badge.svelte';
 	import Tag from './Tag.svelte';
 	import StarFavorite from './StarFavorite.svelte';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
 	import { useModuleCard } from '$lib/hooks/useModuleCard.svelte';
+	import { encodeModuleUuid } from '$lib/utils/url';
 
 	interface Props {
 		uuid: string;
@@ -45,17 +48,22 @@
 	<div class="favorite-action">
 		<StarFavorite {uuid} size="sm" />
 	</div>
-	<a href="/modules/{encodeURIComponent(uuid)}" class="card" style="--card-color: {categoryColor}">
+	<a
+		href="/modules/{encodeModuleUuid(uuid)}"
+		class="card"
+		style="--card-color: {categoryColor}"
+		aria-label={`View ${name} module`}
+	>
 		<div class="card-content">
-			{#if icon}
-				<div class="card-icon">
-					<img src={icon} alt="" />
+			<div class="card-icon">
+				<div class="card-icon-frame">
+					{#if icon}
+						<img class="card-icon-image" src={icon} alt="" />
+					{:else}
+						<span class="card-icon-initial">{name.charAt(0).toUpperCase()}</span>
+					{/if}
 				</div>
-			{:else}
-				<div class="card-icon placeholder">
-					{name.charAt(0).toUpperCase()}
-				</div>
-			{/if}
+			</div>
 
 			<div class="card-main">
 				<div class="card-header">
@@ -64,7 +72,7 @@
 						<Badge size="sm" variant="version">v{version}</Badge>
 					{/if}
 				</div>
-				<p class="author">by {author}</p>
+				<p class="author">by <AuthorLink username={author} /></p>
 				<p class="description">{description}</p>
 			</div>
 		</div>
@@ -91,30 +99,19 @@
 				{/if}
 				{#if verified}
 					<Tag variant="green">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-							<polyline points="22 4 12 14.01 9 11.01" />
-						</svg>
+						<CheckCircle size={14} />
 						Verified
 					</Tag>
 				{/if}
 				{#if isStarred}
 					<Tag variant="amber">
-						<svg viewBox="0 0 24 24" fill="currentColor">
-							<path
-								d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-							/>
-						</svg>
+						<span class="star-filled"><Star size={14} /></span>
 						Starred
 					</Tag>
 				{/if}
 			</div>
 			<div class="card-stats">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-					<polyline points="7 10 12 15 17 10" />
-					<line x1="12" y1="15" x2="12" y2="3" />
-				</svg>
+				<Download size={14} />
 				{formatDownloads(downloads)}
 			</div>
 		</div>
@@ -122,6 +119,10 @@
 </div>
 
 <style>
+	.star-filled :global(svg) {
+		fill: currentColor;
+	}
+
 	.card-wrapper {
 		position: relative;
 	}
@@ -150,10 +151,10 @@
 
 	.card:hover {
 		transform: translateY(-2px);
-		border-color: var(--card-color);
+		border-color: color-mix(in srgb, var(--card-color) 45%, var(--color-border));
 		box-shadow:
 			var(--shadow-md),
-			0 0 20px color-mix(in srgb, var(--card-color) 30%, transparent);
+			0 0 22px rgba(111, 125, 255, 0.18);
 		text-decoration: none;
 	}
 
@@ -168,27 +169,44 @@
 	}
 
 	.card-icon {
-		width: 48px;
-		height: 48px;
+		width: 52px;
+		height: 52px;
 		border-radius: var(--radius-md);
 		flex-shrink: 0;
-		overflow: hidden;
-	}
-
-	.card-icon.placeholder {
-		background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-		color: white;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 1.25rem;
-		font-weight: 600;
 	}
 
-	.card-icon img {
+	.card-icon-frame {
 		width: 100%;
 		height: 100%;
-		object-fit: cover;
+		border-radius: var(--radius-md);
+		background: linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--color-primary) 18%, var(--color-bg-elevated)),
+			color-mix(in srgb, var(--color-info) 10%, var(--color-bg-elevated))
+		);
+		border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+
+	.card-icon-image {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		padding: 6px;
+		filter: drop-shadow(0 6px 10px rgba(6, 9, 18, 0.35));
+	}
+
+	.card-icon-initial {
+		font-size: 1.35rem;
+		font-weight: 600;
+		color: var(--color-text-normal);
 	}
 
 	.card-main {
@@ -230,15 +248,15 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-md);
-		margin-top: var(--space-lg);
-		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border);
+		margin-top: var(--space-md);
+		padding-top: var(--space-sm);
+		border-top: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
 	}
 
 	.card-tags {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-xs);
 		flex-wrap: wrap;
 	}
 
@@ -246,22 +264,17 @@
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--color-warning);
-		background: linear-gradient(
-			135deg,
-			color-mix(in srgb, var(--color-warning) 15%, transparent),
-			color-mix(in srgb, var(--color-warning) 20%, transparent)
-		);
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--color-primary);
+		background: rgba(111, 125, 255, 0.14);
+		border: 1px solid rgba(111, 125, 255, 0.25);
 		padding: 4px 10px;
 		border-radius: 9999px;
 		flex-shrink: 0;
 	}
 
-	.card-stats svg {
-		width: 14px;
-		height: 14px;
-		color: var(--color-warning);
+	.card-stats :global(svg) {
+		color: var(--color-primary);
 	}
 </style>

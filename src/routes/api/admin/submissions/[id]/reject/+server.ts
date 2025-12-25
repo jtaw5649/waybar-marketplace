@@ -1,10 +1,12 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { API_BASE_URL } from '$lib';
+import { jsonHeaders } from '$lib/server/authHeaders';
 import { requireAccessToken } from '$lib/utils/requireAccessToken';
 
-export const POST: RequestHandler = async ({ params, locals, request }) => {
-	const accessToken = await requireAccessToken(locals);
+export const POST: RequestHandler = async ({ params, cookies, request, locals }) => {
+	const session = await locals.auth();
+	const accessToken = await requireAccessToken(cookies, session);
 	let body: unknown;
 	try {
 		body = await request.json();
@@ -23,10 +25,7 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
 
 	const res = await fetch(`${API_BASE_URL}/api/v1/admin/submissions/${params.id}/reject`, {
 		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${accessToken}`,
-			'Content-Type': 'application/json'
-		},
+		headers: jsonHeaders(accessToken),
 		body: JSON.stringify({ reason })
 	});
 

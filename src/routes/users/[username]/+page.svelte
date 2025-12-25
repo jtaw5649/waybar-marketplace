@@ -4,15 +4,9 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import ModuleCard from '$lib/components/ModuleCard.svelte';
+	import { formatMonthYear } from '$lib/utils/formatDate';
 
 	let { data }: { data: PageData } = $props();
-
-	function formatDate(dateStr: string): string {
-		return new Date(dateStr).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long'
-		});
-	}
 </script>
 
 <Header session={data.session} />
@@ -104,11 +98,11 @@
 							<line x1="8" y1="2" x2="8" y2="6" />
 							<line x1="3" y1="10" x2="21" y2="10" />
 						</svg>
-						Member since {formatDate(data.profile.created_at)}
+						Member since {formatMonthYear(data.profile.created_at)}
 					</span>
 				</div>
 
-				{#if data.profile.github_url || data.profile.twitter_url || data.profile.mastodon_url || data.profile.website_url}
+				{#if data.profile.github_url || data.profile.twitter_url || data.profile.bluesky_url || data.profile.discord_url || data.profile.website_url || data.profile.sponsor_url}
 					<div class="social-links">
 						{#if data.profile.github_url}
 							<a
@@ -142,20 +136,36 @@
 								<span>X</span>
 							</a>
 						{/if}
-						{#if data.profile.mastodon_url}
+						{#if data.profile.bluesky_url}
 							<a
-								href={data.profile.mastodon_url}
+								href={data.profile.bluesky_url}
 								target="_blank"
-								rel="noopener noreferrer me"
-								class="social-link mastodon"
-								aria-label="Mastodon profile (opens in new tab)"
+								rel="noopener noreferrer"
+								class="social-link bluesky"
+								aria-label="Bluesky profile (opens in new tab)"
 							>
 								<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
 									<path
-										d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.668 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"
+										d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.272-.037.407-.052-.136.02-.272.041-.407.068-3.19.625-6.037 2.173-3.424 6.154 2.696 4.106 4.617 3.048 5.685 2.369.956-.607 3.326-2.672 3.326-5.27 0 2.598 2.37 4.663 3.326 5.27 1.068.679 2.989 1.737 5.685-2.369 2.613-3.981-.234-5.529-3.424-6.154a10.57 10.57 0 0 0-.407-.068c.135.015.27.033.407.052 2.67.296 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.48 0-.687-.139-1.859-.902-2.202-.66-.3-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z"
 									/>
 								</svg>
-								<span>Mastodon</span>
+								<span>Bluesky</span>
+							</a>
+						{/if}
+						{#if data.profile.discord_url}
+							<a
+								href={data.profile.discord_url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="social-link discord"
+								aria-label="Discord server (opens in new tab)"
+							>
+								<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+									<path
+										d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"
+									/>
+								</svg>
+								<span>Discord</span>
 							</a>
 						{/if}
 						{#if data.profile.website_url}
@@ -183,6 +193,29 @@
 								<span
 									>{data.profile.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span
 								>
+							</a>
+						{/if}
+						{#if data.profile.sponsor_url}
+							<a
+								href={data.profile.sponsor_url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="social-link sponsor"
+								aria-label="Support this creator (opens in new tab)"
+							>
+								<svg
+									viewBox="0 0 24 24"
+									width="18"
+									height="18"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path
+										d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+									/>
+								</svg>
+								<span>Sponsor</span>
 							</a>
 						{/if}
 					</div>
@@ -273,6 +306,7 @@
 		max-width: 1200px;
 		margin: 0 auto;
 		padding: var(--space-xl);
+		padding-top: 5rem;
 		width: 100%;
 	}
 
@@ -444,13 +478,31 @@
 		background-color: #1a1a1a;
 	}
 
-	.social-link.mastodon {
-		background-color: #6364ff;
+	.social-link.bluesky {
+		background-color: #0085ff;
 		color: white;
 	}
 
-	.social-link.mastodon:hover {
-		background-color: #5253e0;
+	.social-link.bluesky:hover {
+		background-color: #0073e6;
+	}
+
+	.social-link.discord {
+		background-color: #5865f2;
+		color: white;
+	}
+
+	.social-link.discord:hover {
+		background-color: #4752c4;
+	}
+
+	.social-link.sponsor {
+		background-color: #db61a2;
+		color: white;
+	}
+
+	.social-link.sponsor:hover {
+		background-color: #bf4b8a;
 	}
 
 	.social-link.website {

@@ -16,7 +16,6 @@ declare module '@auth/sveltekit' {
 			image?: string | null;
 			login?: string;
 		};
-		accessToken?: string;
 		error?: string;
 	}
 }

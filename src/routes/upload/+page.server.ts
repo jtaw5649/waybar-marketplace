@@ -7,6 +7,9 @@ import {
 	isPackageSizeAllowed
 } from '$lib/utils/packageValidation';
 import { toPublicSession } from '$lib/utils/sessionPublic';
+import { encodeModuleUuid } from '$lib/utils/url';
+import { acceptHeaders, jsonHeaders } from '$lib/server/authHeaders';
+import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -21,14 +24,11 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	upload: async (event) => {
-		const session = await event.locals.auth();
-		if (!session?.user || !session.accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
-
-		if (session.error === 'RefreshTokenError') {
-			return fail(401, { message: 'Session expired' });
-		}
+		const { session, accessToken } = authResult;
 
 		const formData = await event.request.formData();
 		const name = formData.get('name') as string;
@@ -62,12 +62,12 @@ export const actions: Actions = {
 		const author = session.user.login?.toLowerCase().replace(/[^a-z0-9-]/g, '-') || 'anonymous';
 		const moduleName = name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 		const uuid = `${moduleName}@${author}`;
-		const authHeader = { Authorization: `Bearer ${session.accessToken}` };
+		const authHeader = acceptHeaders(accessToken);
 
 		try {
 			const createRes = await fetch(`${API_BASE_URL}/api/v1/modules`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json', ...authHeader },
+				headers: jsonHeaders(accessToken),
 				body: JSON.stringify({ uuid, name, description, category, repo_url: repoUrl })
 			});
 			if (!createRes.ok) {
@@ -77,7 +77,7 @@ export const actions: Actions = {
 			}
 
 			const uploadRes = await fetch(
-				`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions/${version}/upload`,
+				`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/versions/${version}/upload`,
 				{ method: 'POST', headers: authHeader, body: await packageFile.arrayBuffer() }
 			);
 			if (!uploadRes.ok) {
@@ -87,10 +87,10 @@ export const actions: Actions = {
 			}
 
 			const publishRes = await fetch(
-				`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions/${version}/publish`,
+				`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/versions/${version}/publish`,
 				{
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json', ...authHeader },
+					headers: jsonHeaders(accessToken),
 					body: JSON.stringify({ changelog: changelog || null })
 				}
 			);

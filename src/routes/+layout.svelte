@@ -25,7 +25,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Waybar Marketplace</title>
+	<title>Barforge</title>
 </svelte:head>
 
 <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -33,7 +33,7 @@
 	{@render children()}
 </div>
 <Toast />
-<CommandPalette />
+<CommandPalette session={page.data.session} isAdmin={page.data.isAdmin} />
 
 <style>
 	.app-wrapper {

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { fromStore } from 'svelte/store';
+	import { onMount } from 'svelte';
+	import { Star } from 'lucide-svelte';
 	import { stars } from '$lib/stores/stars.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
@@ -8,6 +10,20 @@
 	import ModuleCardRow from '$lib/components/ModuleCardRow.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import { viewMode } from '$lib/stores/viewMode';
+	import { encodeModuleUuid } from '$lib/utils/url';
+
+	interface ModuleInfo {
+		uuid: string;
+		name: string;
+		description: string;
+		category: string;
+		downloads: number;
+		version?: string;
+		verified: boolean;
+		icon_url?: string;
+		author_username: string;
+		created_at: string;
+	}
 
 	let { data } = $props();
 
@@ -16,11 +32,44 @@
 	const localStarredUuids = $derived([...stars.starred]);
 	const serverModules = $derived(data.starredModules);
 
+	let localModules = $state<ModuleInfo[]>([]);
+	let loadingLocal = $state(false);
+
+	async function fetchLocalStarredModules() {
+		if (data.isAuthenticated || localStarredUuids.length === 0) return;
+
+		loadingLocal = true;
+		const fetched: ModuleInfo[] = [];
+
+		await Promise.all(
+			localStarredUuids.map(async (uuid) => {
+				try {
+					const res = await fetch(`/api/modules/${encodeModuleUuid(uuid)}`);
+					if (res.ok) {
+						const module = await res.json();
+						fetched.push(module);
+					}
+				} catch {
+					// Skip failed fetches
+				}
+			})
+		);
+
+		localModules = fetched;
+		loadingLocal = false;
+	}
+
+	onMount(() => {
+		if (!data.isAuthenticated && localStarredUuids.length > 0) {
+			fetchLocalStarredModules();
+		}
+	});
+
 	const displayModules = $derived(() => {
 		if (data.isAuthenticated) {
 			return serverModules.filter((m) => stars.starred.has(m.uuid));
 		}
-		return serverModules.filter((m) => stars.starred.has(m.uuid));
+		return localModules.filter((m) => stars.starred.has(m.uuid));
 	});
 
 	const localOnlyCount = $derived(
@@ -29,8 +78,8 @@
 </script>
 
 <svelte:head>
-	<title>Your Stars - Waybar Marketplace</title>
-	<meta name="description" content="Your starred Waybar modules" />
+	<title>Your Stars - Barforge</title>
+	<meta name="description" content="Your starred Barforge modules" />
 </svelte:head>
 
 <Header session={data.session} />
@@ -40,11 +89,7 @@
 		<div class="page-header" in:fly={{ y: -20, duration: 300 }}>
 			<div class="header-content">
 				<div class="title-section">
-					<svg class="star-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-						<path
-							d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-						/>
-					</svg>
+					<span class="star-icon"><Star size={32} /></span>
 					<h1>Your Stars</h1>
 				</div>
 				<p class="subtitle">
@@ -61,13 +106,18 @@
 
 			{#if !data.isAuthenticated}
 				<div class="auth-prompt">
-					<p>Sign in to sync your stars across devices</p>
-					<Button href="/login?redirectTo=/stars" variant="primary" size="sm">Sign In</Button>
+					<p>Log in to sync your stars across devices</p>
+					<Button href="/login?redirectTo=/stars" variant="primary" size="sm">Log In</Button>
 				</div>
 			{/if}
 		</div>
 
-		{#if displayModules().length > 0}
+		{#if loadingLocal}
+			<div class="loading-state" in:fly={{ y: 20, duration: 300 }}>
+				<div class="spinner"></div>
+				<p>Loading your starred modules...</p>
+			</div>
+		{:else if displayModules().length > 0}
 			<div
 				class="module-container"
 				class:grid={viewModeState.current === 'grid'}
@@ -108,11 +158,7 @@
 		{:else}
 			<div class="empty-state" in:fly={{ y: 20, duration: 300, delay: 150 }}>
 				<div class="empty-icon">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path
-							d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-						/>
-					</svg>
+					<Star size={64} />
 				</div>
 				<h2>No starred modules yet</h2>
 				<p>Star modules while browsing to quickly access them later</p>
@@ -128,6 +174,7 @@
 	main {
 		flex: 1;
 		padding: var(--space-2xl) 0;
+		padding-top: 5rem;
 	}
 
 	.container {
@@ -157,9 +204,12 @@
 	}
 
 	.star-icon {
-		width: 32px;
-		height: 32px;
+		display: inline-flex;
 		color: var(--color-warning);
+	}
+
+	.star-icon :global(svg) {
+		fill: currentColor;
 	}
 
 	h1 {
@@ -193,6 +243,27 @@
 		margin: 0;
 	}
 
+	.loading-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-4xl) var(--space-xl);
+		gap: var(--space-lg);
+	}
+
+	.loading-state p {
+		color: var(--color-text-muted);
+		font-size: 0.875rem;
+	}
+
+	.spinner {
+		width: 32px;
+		height: 32px;
+		border: 3px solid var(--color-border);
+		border-top-color: var(--color-primary);
+	}
+
 	.module-container.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -218,15 +289,8 @@
 	}
 
 	.empty-icon {
-		width: 64px;
-		height: 64px;
 		margin-bottom: var(--space-lg);
 		color: var(--color-text-faint);
-	}
-
-	.empty-icon svg {
-		width: 100%;
-		height: 100%;
 	}
 
 	.empty-state h2 {

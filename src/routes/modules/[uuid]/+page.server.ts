@@ -1,71 +1,32 @@
 import type { PageServerLoad, Actions } from './$types';
+import type {
+	Module,
+	Review,
+	VersionHistoryEntry,
+	CollectionBase,
+	Screenshot,
+	RelatedModule
+} from '$lib/types';
 import { error, fail } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
-import type { Module } from '$lib/types';
 import { normalizeUsername } from '$lib/utils/username';
-
-interface ReviewUser {
-	username: string;
-	avatar_url: string | null;
-}
-
-interface Review {
-	id: number;
-	rating: number;
-	title: string | null;
-	body: string | null;
-	helpful_count: number;
-	created_at: string;
-	updated_at: string | null;
-	user: ReviewUser;
-}
-
-interface VersionHistoryEntry {
-	version: string;
-	changelog: string | null;
-	downloads: number;
-	published_at: string;
-}
-
-interface Collection {
-	id: number;
-	name: string;
-	description: string | null;
-	visibility: string;
-	module_count: number;
-}
-
-interface Screenshot {
-	id: number;
-	r2_key: string;
-	alt_text: string | null;
-	position: number;
-	created_at: string;
-}
-
-interface RelatedModule {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	downloads: number;
-	verified_author: boolean;
-	version?: string;
-	created_at?: string;
-}
+import { toPublicSession } from '$lib/utils/sessionPublic';
+import { encodeModuleUuid } from '$lib/utils/url';
+import { acceptHeaders, jsonHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
+import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const uuid = event.params.uuid;
-	const accessToken = session?.accessToken;
+	const accessToken = await resolveAccessToken(event.cookies);
 
 	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, relatedRes] = await Promise.all([
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/reviews`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/versions`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/related?limit=6`)
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}`),
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/reviews`),
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/versions`),
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots`),
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/related?limit=6`)
 	]);
 
 	if (!moduleRes.ok) {
@@ -99,11 +60,11 @@ export const load: PageServerLoad = async (event) => {
 		relatedModules = relatedData.data?.modules || relatedData.modules || [];
 	}
 
-	let collections: Collection[] = [];
+	let collections: CollectionBase[] = [];
 	if (accessToken) {
 		try {
 			const collectionsRes = await fetch(`${API_BASE_URL}/api/v1/collections`, {
-				headers: { Authorization: `Bearer ${accessToken}` }
+				headers: acceptHeaders(accessToken)
 			});
 			if (collectionsRes.ok) {
 				const collectionsData = await collectionsRes.json();
@@ -117,7 +78,7 @@ export const load: PageServerLoad = async (event) => {
 	const isOwner = normalizeUsername(session?.user?.login) === module.author;
 
 	return {
-		session,
+		session: toPublicSession(session),
 		uuid: module.uuid,
 		module,
 		reviews,
@@ -131,11 +92,11 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	addToCollection: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = session?.accessToken;
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
+		const { accessToken } = authResult;
 
 		const uuid = event.params.uuid;
 		const formData = await event.request.formData();
@@ -148,10 +109,7 @@ export const actions: Actions = {
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${collectionId}/modules`, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${accessToken}`
-			},
+			headers: jsonHeaders(accessToken),
 			body: JSON.stringify({
 				module_uuid: uuid,
 				note: note?.trim() || null
@@ -170,11 +128,11 @@ export const actions: Actions = {
 	},
 
 	uploadScreenshot: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = session?.accessToken;
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
+		const { accessToken } = authResult;
 
 		const uuid = event.params.uuid;
 		const formData = await event.request.formData();
@@ -196,7 +154,7 @@ export const actions: Actions = {
 		}
 
 		const endpoint = new URL(
-			`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots`
+			`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots`
 		);
 		const trimmedAlt = altText?.trim();
 		if (trimmedAlt) {
@@ -205,10 +163,7 @@ export const actions: Actions = {
 
 		const res = await fetch(endpoint.toString(), {
 			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': file.type
-			},
+			headers: acceptHeaders(accessToken, { 'Content-Type': file.type }),
 			body: new Uint8Array(await file.arrayBuffer())
 		});
 
@@ -224,11 +179,11 @@ export const actions: Actions = {
 	},
 
 	deleteScreenshot: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = session?.accessToken;
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
+		const { accessToken } = authResult;
 
 		const uuid = event.params.uuid;
 		const formData = await event.request.formData();
@@ -239,12 +194,10 @@ export const actions: Actions = {
 		}
 
 		const res = await fetch(
-			`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/screenshots/${screenshotId}`,
+			`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots/${screenshotId}`,
 			{
 				method: 'DELETE',
-				headers: {
-					Authorization: `Bearer ${accessToken}`
-				}
+				headers: acceptHeaders(accessToken)
 			}
 		);
 

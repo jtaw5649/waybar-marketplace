@@ -1,70 +1,28 @@
 <script lang="ts">
 	import { fromStore } from 'svelte/store';
-	import { theme, type Theme } from '$lib/stores/theme';
+	import { Sun, Moon, Monitor } from 'lucide-svelte';
+	import { theme } from '$lib/stores/theme';
 
 	const themeState = fromStore(theme);
-
-	function cycleTheme() {
-		const order: Theme[] = ['system', 'light', 'dark'];
-		const currentIndex = order.indexOf(themeState.current);
-		const nextIndex = (currentIndex + 1) % order.length;
-		theme.set(order[nextIndex]);
-	}
 </script>
 
 <button
 	class="theme-toggle"
-	onclick={cycleTheme}
+	onclick={theme.cycle}
 	aria-label="Toggle theme (currently {themeState.current})"
 	title="Theme: {themeState.current}"
 >
-	{#if themeState.current === 'light'}
-		<svg
-			width="18"
-			height="18"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<circle cx="12" cy="12" r="5" />
-			<line x1="12" y1="1" x2="12" y2="3" />
-			<line x1="12" y1="21" x2="12" y2="23" />
-			<line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-			<line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-			<line x1="1" y1="12" x2="3" y2="12" />
-			<line x1="21" y1="12" x2="23" y2="12" />
-			<line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-			<line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-		</svg>
-	{:else if themeState.current === 'dark'}
-		<svg
-			width="18"
-			height="18"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-		</svg>
-	{:else}
-		<svg
-			width="18"
-			height="18"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-			<line x1="8" y1="21" x2="16" y2="21" />
-			<line x1="12" y1="17" x2="12" y2="21" />
-		</svg>
-	{/if}
+	{#key themeState.current}
+		<div class="icon-wrapper">
+			{#if themeState.current === 'light'}
+				<Sun size={18} />
+			{:else if themeState.current === 'dark'}
+				<Moon size={18} />
+			{:else}
+				<Monitor size={18} />
+			{/if}
+		</div>
+	{/key}
 </button>
 
 <style>
@@ -72,27 +30,63 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
-		height: 36px;
+		width: 38px;
+		height: 38px;
 		padding: 0;
-		background: none;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
+		background: var(--color-bg-elevated);
+		border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+		border-radius: 9999px;
 		color: var(--color-text-muted);
 		cursor: pointer;
 		transition:
-			background-color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out),
 			border-color var(--duration-fast) var(--ease-out),
+			background-color var(--duration-fast) var(--ease-out),
 			color var(--duration-fast) var(--ease-out);
+		overflow: hidden;
 	}
 
 	.theme-toggle:hover {
+		transform: scale(1.05);
 		background-color: var(--color-bg-surface);
-		border-color: var(--color-primary);
+		border-color: var(--color-border);
 		color: var(--color-text-normal);
+	}
+
+	.theme-toggle:active {
+		transform: scale(0.95);
 	}
 
 	.theme-toggle:focus-visible {
 		box-shadow: var(--focus-ring);
+	}
+
+	.icon-wrapper {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		animation: rotateIn 0.2s var(--ease-out);
+	}
+
+	@keyframes rotateIn {
+		from {
+			transform: rotate(-90deg);
+			opacity: 0;
+		}
+		to {
+			transform: rotate(0deg);
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.icon-wrapper {
+			animation: none;
+		}
+
+		.theme-toggle:hover,
+		.theme-toggle:active {
+			transform: none;
+		}
 	}
 </style>

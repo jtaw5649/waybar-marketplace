@@ -1,32 +1,27 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { Session } from '@auth/sveltekit';
+import type { Cookies } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
-
-async function getAccessToken(locals: App.Locals): Promise<string | null> {
-	const session = await locals.auth();
-	return session?.accessToken ?? null;
-}
+import { authHeaders, jsonHeaders } from '$lib/server/authHeaders';
+import { resolveAccessToken } from '$lib/server/token';
+import { encodeModuleUuid } from '$lib/utils/url';
 
 async function forwardReviewRequest(
 	method: 'POST' | 'PUT' | 'DELETE',
-	locals: App.Locals,
+	cookies: Cookies,
 	uuid: string,
-	request: Request
+	request: Request,
+	session?: Session | { accessToken?: string } | null
 ) {
-	const accessToken = await getAccessToken(locals);
+	const accessToken = await resolveAccessToken(cookies, session);
 	if (!accessToken) {
 		error(401, 'Unauthorized');
 	}
+	const headers = method === 'DELETE' ? authHeaders(accessToken) : jsonHeaders(accessToken);
+	const body = method === 'DELETE' ? undefined : JSON.stringify(await request.json());
 
-	const headers: HeadersInit = { Authorization: `Bearer ${accessToken}` };
-	let body: string | undefined;
-
-	if (method !== 'DELETE') {
-		headers['Content-Type'] = 'application/json';
-		body = JSON.stringify(await request.json());
-	}
-
-	const res = await fetch(`${API_BASE_URL}/api/v1/modules/${encodeURIComponent(uuid)}/reviews`, {
+	const res = await fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/reviews`, {
 		method,
 		headers,
 		body
@@ -39,11 +34,17 @@ async function forwardReviewRequest(
 	return json({ success: true });
 }
 
-export const POST: RequestHandler = async ({ params, locals, request }) =>
-	forwardReviewRequest('POST', locals, params.uuid, request);
+export const POST: RequestHandler = async ({ params, cookies, request, locals }) => {
+	const session = await locals.auth();
+	return forwardReviewRequest('POST', cookies, params.uuid, request, session);
+};
 
-export const PUT: RequestHandler = async ({ params, locals, request }) =>
-	forwardReviewRequest('PUT', locals, params.uuid, request);
+export const PUT: RequestHandler = async ({ params, cookies, request, locals }) => {
+	const session = await locals.auth();
+	return forwardReviewRequest('PUT', cookies, params.uuid, request, session);
+};
 
-export const DELETE: RequestHandler = async ({ params, locals, request }) =>
-	forwardReviewRequest('DELETE', locals, params.uuid, request);
+export const DELETE: RequestHandler = async ({ params, cookies, request, locals }) => {
+	const session = await locals.auth();
+	return forwardReviewRequest('DELETE', cookies, params.uuid, request, session);
+};

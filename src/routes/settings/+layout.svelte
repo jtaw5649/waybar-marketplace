@@ -107,6 +107,7 @@
 	.settings-page {
 		flex: 1;
 		background-color: var(--color-bg-base);
+		padding-top: 5rem;
 	}
 
 	.settings-container {

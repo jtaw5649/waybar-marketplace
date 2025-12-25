@@ -35,7 +35,7 @@
 		deleting = true;
 		try {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
-			toast.success('Account scheduled for deletion. You will be signed out.');
+			toast.success('Account scheduled for deletion. You will be logged out.');
 			showDeleteModal = false;
 			await signOut({ redirectTo: '/' });
 		} catch {
@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-	<title>Security Settings - Waybar Marketplace</title>
+	<title>Security Settings - Barforge</title>
 </svelte:head>
 
 <div class="settings-header">
@@ -57,7 +57,7 @@
 
 <section class="settings-section">
 	<h3 class="section-title">Connected Accounts</h3>
-	<p class="section-description">Services connected to your Waybar Marketplace account.</p>
+	<p class="section-description">Services connected to your Barforge account.</p>
 
 	<div class="connected-accounts">
 		<div class="connected-account">
@@ -107,10 +107,10 @@
 		<div class="session-current">
 			<div class="session-details">
 				<span class="session-label">Current Session</span>
-				<span class="session-meta">Signed in via GitHub OAuth</span>
+				<span class="session-meta">Logged in via GitHub OAuth</span>
 			</div>
 			<button class="btn btn-secondary" onclick={() => signOut({ redirectTo: '/login' })}>
-				Sign Out
+				Log Out
 			</button>
 		</div>
 	</div>
