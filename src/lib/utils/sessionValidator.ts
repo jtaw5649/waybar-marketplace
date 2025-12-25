@@ -6,16 +6,14 @@ export interface SessionValidation {
 }
 
 interface SessionLike {
-	accessToken?: string;
 	error?: string;
 }
 
-export function validateSession(session: SessionLike | null): SessionValidation {
+export function validateSession(session: SessionLike | null, hasToken: boolean): SessionValidation {
 	if (!session) {
 		return { isValid: false, hasToken: false, hasRefreshError: false, shouldReauth: true };
 	}
 
-	const hasToken = !!session.accessToken;
 	const hasRefreshError = session.error === 'RefreshTokenError';
 
 	return {

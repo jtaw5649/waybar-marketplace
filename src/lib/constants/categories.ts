@@ -1,6 +1,3 @@
-/**
- * Category definition with display name, slug, icon, and color.
- */
 export interface Category {
 	name: string;
 	slug: string;
@@ -8,10 +5,6 @@ export interface Category {
 	color: string;
 }
 
-/**
- * All available module categories.
- * This is the single source of truth for categories across the application.
- */
 export const CATEGORIES: readonly Category[] = [
 	{ name: 'System', slug: 'system', icon: '/icons/category-system.svg', color: '#617dfa' },
 	{ name: 'Hardware', slug: 'hardware', icon: '/icons/category-hardware.svg', color: '#10b981' },
@@ -34,38 +27,23 @@ export const CATEGORIES: readonly Category[] = [
 	{ name: 'Custom', slug: 'custom', icon: '/icons/category-custom.svg', color: '#64748b' }
 ] as const;
 
-/**
- * Get all category slugs as an array.
- */
 export function getCategorySlugs(): string[] {
 	return CATEGORIES.map((c) => c.slug);
 }
 
-/**
- * Get categories formatted for the browse page (with "All" option).
- */
 export function getBrowseCategories(): { name: string; slug: string }[] {
 	return [{ name: 'All', slug: '' }, ...CATEGORIES.map(({ name, slug }) => ({ name, slug }))];
 }
 
-/**
- * Get categories for display on the homepage (featured subset with icons/colors).
- */
 export function getHomepageCategories(): Category[] {
 	const featured = ['system', 'hardware', 'network', 'media', 'workspace', 'clock'];
 	return CATEGORIES.filter((c) => featured.includes(c.slug));
 }
 
-/**
- * Find a category by slug.
- */
 export function getCategoryBySlug(slug: string): Category | undefined {
 	return CATEGORIES.find((c) => c.slug === slug.toLowerCase());
 }
 
-/**
- * Get display name for a category slug.
- */
 export function getCategoryName(slug: string): string {
 	return getCategoryBySlug(slug)?.name ?? slug;
 }

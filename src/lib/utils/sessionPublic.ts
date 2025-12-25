@@ -1,9 +1,11 @@
 import type { Session } from '@auth/sveltekit';
 
-export type PublicSession = Omit<Session, 'accessToken'>;
+type SessionWithToken = Session & { accessToken?: string };
+
+export type PublicSession = Session;
 
 export function toPublicSession(session: Session | null): PublicSession | null {
 	if (!session) return null;
-	const { accessToken: _accessToken, ...rest } = session;
-	return rest;
+	const { accessToken: _accessToken, ...safeSession } = session as SessionWithToken;
+	return safeSession;
 }

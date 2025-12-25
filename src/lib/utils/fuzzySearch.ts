@@ -64,7 +64,7 @@ export function fuzzySearch<T extends SearchableItem>(
 		const order = fuzzer.sort(info, haystack, trimmedQuery);
 
 		for (let i = 0; i < order.length; i++) {
-			const idx = token(info.idx[order[i]]);
+			const idx = info.idx[order[i]];
 			const item = items[idx];
 			const score = order.length - i + (field === 'name' ? 1000 : 0);
 			const text = haystack[idx];
@@ -97,8 +97,4 @@ export function fuzzySearch<T extends SearchableItem>(
 	}
 
 	return results.sort((a, b) => b.score - a.score);
-}
-
-function token(value: number): number {
-	return value;
 }
