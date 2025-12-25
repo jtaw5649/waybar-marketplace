@@ -109,4 +109,10 @@ describe('Header', () => {
 		expect(avatarIndex).toBeGreaterThan(-1);
 		expect(avatarIndex).toBeGreaterThan(themeIndex);
 	});
+
+	it('logo-mark has shake animation class', () => {
+		render(Header, { session: null });
+		const logoMark = document.querySelector('.logo-mark');
+		expect(logoMark).toBeTruthy();
+	});
 });

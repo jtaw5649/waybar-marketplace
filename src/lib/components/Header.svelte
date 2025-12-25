@@ -45,37 +45,19 @@
 				class="logo-mark"
 				width="32"
 				height="32"
-				viewBox="8 8 112 112"
+				viewBox="0 0 100 100"
 				fill="none"
 				aria-hidden="true"
 			>
 				<defs>
-					<linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-						<stop offset="0%" stop-color="#617DFA" />
-						<stop offset="100%" stop-color="#8B5CF6" />
+					<linearGradient id="logoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+						<stop offset="0%" stop-color="#cba6f7" />
+						<stop offset="100%" stop-color="#89b4fa" />
 					</linearGradient>
 				</defs>
-				<rect
-					x="10"
-					y="44"
-					width="108"
-					height="40"
-					rx="12"
-					fill="var(--color-bg-elevated)"
-					stroke="url(#logoGrad)"
-					stroke-width="4"
-				/>
-				<rect x="18" y="52" width="24" height="24" rx="6" fill="url(#logoGrad)" />
-				<rect x="48" y="52" width="36" height="24" rx="6" fill="var(--color-border)" />
-				<rect
-					x="90"
-					y="52"
-					width="20"
-					height="24"
-					rx="6"
-					fill="var(--color-border)"
-					fill-opacity="0.5"
-				/>
+				<path d="M10 20 L90 20 L78 38 L22 38 Z" fill="url(#logoGrad)" />
+				<path d="M30 43 L70 43 L70 60 L30 60 Z" fill="url(#logoGrad)" fill-opacity="0.9" />
+				<path d="M22 65 L78 65 L90 85 L10 85 Z" fill="url(#logoGrad)" fill-opacity="0.8" />
 			</svg>
 			<span class="logo-text">
 				<span class="logo-title">Barforge</span>
@@ -184,16 +166,34 @@
 		text-decoration: none;
 		color: var(--color-text-normal);
 		flex-shrink: 0;
-		transition: transform var(--duration-fast) var(--ease-out);
-	}
-
-	.logo:hover {
-		transform: scale(1.02);
 	}
 
 	.logo-mark {
 		color: var(--color-primary);
 		filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+	}
+
+	.logo:hover .logo-mark {
+		animation: shake 0.4s ease-in-out;
+	}
+
+	@keyframes shake {
+		0%,
+		100% {
+			transform: rotate(0deg);
+		}
+		20% {
+			transform: rotate(-4deg);
+		}
+		40% {
+			transform: rotate(4deg);
+		}
+		60% {
+			transform: rotate(-2deg);
+		}
+		80% {
+			transform: rotate(2deg);
+		}
 	}
 
 	.logo-text {
@@ -504,12 +504,15 @@
 			animation: none;
 		}
 
+		.logo:hover .logo-mark {
+			animation: none;
+		}
+
 		.theme-toggle:hover,
 		.theme-toggle:active {
 			transform: none;
 		}
 
-		.logo:hover,
 		.nav-links a:hover,
 		.header-btn:hover,
 		.header-btn:active,
