@@ -1,5 +1,12 @@
 # barforge-web
 
+## [0.7.0](https://github.com/jtaw5649/barforge-web/compare/barforge-web-v0.6.0...barforge-web-v0.7.0) (2025-12-25)
+
+
+### Features
+
+* add /install redirect and fix deploy target ([#39](https://github.com/jtaw5649/barforge-web/issues/39)) ([42ba66f](https://github.com/jtaw5649/barforge-web/commit/42ba66f992c27a337e888fbeb561c4cb237c815e))
+
 ## [0.6.0](https://github.com/jtaw5649/barforge-web/compare/barforge-web-v0.5.5...barforge-web-v0.6.0) (2025-12-25)
 
 
