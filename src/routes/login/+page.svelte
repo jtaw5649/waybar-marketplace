@@ -28,7 +28,10 @@
 	<div class="login-container">
 		<div class="login-card">
 			<div class="login-icon">
-				<img src="/icons/favicon.svg" alt="" width="80" height="80" />
+				<picture>
+					<source srcset="/branding/avatar-dark-512.png" media="(prefers-color-scheme: dark)" />
+					<img src="/branding/avatar-light-512.png" alt="Barforge avatar" width="80" height="80" />
+				</picture>
 			</div>
 			<h1>Log in to Barforge</h1>
 			<p>Log in with your GitHub account to submit modules, write reviews, and more.</p>
@@ -58,7 +61,10 @@
 				{/if}
 			</button>
 
-			<p class="terms">By logging in, you agree to our terms of service and privacy policy.</p>
+			<p class="terms">
+				By logging in, you agree to our <a href="/terms">Terms of Service</a> and
+				<a href="/privacy">Privacy Policy</a>.
+			</p>
 		</div>
 	</div>
 </main>
@@ -156,5 +162,17 @@
 		margin-top: var(--space-lg);
 		font-size: 0.75rem;
 		color: var(--color-text-faint);
+	}
+
+	.terms a {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-color: color-mix(in srgb, currentColor 60%, transparent);
+		text-underline-offset: 2px;
+		transition: color var(--duration-fast) var(--ease-out);
+	}
+
+	.terms a:hover {
+		color: var(--color-text-normal);
 	}
 </style>
