@@ -1,12 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import type {
-	Module,
-	Review,
-	VersionHistoryEntry,
-	CollectionBase,
-	Screenshot,
-	RelatedModule
-} from '$lib/types';
+import type { Module, Review, VersionHistoryEntry, CollectionBase, Screenshot } from '$lib/types';
 import { error, fail } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import { normalizeUsername } from '$lib/utils/username';
@@ -19,7 +12,11 @@ import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authActio
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const uuid = event.params.uuid;
-	const accessToken = await resolveAccessToken(event.cookies);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		session,
+		event.platform?.env?.AUTH_SECRET
+	);
 
 	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, relatedRes] = await Promise.all([
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}`),
@@ -54,7 +51,7 @@ export const load: PageServerLoad = async (event) => {
 		screenshots = screenshotsData.data?.screenshots || screenshotsData.screenshots || [];
 	}
 
-	let relatedModules: RelatedModule[] = [];
+	let relatedModules: Module[] = [];
 	if (relatedRes.ok) {
 		const relatedData = await relatedRes.json();
 		relatedModules = relatedData.data?.modules || relatedData.modules || [];

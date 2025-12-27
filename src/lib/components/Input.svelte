@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { FullAutoFill } from 'svelte/elements';
 
 	interface Props {
 		type?: 'text' | 'email' | 'password' | 'url' | 'number' | 'search';
@@ -11,6 +12,7 @@
 		error?: string;
 		id?: string;
 		name?: string;
+		autocomplete?: FullAutoFill | null;
 		maxlength?: number;
 		pattern?: string;
 		prefix?: Snippet;
@@ -31,6 +33,7 @@
 		error,
 		id,
 		name,
+		autocomplete,
 		maxlength,
 		pattern,
 		prefix,
@@ -63,6 +66,7 @@
 		{type}
 		{id}
 		{name}
+		{autocomplete}
 		{placeholder}
 		{disabled}
 		{required}

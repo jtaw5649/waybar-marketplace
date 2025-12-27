@@ -128,6 +128,7 @@
 				<img
 					src={getUrl(screenshots[selectedIndex].r2_key)}
 					alt={screenshots[selectedIndex].alt_text || `Screenshot ${selectedIndex + 1}`}
+					loading="lazy"
 				/>
 
 				{#if selectedIndex < screenshots.length - 1}

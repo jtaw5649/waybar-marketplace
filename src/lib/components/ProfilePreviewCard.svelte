@@ -31,7 +31,7 @@
 	<div class="preview-card">
 		<div class="preview-header">
 			{#if avatarUrl}
-				<img src={avatarUrl} alt="" class="preview-avatar" />
+				<img src={avatarUrl} alt="" class="preview-avatar" loading="lazy" />
 			{:else}
 				<div class="avatar-placeholder" aria-hidden="true">
 					{displayedName.charAt(0).toUpperCase()}

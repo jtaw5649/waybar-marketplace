@@ -68,7 +68,7 @@
 	let selectedCollection: {
 		id: number;
 		name: string;
-		description: string | null;
+		description?: string | null;
 		visibility: string;
 	} | null = $state(null);
 	let newCollectionName = $state('');
@@ -82,7 +82,7 @@
 		websiteUrl = data.profile?.website_url || '';
 	});
 
-	function formatVersion(v: string | undefined): string {
+	function formatVersion(v: string | null | undefined): string {
 		return v || '0.0.0';
 	}
 
@@ -177,7 +177,7 @@
 			<aside class="sidebar">
 				<div class="user-card">
 					{#if data.session.user.image}
-						<img src={data.session.user.image} alt="" class="avatar" />
+						<img src={data.session.user.image} alt="" class="avatar" loading="lazy" />
 					{:else}
 						<div class="avatar-placeholder">
 							{data.session.user.name?.charAt(0).toUpperCase() || 'U'}
@@ -549,6 +549,7 @@
 										type="text"
 										id="displayName"
 										name="display_name"
+										autocomplete="name"
 										bind:value={displayName}
 										placeholder="Your display name"
 										maxlength="50"
@@ -588,6 +589,7 @@
 										type="url"
 										id="websiteUrl"
 										name="website_url"
+										autocomplete="url"
 										bind:value={websiteUrl}
 										placeholder="https://example.com"
 										aria-describedby="websiteUrl-help"
@@ -601,6 +603,7 @@
 										type="url"
 										id="githubUrl"
 										name="github_url"
+										autocomplete="url"
 										bind:value={githubUrl}
 										placeholder="https://github.com/username"
 										aria-describedby="githubUrl-help"
@@ -622,6 +625,7 @@
 										type="url"
 										id="twitterUrl"
 										name="twitter_url"
+										autocomplete="url"
 										bind:value={twitterUrl}
 										placeholder="https://x.com/username"
 										aria-describedby="twitterUrl-help"
@@ -658,6 +662,7 @@
 										type="url"
 										id="sponsorUrl"
 										name="sponsor_url"
+										autocomplete="url"
 										bind:value={sponsorUrl}
 										placeholder="https://ko-fi.com/username"
 										aria-describedby="sponsorUrl-help"
@@ -773,6 +778,7 @@
 					type="text"
 					id="collection-name"
 					name="name"
+					autocomplete="off"
 					bind:value={newCollectionName}
 					placeholder="My Favorites"
 					required
@@ -842,6 +848,7 @@
 					type="text"
 					id="edit-collection-name"
 					name="name"
+					autocomplete="off"
 					bind:value={newCollectionName}
 					placeholder="My Favorites"
 					required

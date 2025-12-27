@@ -100,7 +100,7 @@
 			category: data.module.category,
 			downloads: data.module.downloads,
 			verified_author: data.module.verified_author,
-			version: data.module.version
+			version: data.module.version ?? undefined
 		});
 	});
 
@@ -491,6 +491,7 @@
 						<input
 							type="text"
 							id="review-title"
+							autocomplete="off"
 							bind:value={reviewTitle}
 							placeholder="Summary of your review"
 							maxlength="100"
@@ -544,7 +545,7 @@
 							<div class="review-header">
 								<div class="review-user">
 									{#if review.user.avatar_url}
-										<img src={review.user.avatar_url} alt="" class="review-avatar" />
+										<img src={review.user.avatar_url} alt="" class="review-avatar" loading="lazy" />
 									{:else}
 										<div class="review-avatar-placeholder">
 											{review.user.username.charAt(0).toUpperCase()}
@@ -626,9 +627,9 @@
 							description={relatedModule.description}
 							category={relatedModule.category}
 							downloads={relatedModule.downloads}
-							version={relatedModule.version}
+							version={relatedModule.version ?? undefined}
 							verified={relatedModule.verified_author}
-							createdAt={relatedModule.created_at}
+							lastUpdated={relatedModule.last_updated ?? undefined}
 							delay={i * 50}
 						/>
 					{/each}
@@ -779,6 +780,7 @@
 					type="text"
 					id="alt-text"
 					name="alt_text"
+					autocomplete="off"
 					bind:value={altTextInput}
 					placeholder="Describe the screenshot for accessibility"
 					maxlength="200"

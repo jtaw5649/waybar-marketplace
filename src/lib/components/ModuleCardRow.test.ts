@@ -12,7 +12,7 @@ describe('ModuleCardRow', () => {
 			category: 'Productivity',
 			downloads: 320,
 			icon: '/icons/focus.svg',
-			createdAt: '2024-12-08'
+			lastUpdated: '2024-12-08'
 		});
 
 		const frame = container.querySelector('.row-icon-frame');
@@ -27,7 +27,7 @@ describe('ModuleCardRow', () => {
 			author: 'hoverauthor',
 			category: 'Utility',
 			downloads: 100,
-			createdAt: '2024-12-08'
+			lastUpdated: '2024-12-08'
 		});
 
 		const hoverWrapper = container.querySelector('.hover-card-wrapper');

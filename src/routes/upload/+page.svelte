@@ -10,6 +10,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
+	import { Turnstile } from 'svelte-turnstile';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { getCategorySlugs, getCategoryName } from '$lib/constants/categories';
 
@@ -22,6 +23,7 @@
 	let category = $state('custom');
 	let repoUrl = $state('');
 	let version = $state('1.0.0');
+	let license = $state('');
 	let packageFile: File | null = $state(null);
 	let changelog = $state('');
 
@@ -156,6 +158,7 @@
 						type="text"
 						id="name"
 						name="name"
+						autocomplete="off"
 						bind:value={name}
 						placeholder="My Awesome Module"
 						required
@@ -219,6 +222,7 @@ Supports **Markdown** formatting:
 							type="text"
 							id="version"
 							name="version"
+							autocomplete="off"
 							bind:value={version}
 							placeholder="1.0.0"
 							required
@@ -233,8 +237,24 @@ Supports **Markdown** formatting:
 						type="url"
 						id="repoUrl"
 						name="repo_url"
+						autocomplete="url"
 						bind:value={repoUrl}
 						placeholder="https://github.com/user/repo"
+						required
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="license">License (SPDX)</label>
+					<input
+						type="text"
+						id="license"
+						name="license"
+						autocomplete="off"
+						bind:value={license}
+						placeholder="MIT"
+						pattern="[A-Za-z0-9.+-]+"
+						title="Use an SPDX license identifier like MIT or GPL-3.0-or-later"
 						required
 					/>
 				</div>
@@ -283,6 +303,10 @@ Supports **Markdown** formatting:
 						rows={3}
 					/>
 				</div>
+
+				{#if data.turnstileSiteKey}
+					<Turnstile siteKey={data.turnstileSiteKey} />
+				{/if}
 
 				<button type="submit" class="btn btn-primary btn-submit" disabled={loading}>
 					{#if loading}

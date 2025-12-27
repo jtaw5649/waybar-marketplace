@@ -39,7 +39,7 @@ export async function authJwtCallback({
 			typeof account.refresh_token === 'string' ? account.refresh_token : undefined;
 		const login = typeof profile?.login === 'string' ? profile.login : undefined;
 
-		return {
+		const nextToken: Token = {
 			...token,
 			accessToken,
 			expiresAt,
@@ -47,6 +47,8 @@ export async function authJwtCallback({
 			login,
 			error: undefined
 		};
+
+		return nextToken;
 	}
 
 	const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -57,7 +59,8 @@ export async function authJwtCallback({
 	}
 
 	if (expiresAt && token.refreshToken) {
-		return refreshAccessToken(token);
+		const refreshed = await refreshAccessToken(token);
+		return refreshed;
 	}
 
 	if (expiresAt) {
@@ -76,10 +79,37 @@ export async function authSessionCallback({ session, token }: SessionCallbackPar
 	return session;
 }
 
-export function resolveTrustHost(nodeEnv?: string, trustHostEnv?: string): boolean {
+export function resolveTrustHost(
+	nodeEnv?: string,
+	trustHostEnv?: string,
+	cfPagesEnv?: string,
+	vercelEnv?: string
+): boolean {
 	if (nodeEnv && nodeEnv !== 'production') return true;
-	if (trustHostEnv === undefined || trustHostEnv === '') return true;
-	return trustHostEnv === 'true';
+	if (trustHostEnv === 'true') return true;
+	if (cfPagesEnv || vercelEnv) return true;
+	return false;
+}
+
+export function resolveRedirectUrl(url: string, baseUrl: string): string {
+	if (url.startsWith('/')) {
+		return `${baseUrl}${url}`;
+	}
+
+	try {
+		const resolved = new URL(url);
+		if (resolved.origin === baseUrl) {
+			return url;
+		}
+	} catch {
+		return baseUrl;
+	}
+
+	return baseUrl;
+}
+
+export function githubAuthorizationParams() {
+	return { scope: 'read:user user:email' };
 }
 
 type RefreshResponse = {
@@ -100,13 +130,30 @@ export function sanitizeRefreshError(tokens: RefreshResponse): SanitizedError {
 	};
 }
 
-export const { handle, signIn, signOut } = SvelteKitAuth({
-	providers: [GitHub],
-	callbacks: {
-		jwt: authJwtCallback,
-		session: authSessionCallback
-	},
-	trustHost: resolveTrustHost(env.NODE_ENV, env.AUTH_TRUST_HOST)
+export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
+	const authSecret = event.platform?.env?.AUTH_SECRET ?? env.AUTH_SECRET;
+	const trustHostEnv = event.platform?.env?.AUTH_TRUST_HOST ?? env.AUTH_TRUST_HOST;
+	const cfPagesEnv = event.platform?.env?.CF_PAGES ?? env.CF_PAGES;
+	const vercelEnv = event.platform?.env?.VERCEL ?? env.VERCEL;
+	const githubId = event.platform?.env?.AUTH_GITHUB_ID ?? env.AUTH_GITHUB_ID ?? '';
+	const githubSecret = event.platform?.env?.AUTH_GITHUB_SECRET ?? env.AUTH_GITHUB_SECRET ?? '';
+
+	return {
+		providers: [
+			GitHub({
+				clientId: githubId,
+				clientSecret: githubSecret,
+				authorization: { params: githubAuthorizationParams() }
+			})
+		],
+		callbacks: {
+			jwt: authJwtCallback,
+			session: authSessionCallback,
+			redirect: ({ url, baseUrl }) => resolveRedirectUrl(url, baseUrl)
+		},
+		secret: authSecret,
+		trustHost: resolveTrustHost(env.NODE_ENV, trustHostEnv, cfPagesEnv, vercelEnv)
+	};
 });
 
 async function refreshAccessToken(token: Token) {

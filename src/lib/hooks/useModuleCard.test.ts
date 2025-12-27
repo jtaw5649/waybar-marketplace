@@ -44,7 +44,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'status',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.categoryVariant).toBe('purple');
 		});
@@ -54,7 +54,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'utility',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.categoryVariant).toBe('blue');
 		});
@@ -64,7 +64,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'unknown',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.categoryVariant).toBe('neutral');
 		});
@@ -76,7 +76,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'status',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.categoryColor).toBe('#8b5cf6');
 		});
@@ -86,7 +86,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'unknown',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.categoryColor).toBe('#6b7280');
 		});
@@ -99,7 +99,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'status',
-				createdAt: recentDate
+				lastUpdated: recentDate
 			}));
 			expect(result.isNew).toBe(true);
 		});
@@ -110,17 +110,17 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'status',
-				createdAt: oldDate
+				lastUpdated: oldDate
 			}));
 			expect(result.isNew).toBe(false);
 		});
 
-		it('returns false when createdAt is undefined', async () => {
+		it('returns false when lastUpdated is undefined', async () => {
 			const { useModuleCard } = await import('./useModuleCard.svelte');
 			const result = useModuleCard(() => ({
 				uuid: 'test',
 				category: 'status',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.isNew).toBe(false);
 		});
@@ -132,7 +132,7 @@ describe('useModuleCard', () => {
 			const result = useModuleCard(() => ({
 				uuid: 'starred-uuid',
 				category: 'status',
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 			expect(result.isStarred).toBe(true);
 		});
@@ -145,7 +145,7 @@ describe('useModuleCard', () => {
 
 				category: 'status',
 
-				createdAt: undefined
+				lastUpdated: undefined
 			}));
 
 			expect(result.isStarred).toBe(false);

@@ -298,6 +298,7 @@
 					<input
 						bind:this={inputRef}
 						type="text"
+						autocomplete="off"
 						value={$query}
 						oninput={(e) => setQuery(e.currentTarget.value)}
 						placeholder="Find pages and commands..."

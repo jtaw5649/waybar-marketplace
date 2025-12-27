@@ -12,7 +12,11 @@ import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authActio
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const collectionId = event.params.id;
-	const accessToken = await resolveAccessToken(event.cookies);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		session,
+		event.platform?.env?.AUTH_SECRET
+	);
 
 	const headers = acceptHeaders(accessToken ?? undefined);
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { signOut } from '@auth/sveltekit/client';
 	import { page } from '$app/state';
 	import type { Session } from '@auth/sveltekit';
 	import { Sun, Moon, Monitor, Search, Menu, X } from 'lucide-svelte';
@@ -7,10 +6,12 @@
 	import { fromStore } from 'svelte/store';
 	import { theme } from '$lib/stores/theme';
 	import { cleanRedirectUrl } from '$lib/utils/url';
+	import { signOutWithCleanup } from '$lib/utils/sessionCleanup';
 	import Button from './Button.svelte';
 	import Avatar from './Avatar.svelte';
 	import SearchInput from './SearchInput.svelte';
 	import AvatarDropdown from './AvatarDropdown.svelte';
+	import NotificationCenter from './NotificationCenter.svelte';
 
 	interface Props {
 		session: Session | null;
@@ -29,9 +30,9 @@
 		mobileMenuOpen = false;
 	}
 
-	function handleSignOut() {
+	async function handleSignOut() {
 		closeMobileMenu();
-		signOut();
+		await signOutWithCleanup();
 	}
 
 	const loginTarget = $derived(cleanRedirectUrl(page.url.pathname + page.url.search));
@@ -94,6 +95,7 @@
 				{/key}
 			</button>
 			{#if session?.user}
+				<NotificationCenter />
 				<AvatarDropdown user={session.user} />
 			{:else}
 				<a href={loginUrl} class="header-btn header-btn-primary">Log In</a>

@@ -87,18 +87,25 @@
 	--color-bg-elevated: #45475a;
 	--color-text-normal: #cdd6f4;
 	--color-text-muted: #a6adc8;
-	--color-text-faint: #6c7086;
+	--color-text-faint: #8f95aa;
+	--color-text: var(--color-text-normal);
 	--color-success: #a6e3a1;
 	--color-warning: #f9e2af;
 	--color-error: #f38ba8;
+	--color-danger: var(--color-error);
 	--color-info: #89b4fa;
 	--color-border: #45475a;
+	--color-border-hover: color-mix(in srgb, var(--color-border) 70%, var(--color-text-faint));
+	--color-bg-secondary: var(--color-bg-surface);
+	--color-bg-hover: var(--color-bg-elevated);
+	--color-primary-dark: color-mix(in srgb, var(--color-primary) 80%, black);
 	--color-grid: rgba(205, 214, 244, 0.06);
 
 	--shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
 	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
 	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
 	--shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+	--shadow-xl: 0 14px 36px rgba(0, 0, 0, 0.6);
 	--shadow-glow: 0 0 28px rgba(138, 123, 255, 0.4);
 
 	--duration-instant: 100ms;
@@ -113,17 +120,20 @@
 	--focus-ring: 0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-primary);
 
 	--space-xs: 4px;
+	--space-2xs: 2px;
 	--space-sm: 8px;
 	--space-md: 12px;
 	--space-lg: 16px;
 	--space-xl: 24px;
 	--space-2xl: 32px;
 	--space-3xl: 48px;
+	--space-4xl: 64px;
 
 	--radius-sm: 0;
 	--radius-md: 0;
 	--radius-lg: 0;
 	--radius-xl: 0;
+	--radius-full: 999px;
 
 	--border-tui: 1px solid var(--color-border);
 	--border-tui-accent: 1px solid var(--color-primary);
@@ -143,6 +153,11 @@
 	--font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 	--font-display: 'Space Grotesk', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--font-size-xs: 0.75rem;
+	--font-size-sm: 0.875rem;
+	--font-size-md: 1rem;
+	--font-size-lg: 1.125rem;
+	--font-size-xl: 1.25rem;
 }
 
 [data-theme='light'] {
@@ -153,7 +168,7 @@
 	--color-bg-elevated: #dce0e8;
 	--color-text-normal: #4c4f69;
 	--color-text-muted: #6c6f85;
-	--color-text-faint: #9ca0b0;
+	--color-text-faint: #5b6472;
 	--color-success: #40a02b;
 	--color-warning: #df8e1d;
 	--color-error: #d20f39;

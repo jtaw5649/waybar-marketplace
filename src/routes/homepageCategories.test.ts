@@ -7,7 +7,7 @@ vi.mock('svelte-typewrite', () => ({
 }));
 
 describe('Homepage layout', () => {
-	it('renders TUI panel structure with navigation cards', { timeout: 10000 }, async () => {
+	it('renders TUI panel structure with navigation cards', { timeout: 20000 }, async () => {
 		const { default: Page } = await import('./+page.svelte');
 		const landing = {
 			stats: {

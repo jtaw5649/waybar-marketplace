@@ -4,7 +4,7 @@ import { getCategoryVariant, getCategoryColor, SEVEN_DAYS_MS } from '$lib/consta
 interface ModuleCardInput {
 	uuid: string;
 	category: string;
-	createdAt?: string;
+	lastUpdated?: string;
 }
 
 export function useModuleCard(getProps: () => ModuleCardInput) {
@@ -13,7 +13,7 @@ export function useModuleCard(getProps: () => ModuleCardInput) {
 	const categoryVariant = $derived(getCategoryVariant(props.category));
 	const categoryColor = $derived(getCategoryColor(props.category));
 	const isNew = $derived(
-		props.createdAt ? Date.now() - Date.parse(props.createdAt) < SEVEN_DAYS_MS : false
+		props.lastUpdated ? Date.now() - Date.parse(props.lastUpdated) < SEVEN_DAYS_MS : false
 	);
 	const isStarred = $derived(stars.isStarred(props.uuid));
 

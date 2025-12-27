@@ -5,10 +5,10 @@ import { authHeaders, jsonHeaders } from '$lib/server/authHeaders';
 import { resolveAccessToken } from '$lib/server/token';
 import { encodeModuleUuid } from '$lib/utils/url';
 
-export const GET: RequestHandler = async ({ params, cookies, locals }) => {
+export const GET: RequestHandler = async ({ params, cookies, locals, platform }) => {
 	const { uuid } = params;
 	const session = await locals.auth();
-	const accessToken = await resolveAccessToken(cookies, session);
+	const accessToken = await resolveAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	const headers = authHeaders(accessToken ?? undefined);
 
 	const res = await fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/star`, {
@@ -23,9 +23,9 @@ export const GET: RequestHandler = async ({ params, cookies, locals }) => {
 	return json(data);
 };
 
-export const POST: RequestHandler = async ({ params, cookies, locals }) => {
+export const POST: RequestHandler = async ({ params, cookies, locals, platform }) => {
 	const session = await locals.auth();
-	const accessToken = await resolveAccessToken(cookies, session);
+	const accessToken = await resolveAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	if (!accessToken) {
 		error(401, 'Unauthorized');
 	}
@@ -56,9 +56,9 @@ export const POST: RequestHandler = async ({ params, cookies, locals }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ params, cookies, locals }) => {
+export const DELETE: RequestHandler = async ({ params, cookies, locals, platform }) => {
 	const session = await locals.auth();
-	const accessToken = await resolveAccessToken(cookies, session);
+	const accessToken = await resolveAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	if (!accessToken) {
 		error(401, 'Unauthorized');
 	}

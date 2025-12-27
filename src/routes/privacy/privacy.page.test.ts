@@ -26,6 +26,14 @@ describe('Privacy page', () => {
 		expect(screen.getByRole('heading', { name: /your rights/i })).toBeTruthy();
 	}, 15000);
 
+	it('explains anonymized retention of public submissions', async () => {
+		const { default: Page } = await import('./+page.svelte');
+		render(Page);
+
+		expect(screen.getAllByText(/public contributions/i).length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/anonym/i).length).toBeGreaterThan(0);
+	}, 15000);
+
 	it('directs privacy requests to support email and lists contact addresses', async () => {
 		const { default: Page } = await import('./+page.svelte');
 		render(Page);

@@ -27,6 +27,7 @@ describe('user profile page server', () => {
 			discord_url: null,
 			sponsor_url: null,
 			verified_author: false,
+			role: 'user',
 			module_count: 0,
 			created_at: '2024-01-01'
 		};

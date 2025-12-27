@@ -14,7 +14,9 @@ const mockModules = [
 		downloads: 100,
 		rating: 4.5,
 		verified_author: false,
-		created_at: '2024-01-01'
+		repo_url: 'https://example.com/battery',
+		tags: [],
+		last_updated: '2024-01-01'
 	},
 	{
 		uuid: 'mod-2',
@@ -25,7 +27,9 @@ const mockModules = [
 		downloads: 200,
 		rating: 4.0,
 		verified_author: false,
-		created_at: '2024-01-02'
+		repo_url: 'https://example.com/cpu',
+		tags: [],
+		last_updated: '2024-01-02'
 	}
 ] as Module[];
 

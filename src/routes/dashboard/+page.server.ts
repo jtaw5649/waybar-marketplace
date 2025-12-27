@@ -10,7 +10,11 @@ import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authActio
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
-	const accessToken = await resolveAccessToken(event.cookies);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		session,
+		event.platform?.env?.AUTH_SECRET
+	);
 	const validation = validateSession(session, !!accessToken);
 
 	if (!session?.user || !validation.isValid || !accessToken) {
@@ -86,7 +90,11 @@ export const actions: Actions = {
 
 	createCollection: async (event) => {
 		const session = await event.locals.auth();
-		const accessToken = await resolveAccessToken(event.cookies);
+		const accessToken = await resolveAccessToken(
+			event.cookies,
+			session,
+			event.platform?.env?.AUTH_SECRET
+		);
 		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
@@ -124,7 +132,11 @@ export const actions: Actions = {
 
 	updateCollection: async (event) => {
 		const session = await event.locals.auth();
-		const accessToken = await resolveAccessToken(event.cookies);
+		const accessToken = await resolveAccessToken(
+			event.cookies,
+			session,
+			event.platform?.env?.AUTH_SECRET
+		);
 		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}
@@ -162,7 +174,11 @@ export const actions: Actions = {
 
 	deleteCollection: async (event) => {
 		const session = await event.locals.auth();
-		const accessToken = await resolveAccessToken(event.cookies);
+		const accessToken = await resolveAccessToken(
+			event.cookies,
+			session,
+			event.platform?.env?.AUTH_SECRET
+		);
 		if (!session?.user || !accessToken) {
 			return fail(401, { message: 'Unauthorized' });
 		}

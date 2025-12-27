@@ -38,7 +38,7 @@ describe('stars api', () => {
 		await GET(event);
 
 		expect(event.locals.auth).toHaveBeenCalled();
-		expect(resolveAccessToken).toHaveBeenCalledWith(event.cookies, session);
+		expect(resolveAccessToken).toHaveBeenCalledWith(event.cookies, session, undefined);
 		expect(fetchMock).toHaveBeenCalledWith(
 			expect.stringContaining('/api/v1/users/me/stars'),
 			expect.objectContaining({

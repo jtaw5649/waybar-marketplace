@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { clickOutside } from '$lib/actions/clickOutside';
 
 	interface Props {
 		triggerText?: string;
@@ -22,8 +22,6 @@
 	let isOpen = $state(false);
 	let openTimer: ReturnType<typeof setTimeout> | null = null;
 	let closeTimer: ReturnType<typeof setTimeout> | null = null;
-	let wrapperRef = $state<HTMLDivElement | null>(null);
-	let cardRef = $state<HTMLDivElement | null>(null);
 
 	function clearTimers() {
 		if (openTimer) {
@@ -70,28 +68,14 @@
 		}
 	}
 
-	function handleClickOutside(event: MouseEvent) {
-		if (!isOpen) return;
-		const target = event.target as Node;
-		const clickedInsideWrapper = wrapperRef?.contains(target);
-		const clickedInsideCard = cardRef?.contains(target);
-		if (!clickedInsideWrapper && !clickedInsideCard) {
-			isOpen = false;
-		}
-	}
-
-	onMount(() => {
-		document.addEventListener('click', handleClickOutside);
-		return () => {
-			document.removeEventListener('click', handleClickOutside);
-			clearTimers();
-		};
+	$effect(() => {
+		return () => clearTimers();
 	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="hover-card-wrapper" bind:this={wrapperRef}>
+<div class="hover-card-wrapper" use:clickOutside={{ handler: () => isOpen && (isOpen = false) }}>
 	<div
 		class="trigger"
 		role="button"
@@ -113,7 +97,6 @@
 	{#if isOpen}
 		<div
 			class="hover-card"
-			bind:this={cardRef}
 			role="tooltip"
 			onmouseenter={handleCardMouseEnter}
 			onmouseleave={handleCardMouseLeave}

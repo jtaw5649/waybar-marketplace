@@ -47,16 +47,27 @@ function getSessionTokenFromCookies(
 	return null;
 }
 
-export async function getServerToken(cookies?: Cookies): Promise<string | null> {
+export async function getServerToken(
+	cookies?: Cookies,
+	authSecret?: string
+): Promise<string | null> {
 	if (!cookies) return null;
 	const session = getSessionTokenFromCookies(cookies);
 
 	if (!session) return null;
 
+	const secret = authSecret ?? env.AUTH_SECRET;
+	if (!secret) {
+		if (env.NODE_ENV === 'production') {
+			throw new Error('AUTH_SECRET is required to decode session tokens');
+		}
+		return null;
+	}
+
 	try {
 		const decoded = (await decode({
 			token: session.token,
-			secret: env.AUTH_SECRET ?? '',
+			secret,
 			salt: session.cookieName
 		})) as DecodedToken | null;
 
@@ -68,12 +79,13 @@ export async function getServerToken(cookies?: Cookies): Promise<string | null> 
 
 export async function resolveAccessToken(
 	cookies?: Cookies,
-	session?: Session | { accessToken?: string } | null
+	session?: Session | { accessToken?: string } | null,
+	authSecret?: string
 ): Promise<string | null> {
 	const accessToken = session && 'accessToken' in session ? session.accessToken : undefined;
 	if (accessToken) {
 		return accessToken;
 	}
 
-	return getServerToken(cookies);
+	return getServerToken(cookies, authSecret);
 }

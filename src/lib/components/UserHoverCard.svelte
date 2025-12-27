@@ -37,7 +37,12 @@
 	{:else if user}
 		<div class="user-content">
 			{#if user.avatar_url}
-				<img src={user.avatar_url} alt={user.display_name || user.username} class="user-avatar" />
+				<img
+					src={user.avatar_url}
+					alt={user.display_name || user.username}
+					class="user-avatar"
+					loading="lazy"
+				/>
 			{/if}
 			<div class="user-name">
 				{user.display_name || user.username}

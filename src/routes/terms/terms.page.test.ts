@@ -26,6 +26,22 @@ describe('Terms page', () => {
 		expect(screen.getByText(/registry api/i)).toBeTruthy();
 	}, 15000);
 
+	it('requires SPDX licensing for submissions', async () => {
+		const { default: Page } = await import('./+page.svelte');
+		render(Page);
+
+		expect(screen.getAllByText(/spdx/i).length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/license/i).length).toBeGreaterThan(0);
+	}, 15000);
+
+	it('allows continued hosting after account deletion with anonymization', async () => {
+		const { default: Page } = await import('./+page.svelte');
+		render(Page);
+
+		expect(screen.getAllByText(/account deletion/i).length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/anonym/i).length).toBeGreaterThan(0);
+	}, 15000);
+
 	it('renders back button linking to homepage', async () => {
 		const { default: Page } = await import('./+page.svelte');
 		render(Page);

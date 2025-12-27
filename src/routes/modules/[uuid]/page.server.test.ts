@@ -32,7 +32,9 @@ describe('module page server', () => {
 			category: 'system',
 			author: 'test',
 			downloads: 0,
-			verified_author: false
+			verified_author: false,
+			repo_url: 'https://example.com/test',
+			tags: []
 		};
 
 		const event = {
@@ -218,7 +220,9 @@ describe('module page server', () => {
 			category: 'system',
 			author: 'test',
 			downloads: 0,
-			verified_author: false
+			verified_author: false,
+			repo_url: 'https://example.com/test',
+			tags: []
 		};
 
 		const event = {
@@ -258,7 +262,9 @@ describe('module page server', () => {
 			category: 'system',
 			author: 'test',
 			downloads: 0,
-			verified_author: false
+			verified_author: false,
+			repo_url: 'https://example.com/test',
+			tags: []
 		};
 
 		const event = {

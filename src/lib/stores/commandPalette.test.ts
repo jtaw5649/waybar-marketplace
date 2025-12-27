@@ -121,7 +121,9 @@ describe('commandPalette store', () => {
 					downloads: 100,
 					rating: 4.5,
 					verified_author: false,
-					created_at: '2024-01-01T00:00:00Z'
+					repo_url: 'https://example.com/battery',
+					tags: [],
+					last_updated: '2024-01-01T00:00:00Z'
 				}
 			];
 			setModules(testModules);
@@ -135,11 +137,13 @@ describe('commandPalette store', () => {
 					name: 'First',
 					description: '',
 					author: '',
-					category: '',
+					category: 'custom',
 					downloads: 0,
 					rating: null,
 					verified_author: false,
-					created_at: '2024-01-01T00:00:00Z'
+					repo_url: 'https://example.com/first',
+					tags: [],
+					last_updated: '2024-01-01T00:00:00Z'
 				}
 			];
 			const second: Module[] = [
@@ -148,11 +152,13 @@ describe('commandPalette store', () => {
 					name: 'Second',
 					description: '',
 					author: '',
-					category: '',
+					category: 'custom',
 					downloads: 0,
 					rating: null,
 					verified_author: false,
-					created_at: '2024-01-01T00:00:00Z'
+					repo_url: 'https://example.com/second',
+					tags: [],
+					last_updated: '2024-01-01T00:00:00Z'
 				}
 			];
 			setModules(first);
@@ -172,11 +178,13 @@ describe('commandPalette store', () => {
 					name: 'Test',
 					description: '',
 					author: '',
-					category: '',
+					category: 'custom',
 					downloads: 0,
 					rating: null,
 					verified_author: false,
-					created_at: '2024-01-01T00:00:00Z'
+					repo_url: 'https://example.com/test',
+					tags: [],
+					last_updated: '2024-01-01T00:00:00Z'
 				}
 			]);
 

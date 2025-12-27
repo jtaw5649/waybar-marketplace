@@ -28,6 +28,14 @@ declare global {
 		interface Platform {
 			env: {
 				DB: D1Database;
+				AUTH_SECRET?: string;
+				AUTH_TRUST_HOST?: string;
+				AUTH_GITHUB_ID?: string;
+				AUTH_GITHUB_SECRET?: string;
+				CF_PAGES?: string;
+				VERCEL?: string;
+				TURNSTILE_SITE_KEY?: string;
+				TURNSTILE_SECRET?: string;
 				RESEND_API_KEY?: string;
 			};
 			context: {

@@ -11,19 +11,7 @@
 	import Button from '$lib/components/Button.svelte';
 	import { viewMode } from '$lib/stores/viewMode';
 	import { encodeModuleUuid } from '$lib/utils/url';
-
-	interface ModuleInfo {
-		uuid: string;
-		name: string;
-		description: string;
-		category: string;
-		downloads: number;
-		version?: string;
-		verified: boolean;
-		icon_url?: string;
-		author_username: string;
-		created_at: string;
-	}
+	import type { Module } from '$lib/types';
 
 	let { data } = $props();
 
@@ -32,14 +20,14 @@
 	const localStarredUuids = $derived([...stars.starred]);
 	const serverModules = $derived(data.starredModules);
 
-	let localModules = $state<ModuleInfo[]>([]);
+	let localModules = $state<Module[]>([]);
 	let loadingLocal = $state(false);
 
 	async function fetchLocalStarredModules() {
 		if (data.isAuthenticated || localStarredUuids.length === 0) return;
 
 		loadingLocal = true;
-		const fetched: ModuleInfo[] = [];
+		const fetched: Module[] = [];
 
 		await Promise.all(
 			localStarredUuids.map(async (uuid) => {
@@ -128,28 +116,28 @@
 						<ModuleCard
 							uuid={module.uuid}
 							name={module.name}
-							author={module.author_username}
+							author={module.author}
 							description={module.description}
 							category={module.category}
 							downloads={module.downloads}
-							version={module.version}
-							verified={module.verified}
-							icon={module.icon_url}
-							createdAt={module.created_at}
+							version={module.version ?? undefined}
+							verified={module.verified_author}
+							icon={module.icon ?? undefined}
+							lastUpdated={module.last_updated ?? undefined}
 							delay={i * 50}
 						/>
 					{:else}
 						<ModuleCardRow
 							uuid={module.uuid}
 							name={module.name}
-							author={module.author_username}
+							author={module.author}
 							description={module.description}
 							category={module.category}
 							downloads={module.downloads}
-							version={module.version}
-							verified={module.verified}
-							icon={module.icon_url}
-							createdAt={module.created_at}
+							version={module.version ?? undefined}
+							verified={module.verified_author}
+							icon={module.icon ?? undefined}
+							lastUpdated={module.last_updated ?? undefined}
 							delay={i * 30}
 						/>
 					{/if}

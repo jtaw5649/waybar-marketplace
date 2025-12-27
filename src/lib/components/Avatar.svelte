@@ -12,7 +12,7 @@
 </script>
 
 {#if src}
-	<img {src} {alt} class="avatar avatar-{size}" />
+	<img {src} {alt} class="avatar avatar-{size}" loading="lazy" />
 {:else}
 	<div class="avatar-placeholder avatar-{size}" aria-hidden="true">
 		{initial}

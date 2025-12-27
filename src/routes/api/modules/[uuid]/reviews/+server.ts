@@ -12,9 +12,10 @@ async function forwardReviewRequest(
 	cookies: Cookies,
 	uuid: string,
 	request: Request,
-	session?: Session | { accessToken?: string } | null
+	session?: Session | { accessToken?: string } | null,
+	authSecret?: string
 ) {
-	const accessToken = await resolveAccessToken(cookies, session);
+	const accessToken = await resolveAccessToken(cookies, session, authSecret);
 	if (!accessToken) {
 		error(401, 'Unauthorized');
 	}
@@ -34,17 +35,38 @@ async function forwardReviewRequest(
 	return json({ success: true });
 }
 
-export const POST: RequestHandler = async ({ params, cookies, request, locals }) => {
+export const POST: RequestHandler = async ({ params, cookies, request, locals, platform }) => {
 	const session = await locals.auth();
-	return forwardReviewRequest('POST', cookies, params.uuid, request, session);
+	return forwardReviewRequest(
+		'POST',
+		cookies,
+		params.uuid,
+		request,
+		session,
+		platform?.env?.AUTH_SECRET
+	);
 };
 
-export const PUT: RequestHandler = async ({ params, cookies, request, locals }) => {
+export const PUT: RequestHandler = async ({ params, cookies, request, locals, platform }) => {
 	const session = await locals.auth();
-	return forwardReviewRequest('PUT', cookies, params.uuid, request, session);
+	return forwardReviewRequest(
+		'PUT',
+		cookies,
+		params.uuid,
+		request,
+		session,
+		platform?.env?.AUTH_SECRET
+	);
 };
 
-export const DELETE: RequestHandler = async ({ params, cookies, request, locals }) => {
+export const DELETE: RequestHandler = async ({ params, cookies, request, locals, platform }) => {
 	const session = await locals.auth();
-	return forwardReviewRequest('DELETE', cookies, params.uuid, request, session);
+	return forwardReviewRequest(
+		'DELETE',
+		cookies,
+		params.uuid,
+		request,
+		session,
+		platform?.env?.AUTH_SECRET
+	);
 };

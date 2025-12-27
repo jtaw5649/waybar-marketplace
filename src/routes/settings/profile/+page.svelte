@@ -176,6 +176,7 @@
 					type="text"
 					id="displayName"
 					name="display_name"
+					autocomplete="name"
 					bind:value={displayName}
 					placeholder="Your display name"
 					maxlength="50"
@@ -213,6 +214,7 @@
 					type="url"
 					id="websiteUrl"
 					name="website_url"
+					autocomplete="url"
 					bind:value={websiteUrl}
 					placeholder="https://example.com"
 					aria-describedby="websiteUrl-help"
@@ -226,6 +228,7 @@
 					type="url"
 					id="githubUrl"
 					name="github_url"
+					autocomplete="url"
 					bind:value={githubUrl}
 					placeholder="https://github.com/username"
 					aria-describedby="githubUrl-help"
@@ -247,6 +250,7 @@
 					type="url"
 					id="twitterUrl"
 					name="twitter_url"
+					autocomplete="url"
 					bind:value={twitterUrl}
 					placeholder="https://x.com/username"
 					aria-describedby="twitterUrl-help"
@@ -268,6 +272,7 @@
 					type="url"
 					id="blueskyUrl"
 					name="bluesky_url"
+					autocomplete="url"
 					bind:value={blueskyUrl}
 					placeholder="https://bsky.app/profile/username.bsky.social"
 					aria-describedby="blueskyUrl-help"
@@ -289,6 +294,7 @@
 					type="url"
 					id="discordUrl"
 					name="discord_url"
+					autocomplete="url"
 					bind:value={discordUrl}
 					placeholder="https://discord.gg/invite-code"
 					aria-describedby="discordUrl-help"
@@ -326,6 +332,7 @@
 					type="url"
 					id="sponsorUrl"
 					name="sponsor_url"
+					autocomplete="url"
 					bind:value={sponsorUrl}
 					placeholder="https://ko-fi.com/username"
 					aria-describedby="sponsorUrl-help"

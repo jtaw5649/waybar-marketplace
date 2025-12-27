@@ -4,9 +4,9 @@ import { API_BASE_URL } from '$lib';
 import { acceptHeaders } from '$lib/server/authHeaders';
 import { requireAccessToken } from '$lib/utils/requireAccessToken';
 
-export const POST: RequestHandler = async ({ params, cookies, locals }) => {
+export const POST: RequestHandler = async ({ params, cookies, locals, platform }) => {
 	const session = await locals.auth();
-	const accessToken = await requireAccessToken(cookies, session);
+	const accessToken = await requireAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	const res = await fetch(`${API_BASE_URL}/api/v1/admin/submissions/${params.id}/approve`, {
 		method: 'POST',
 		headers: acceptHeaders(accessToken)

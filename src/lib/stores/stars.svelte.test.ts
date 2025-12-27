@@ -607,4 +607,23 @@ describe('StarsStore', () => {
 			expect(stars.starredUuids).toContain('uuid-1');
 		});
 	});
+
+	describe('clearLocalState', () => {
+		it('clears starred data and storage', async () => {
+			localStorageMock._setStore({
+				starred_modules: JSON.stringify(['uuid-1'])
+			});
+			const { stars } = await import('./stars.svelte');
+
+			stars.setStarCount('uuid-1', 2);
+			stars.setAuthenticated(true);
+
+			stars.clearLocalState();
+
+			expect(stars.starredUuids).toEqual([]);
+			expect(stars.getStarCount('uuid-1')).toBe(0);
+			expect(stars.isAuthenticated).toBe(false);
+			expect(localStorage.getItem('starred_modules')).toBeNull();
+		});
+	});
 });

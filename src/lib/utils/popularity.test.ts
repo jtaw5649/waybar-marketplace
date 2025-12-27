@@ -7,7 +7,7 @@ describe('calculatePopularityScore', () => {
 			const score = calculatePopularityScore({
 				downloads: 0,
 				rating: null,
-				created_at: new Date().toISOString()
+				last_updated: new Date().toISOString()
 			});
 			expect(score).toBe(0);
 		});
@@ -16,17 +16,17 @@ describe('calculatePopularityScore', () => {
 			const score10 = calculatePopularityScore({
 				downloads: 10,
 				rating: null,
-				created_at: new Date().toISOString()
+				last_updated: new Date().toISOString()
 			});
 			const score100 = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: new Date().toISOString()
+				last_updated: new Date().toISOString()
 			});
 			const score1000 = calculatePopularityScore({
 				downloads: 1000,
 				rating: null,
-				created_at: new Date().toISOString()
+				last_updated: new Date().toISOString()
 			});
 
 			expect(score100).toBeGreaterThan(score10);
@@ -41,12 +41,12 @@ describe('calculatePopularityScore', () => {
 			const unrated = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 			const rated5 = calculatePopularityScore({
 				downloads: 100,
 				rating: 5,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 
 			expect(rated5).toBeGreaterThan(unrated);
@@ -57,12 +57,12 @@ describe('calculatePopularityScore', () => {
 			const rated1 = calculatePopularityScore({
 				downloads: 100,
 				rating: 1,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 			const rated5 = calculatePopularityScore({
 				downloads: 100,
 				rating: 5,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 
 			expect(rated5).toBeGreaterThan(rated1);
@@ -73,12 +73,12 @@ describe('calculatePopularityScore', () => {
 			const unrated = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 			const rated3 = calculatePopularityScore({
 				downloads: 100,
 				rating: 3,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 
 			expect(Math.abs(unrated - rated3)).toBeLessThan(unrated * 0.3);
@@ -94,17 +94,17 @@ describe('calculatePopularityScore', () => {
 			const newModule = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: now.toISOString()
+				last_updated: now.toISOString()
 			});
 			const weekOld = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: oneWeekAgo.toISOString()
+				last_updated: oneWeekAgo.toISOString()
 			});
 			const monthOld = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: oneMonthAgo.toISOString()
+				last_updated: oneMonthAgo.toISOString()
 			});
 
 			expect(newModule).toBeGreaterThan(weekOld);
@@ -118,12 +118,12 @@ describe('calculatePopularityScore', () => {
 			const newModule = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: now.toISOString()
+				last_updated: now.toISOString()
 			});
 			const oldModule = calculatePopularityScore({
 				downloads: 100,
 				rating: null,
-				created_at: oneYearAgo.toISOString()
+				last_updated: oneYearAgo.toISOString()
 			});
 
 			expect(oldModule).toBeGreaterThan(newModule * 0.5);
@@ -136,12 +136,12 @@ describe('calculatePopularityScore', () => {
 			const popular = calculatePopularityScore({
 				downloads: 1000,
 				rating: 4.5,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 			const unpopular = calculatePopularityScore({
 				downloads: 10,
 				rating: 5,
-				created_at: baseDate
+				last_updated: baseDate
 			});
 
 			expect(popular).toBeGreaterThan(unpopular);
@@ -151,10 +151,20 @@ describe('calculatePopularityScore', () => {
 			const score = calculatePopularityScore({
 				downloads: 0,
 				rating: 5,
-				created_at: new Date().toISOString()
+				last_updated: new Date().toISOString()
 			});
 
 			expect(score).toBeGreaterThanOrEqual(0);
+			expect(Number.isFinite(score)).toBe(true);
+		});
+
+		it('returns a finite score when last_updated is missing', () => {
+			const score = calculatePopularityScore({
+				downloads: 100,
+				rating: null,
+				last_updated: undefined
+			});
+
 			expect(Number.isFinite(score)).toBe(true);
 		});
 	});
@@ -168,12 +178,12 @@ describe('calculateTrendingScore', () => {
 		const newLowDownloads = calculateTrendingScore({
 			downloads: 50,
 			rating: null,
-			created_at: now.toISOString()
+			last_updated: now.toISOString()
 		});
 		const oldHighDownloads = calculateTrendingScore({
 			downloads: 500,
 			rating: null,
-			created_at: oneWeekAgo.toISOString()
+			last_updated: oneWeekAgo.toISOString()
 		});
 
 		expect(newLowDownloads).toBeGreaterThan(oldHighDownloads * 0.5);
@@ -187,17 +197,17 @@ describe('calculateTrendingScore', () => {
 		const todayScore = calculateTrendingScore({
 			downloads: 100,
 			rating: null,
-			created_at: now.toISOString()
+			last_updated: now.toISOString()
 		});
 		const yesterdayScore = calculateTrendingScore({
 			downloads: 100,
 			rating: null,
-			created_at: yesterday.toISOString()
+			last_updated: yesterday.toISOString()
 		});
 		const weekScore = calculateTrendingScore({
 			downloads: 100,
 			rating: null,
-			created_at: lastWeek.toISOString()
+			last_updated: lastWeek.toISOString()
 		});
 
 		expect(todayScore).toBeGreaterThan(yesterdayScore);
@@ -209,14 +219,24 @@ describe('calculateTrendingScore', () => {
 		const manyDownloads = calculateTrendingScore({
 			downloads: 1000,
 			rating: null,
-			created_at: baseDate
+			last_updated: baseDate
 		});
 		const fewDownloads = calculateTrendingScore({
 			downloads: 10,
 			rating: null,
-			created_at: baseDate
+			last_updated: baseDate
 		});
 
 		expect(manyDownloads).toBeGreaterThan(fewDownloads);
+	});
+
+	it('returns a finite score when last_updated is missing', () => {
+		const score = calculateTrendingScore({
+			downloads: 100,
+			rating: null,
+			last_updated: undefined
+		});
+
+		expect(Number.isFinite(score)).toBe(true);
 	});
 });

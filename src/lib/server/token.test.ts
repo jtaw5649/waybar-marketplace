@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getServerToken } from './token';
+import { getServerToken, resolveAccessToken } from './token';
+
+const envMock = vi.hoisted(() => ({
+	AUTH_SECRET: 'test-secret',
+	NODE_ENV: 'test'
+}));
 
 vi.mock('$env/dynamic/private', () => ({
-	env: { AUTH_SECRET: 'test-secret' }
+	env: envMock
 }));
 
 vi.mock('@auth/core/jwt', () => ({
@@ -25,6 +30,8 @@ function createMockCookies(cookies: Record<string, string>) {
 describe('getServerToken', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		envMock.AUTH_SECRET = 'test-secret';
+		envMock.NODE_ENV = 'test';
 	});
 	it('returns null when no session cookie exists', async () => {
 		const cookies = createMockCookies({});
@@ -88,6 +95,54 @@ describe('getServerToken', () => {
 			expect.objectContaining({
 				token: 'chunk-achunk-b',
 				salt: 'authjs.session-token'
+			})
+		);
+	});
+
+	it('uses provided auth secret for decoding', async () => {
+		vi.mocked(decode).mockResolvedValueOnce({ accessToken: 'secret-token' });
+		const cookies = createMockCookies({ 'authjs.session-token': 'encrypted-jwt' });
+
+		await getServerToken(cookies as never, 'override-secret');
+
+		expect(decode).toHaveBeenCalledWith(
+			expect.objectContaining({
+				secret: 'override-secret'
+			})
+		);
+	});
+
+	it('returns null when secret is missing outside production', async () => {
+		envMock.AUTH_SECRET = undefined as unknown as string;
+		envMock.NODE_ENV = 'development';
+		const cookies = createMockCookies({ 'authjs.session-token': 'encrypted-jwt' });
+
+		const result = await getServerToken(cookies as never);
+
+		expect(result).toBeNull();
+		expect(decode).not.toHaveBeenCalled();
+	});
+
+	it('throws when secret is missing in production', async () => {
+		envMock.AUTH_SECRET = undefined as unknown as string;
+		envMock.NODE_ENV = 'production';
+		const cookies = createMockCookies({ 'authjs.session-token': 'encrypted-jwt' });
+
+		await expect(getServerToken(cookies as never)).rejects.toThrow('AUTH_SECRET');
+	});
+});
+
+describe('resolveAccessToken', () => {
+	it('passes provided secret to token decoding', async () => {
+		vi.mocked(decode).mockResolvedValueOnce({ accessToken: 'secret-token' });
+		const cookies = createMockCookies({ 'authjs.session-token': 'encrypted-jwt' });
+
+		const result = await resolveAccessToken(cookies as never, null, 'override-secret');
+
+		expect(result).toBe('secret-token');
+		expect(decode).toHaveBeenCalledWith(
+			expect.objectContaining({
+				secret: 'override-secret'
 			})
 		);
 	});

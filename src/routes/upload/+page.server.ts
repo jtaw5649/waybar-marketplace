@@ -19,7 +19,10 @@ export const load: PageServerLoad = async (event) => {
 	if (session.error === 'RefreshTokenError') {
 		throw redirect(302, '/login');
 	}
-	return { session: toPublicSession(session) };
+	return {
+		session: toPublicSession(session),
+		turnstileSiteKey: event.platform?.env?.TURNSTILE_SITE_KEY
+	};
 };
 
 export const actions: Actions = {
@@ -31,15 +34,42 @@ export const actions: Actions = {
 		const { session, accessToken } = authResult;
 
 		const formData = await event.request.formData();
+
+		const turnstileSecret = event.platform?.env?.TURNSTILE_SECRET;
+		if (turnstileSecret) {
+			const turnstileToken = formData.get('cf-turnstile-response') as string;
+			if (!turnstileToken) {
+				return fail(400, { message: 'Bot verification required' });
+			}
+
+			const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: new URLSearchParams({
+					secret: turnstileSecret,
+					response: turnstileToken
+				})
+			});
+			const verifyResult = await verifyRes.json().catch(() => null);
+			if (
+				!verifyResult ||
+				typeof verifyResult !== 'object' ||
+				(verifyResult as { success?: boolean }).success !== true
+			) {
+				return fail(400, { message: 'Bot verification failed' });
+			}
+		}
+
 		const name = formData.get('name') as string;
 		const description = formData.get('description') as string;
 		const category = formData.get('category') as string;
 		const version = formData.get('version') as string;
+		const license = formData.get('license') as string;
 		const repoUrl = formData.get('repo_url') as string;
 		const changelog = formData.get('changelog') as string;
 		const packageFile = formData.get('package') as File;
 
-		if (!name || !description || !category || !version || !packageFile) {
+		if (!name || !description || !category || !version || !license || !packageFile) {
 			return fail(400, { message: 'Missing required fields' });
 		}
 
@@ -68,12 +98,17 @@ export const actions: Actions = {
 			const createRes = await fetch(`${API_BASE_URL}/api/v1/modules`, {
 				method: 'POST',
 				headers: jsonHeaders(accessToken),
-				body: JSON.stringify({ uuid, name, description, category, repo_url: repoUrl })
+				body: JSON.stringify({
+					uuid,
+					name,
+					description,
+					category,
+					repo_url: repoUrl,
+					license
+				})
 			});
 			if (!createRes.ok) {
-				return fail(createRes.status, {
-					message: (await createRes.text()) || 'Failed to create module'
-				});
+				return fail(createRes.status, { message: 'Failed to create module' });
 			}
 
 			const uploadRes = await fetch(
@@ -81,9 +116,7 @@ export const actions: Actions = {
 				{ method: 'POST', headers: authHeader, body: await packageFile.arrayBuffer() }
 			);
 			if (!uploadRes.ok) {
-				return fail(uploadRes.status, {
-					message: (await uploadRes.text()) || 'Failed to upload package'
-				});
+				return fail(uploadRes.status, { message: 'Failed to upload package' });
 			}
 
 			const publishRes = await fetch(
@@ -95,9 +128,7 @@ export const actions: Actions = {
 				}
 			);
 			if (!publishRes.ok) {
-				return fail(publishRes.status, {
-					message: (await publishRes.text()) || 'Failed to publish'
-				});
+				return fail(publishRes.status, { message: 'Failed to publish' });
 			}
 
 			return { success: true, uuid };

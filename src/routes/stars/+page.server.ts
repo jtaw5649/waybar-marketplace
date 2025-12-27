@@ -1,29 +1,16 @@
 import type { PageServerLoad } from './$types';
 import { API_BASE_URL } from '$lib';
 import { normalizeStarsPayload } from '$lib/utils/starsResponse';
+import { isStarredModule } from '$lib/utils/moduleGuards';
 import { validateSession } from '$lib/utils/sessionValidator';
 import { toPublicSession } from '$lib/utils/sessionPublic';
 import { acceptHeaders } from '$lib/server/authHeaders';
 import { resolveAccessToken } from '$lib/server/token';
+import type { StarredModule } from '$lib/types';
 
-interface StarredModule {
-	uuid: string;
-	name: string;
-	slug: string;
-	description: string;
-	category: string;
-	downloads: number;
-	version?: string;
-	verified: boolean;
-	icon_url?: string;
-	author_username: string;
-	created_at: string;
-	starred_at: string;
-}
-
-export const load: PageServerLoad = async ({ locals, cookies }) => {
+export const load: PageServerLoad = async ({ locals, cookies, platform }) => {
 	const session = await locals.auth();
-	const accessToken = await resolveAccessToken(cookies);
+	const accessToken = await resolveAccessToken(cookies, undefined, platform?.env?.AUTH_SECRET);
 	const publicSession = toPublicSession(session);
 	const validation = validateSession(session, !!accessToken);
 
@@ -50,7 +37,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			};
 		}
 
-		const payload = normalizeStarsPayload<StarredModule>(await res.json());
+		const payload = normalizeStarsPayload<StarredModule>(await res.json(), isStarredModule);
 
 		return {
 			starredModules: payload.modules,

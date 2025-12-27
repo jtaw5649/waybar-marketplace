@@ -11,10 +11,11 @@ describe('svelte config CSP', () => {
 		expect(configSource).not.toContain('https://fonts.gstatic.com');
 	});
 
-	it('allows local registry API in connect-src for development', () => {
+	it('gates local registry API in connect-src to development only', () => {
 		const configPath = path.resolve(process.cwd(), 'svelte.config.js');
 		const configSource = readFileSync(configPath, 'utf8');
 
+		expect(configSource).toContain("process.env.NODE_ENV === 'development'");
 		expect(configSource).toContain('http://127.0.0.1:8787');
 		expect(configSource).toContain('http://localhost:8787');
 	});

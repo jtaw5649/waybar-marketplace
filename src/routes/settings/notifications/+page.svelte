@@ -1,65 +1,91 @@
 <script lang="ts">
+	import type { PageData } from './$types';
 	import { toast } from '$lib/stores/toast.svelte';
+	import { notificationStore } from '$lib/stores/notifications.svelte';
+	import type { NotificationPreference, NotificationType } from '$lib/types';
+	import { toNotificationPreferencesApi } from '$lib/utils/notificationPreferences';
+
+	let { data }: { data: PageData } = $props();
 
 	let saving = $state(false);
 
-	interface NotificationSetting {
-		id: string;
+	interface NotificationUIConfig {
+		type: NotificationType;
 		label: string;
 		description: string;
-		email: boolean;
-		inApp: boolean;
 		icon: 'download' | 'comment' | 'star' | 'update' | 'announce';
 	}
 
-	let notifications = $state<NotificationSetting[]>([
+	const notificationUIConfig = [
 		{
-			id: 'downloads',
+			type: 'downloads',
 			label: 'Download milestones',
 			description: 'Get notified when your modules reach download milestones (100, 1k, 10k, etc.)',
-			email: true,
-			inApp: true,
 			icon: 'download'
 		},
 		{
-			id: 'comments',
+			type: 'comments',
 			label: 'New comments',
 			description: 'When someone comments on your modules',
-			email: true,
-			inApp: true,
 			icon: 'comment'
 		},
 		{
-			id: 'stars',
+			type: 'stars',
 			label: 'New stars',
 			description: 'When someone stars your modules',
-			email: false,
-			inApp: true,
 			icon: 'star'
 		},
 		{
-			id: 'updates',
+			type: 'updates',
 			label: 'Module updates',
 			description: 'When modules you starred release new versions',
-			email: true,
-			inApp: true,
 			icon: 'update'
 		},
 		{
-			id: 'announcements',
+			type: 'announcements',
 			label: 'Platform announcements',
 			description: 'Important updates about Barforge',
-			email: true,
-			inApp: true,
 			icon: 'announce'
 		}
-	]);
+	] satisfies NotificationUIConfig[];
+
+	let preferences = $state<NotificationPreference[]>(notificationStore.getPreferences());
+
+	$effect(() => {
+		if (data.preferences) {
+			preferences = data.preferences;
+		}
+	});
+
+	function getPreference(type: NotificationType) {
+		return preferences.find((p) => p.type === type) ?? { type, email: false, inApp: true };
+	}
+
+	function updatePreference(type: NotificationType, field: 'email' | 'inApp', value: boolean) {
+		preferences = preferences.map((p) => (p.type === type ? { ...p, [field]: value } : p));
+	}
 
 	async function saveNotifications() {
 		saving = true;
-		await new Promise((resolve) => setTimeout(resolve, 500));
-		saving = false;
-		toast.success('Notification preferences saved!');
+		try {
+			const res = await fetch('/api/notifications/preferences', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(toNotificationPreferencesApi(preferences))
+			});
+
+			if (!res.ok) {
+				throw new Error('Failed to save notification preferences');
+			}
+
+			notificationStore.savePreferences(preferences);
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			toast.success('Notification preferences saved!');
+		} catch {
+			toast.error('Failed to save notification preferences.');
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -109,11 +135,12 @@
 		</div>
 	</div>
 
-	{#each notifications as notification (notification.id)}
+	{#each notificationUIConfig as config (config.type)}
+		{@const pref = getPreference(config.type)}
 		<div class="notification-row">
 			<div class="notification-info">
 				<div class="notification-icon">
-					{#if notification.icon === 'download'}
+					{#if config.icon === 'download'}
 						<svg
 							viewBox="0 0 24 24"
 							width="20"
@@ -127,7 +154,7 @@
 							<polyline points="7 10 12 15 17 10" />
 							<line x1="12" y1="15" x2="12" y2="3" />
 						</svg>
-					{:else if notification.icon === 'comment'}
+					{:else if config.icon === 'comment'}
 						<svg
 							viewBox="0 0 24 24"
 							width="20"
@@ -141,7 +168,7 @@
 								d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
 							/>
 						</svg>
-					{:else if notification.icon === 'star'}
+					{:else if config.icon === 'star'}
 						<svg
 							viewBox="0 0 24 24"
 							width="20"
@@ -155,7 +182,7 @@
 								d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
 							/>
 						</svg>
-					{:else if notification.icon === 'update'}
+					{:else if config.icon === 'update'}
 						<svg
 							viewBox="0 0 24 24"
 							width="20"
@@ -168,7 +195,7 @@
 							<polyline points="23 4 23 10 17 10" />
 							<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
 						</svg>
-					{:else if notification.icon === 'announce'}
+					{:else if config.icon === 'announce'}
 						<svg
 							viewBox="0 0 24 24"
 							width="20"
@@ -185,24 +212,32 @@
 					{/if}
 				</div>
 				<div class="notification-text">
-					<span class="notification-label">{notification.label}</span>
-					<span class="notification-description">{notification.description}</span>
+					<span class="notification-label">{config.label}</span>
+					<span class="notification-description">{config.description}</span>
 				</div>
 			</div>
 			<div class="notification-toggles">
 				<label class="toggle">
-					<input type="checkbox" bind:checked={notification.email} />
+					<input
+						type="checkbox"
+						checked={pref.email}
+						onchange={(e) => updatePreference(config.type, 'email', e.currentTarget.checked)}
+					/>
 					<span class="toggle-track">
 						<span class="toggle-thumb"></span>
 					</span>
-					<span class="sr-only">Email notifications for {notification.label}</span>
+					<span class="sr-only">Email notifications for {config.label}</span>
 				</label>
 				<label class="toggle">
-					<input type="checkbox" bind:checked={notification.inApp} />
+					<input
+						type="checkbox"
+						checked={pref.inApp}
+						onchange={(e) => updatePreference(config.type, 'inApp', e.currentTarget.checked)}
+					/>
 					<span class="toggle-track">
 						<span class="toggle-thumb"></span>
 					</span>
-					<span class="sr-only">In-app notifications for {notification.label}</span>
+					<span class="sr-only">In-app notifications for {config.label}</span>
 				</label>
 			</div>
 		</div>

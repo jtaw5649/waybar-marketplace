@@ -15,9 +15,9 @@ vi.mock('$app/state', () => ({
 }));
 
 vi.mock('@auth/sveltekit/client', () => ({
-	signIn: vi.fn(),
-	signOut: vi.fn()
+	signIn: vi.fn()
 }));
+vi.mock('$lib/utils/sessionCleanup', () => ({ signOutWithCleanup: vi.fn() }));
 
 const baseData = {
 	session: null,

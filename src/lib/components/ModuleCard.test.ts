@@ -12,7 +12,7 @@ describe('ModuleCard', () => {
 			description: 'Track nearby trains',
 			category: 'Transport',
 			downloads: 1200,
-			createdAt: '2024-12-02'
+			lastUpdated: '2024-12-02'
 		});
 
 		const link = screen.getByRole('link', { name: /view transit tracker module/i });
@@ -28,7 +28,7 @@ describe('ModuleCard', () => {
 			category: 'System',
 			downloads: 540,
 			icon: '/icons/barforge.svg',
-			createdAt: '2024-12-10'
+			lastUpdated: '2024-12-10'
 		});
 
 		const frame = container.querySelector('.card-icon-frame');
@@ -44,7 +44,7 @@ describe('ModuleCard', () => {
 			description: 'Test hover',
 			category: 'Utility',
 			downloads: 100,
-			createdAt: '2024-12-08'
+			lastUpdated: '2024-12-08'
 		});
 
 		const hoverWrapper = container.querySelector('.hover-card-wrapper');
