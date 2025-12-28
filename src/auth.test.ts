@@ -45,7 +45,7 @@ describe('authJwtCallback', () => {
 			})
 		} as Response);
 
-		await authJwtCallback({ token });
+		await authJwtCallback({ token }, { clientId: 'client-id', clientSecret: 'client-secret' });
 
 		expect(console.error).toHaveBeenCalledWith(
 			'[AUTH] Refresh failed:',

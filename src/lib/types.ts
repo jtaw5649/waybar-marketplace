@@ -73,6 +73,16 @@ export interface Notification {
 	readAt?: string;
 }
 
+export type NotificationIcon = 'download' | 'comment' | 'star' | 'update' | 'announce';
+
+export const NOTIFICATION_TYPES: NotificationType[] = [
+	'downloads',
+	'comments',
+	'stars',
+	'updates',
+	'announcements'
+];
+
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
 	downloads: 'Download milestones',
 	comments: 'New comments',
@@ -87,6 +97,14 @@ export const NOTIFICATION_TYPE_DESCRIPTIONS: Record<NotificationType, string> = 
 	stars: 'When someone stars your modules',
 	updates: 'When modules you starred release new versions',
 	announcements: 'Important updates about Barforge'
+};
+
+export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, NotificationIcon> = {
+	downloads: 'download',
+	comments: 'comment',
+	stars: 'star',
+	updates: 'update',
+	announcements: 'announce'
 };
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreference[] = [

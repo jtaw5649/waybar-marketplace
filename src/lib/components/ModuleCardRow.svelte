@@ -47,7 +47,15 @@
 		<div class="row-icon">
 			<div class="row-icon-frame">
 				{#if icon}
-					<img class="row-icon-image" src={icon} alt="" loading="lazy" />
+					<img
+						class="row-icon-image"
+						src={icon}
+						alt=""
+						width="40"
+						height="40"
+						loading="lazy"
+						decoding="async"
+					/>
 				{:else}
 					<span class="row-icon-initial">{name.charAt(0).toUpperCase()}</span>
 				{/if}

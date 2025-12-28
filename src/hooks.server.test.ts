@@ -53,4 +53,22 @@ describe('security headers', () => {
 
 		expect(result.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
 	});
+
+	it('preloads font assets via resolve preload filter', async () => {
+		const response = new Response('ok');
+		const resolve = vi.fn().mockResolvedValue(response);
+		const event = {
+			url: new URL('https://example.com')
+		} as Parameters<typeof addSecurityHeaders>[0]['event'];
+
+		await addSecurityHeaders({ event, resolve });
+
+		const options = resolve.mock.calls[0]?.[1] as
+			| { preload?: (input: { type: string; path: string }) => boolean }
+			| undefined;
+
+		expect(options?.preload).toBeTypeOf('function');
+		expect(options?.preload?.({ type: 'font', path: '/fonts/space-grotesk-500.ttf' })).toBe(true);
+		expect(options?.preload?.({ type: 'script', path: '/_app/immutable/entry.js' })).toBe(false);
+	});
 });

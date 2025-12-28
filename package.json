@@ -42,13 +42,13 @@
 		"@iconify-json/simple-icons": "^1.2.63",
 		"@iconify/svelte": "^5.1.0",
 		"@leeoniya/ufuzzy": "^1.0.19",
-		"@types/marked": "^5.0.2",
 		"isomorphic-dompurify": "^2.34.0",
 		"lucide-svelte": "^0.562.0",
 		"marked": "^17.0.1",
 		"resend": "^6.6.0",
 		"svelte-typewrite": "^3.0.0",
-		"sveltekit-sse": "^0.14.3"
+		"sveltekit-sse": "^0.14.3",
+		"zod": "^4.2.1"
 	},
 	"overrides": {
 		"cookie": "^1.0.2"

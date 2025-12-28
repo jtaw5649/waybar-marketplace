@@ -58,7 +58,15 @@
 			<div class="card-icon">
 				<div class="card-icon-frame">
 					{#if icon}
-						<img class="card-icon-image" src={icon} alt="" loading="lazy" />
+						<img
+							class="card-icon-image"
+							src={icon}
+							alt=""
+							width="52"
+							height="52"
+							loading="lazy"
+							decoding="async"
+						/>
 					{:else}
 						<span class="card-icon-initial">{name.charAt(0).toUpperCase()}</span>
 					{/if}

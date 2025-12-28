@@ -97,7 +97,15 @@
 					{#each recentStars as module (module.uuid)}
 						<a href="/modules/{encodeModuleUuid(module.uuid)}" class="star-item" onclick={close}>
 							{#if module.icon}
-								<img src={module.icon} alt="" class="item-icon" loading="lazy" />
+								<img
+									src={module.icon}
+									alt=""
+									class="item-icon"
+									width="32"
+									height="32"
+									loading="lazy"
+									decoding="async"
+								/>
 							{:else}
 								<div class="item-icon placeholder">
 									{module.name.charAt(0).toUpperCase()}

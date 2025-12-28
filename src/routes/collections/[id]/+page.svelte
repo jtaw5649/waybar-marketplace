@@ -48,7 +48,15 @@
 			<div class="collection-meta">
 				<a href="/users/{collection.owner.username}" class="owner-link">
 					{#if collection.owner.avatar_url}
-						<img src={collection.owner.avatar_url} alt="" class="owner-avatar" loading="lazy" />
+						<img
+							src={collection.owner.avatar_url}
+							alt=""
+							class="owner-avatar"
+							width="24"
+							height="24"
+							loading="lazy"
+							decoding="async"
+						/>
 					{/if}
 					<span>{collection.owner.display_name || collection.owner.username}</span>
 				</a>

@@ -137,6 +137,7 @@
 										width="14"
 										height="14"
 										loading="lazy"
+										decoding="async"
 									/>
 								{/if}
 							{/each}
@@ -168,6 +169,7 @@
 							width="16"
 							height="16"
 							loading="lazy"
+							decoding="async"
 						/>
 					{/if}
 					<span class="tech-name">{tech.name}</span>

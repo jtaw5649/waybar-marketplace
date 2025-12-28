@@ -78,11 +78,13 @@
 - `https://html.spec.whatwg.org/multipage/server-sent-events.html`
 - `https://doc.rust-lang.org/reference/comments.html`
 - `https://github.com/sveltejs/kit/blob/main/documentation/docs/20-core-concepts/30-form-actions.md`
+- `https://kit.svelte.dev/docs/load`
 - `https://github.com/sveltejs/svelte/blob/main/documentation/docs/02-runes/03-$derived.md`
 - `https://github.com/sveltejs/svelte/blob/main/documentation/docs/02-runes/04-$effect.md`
 - `https://github.com/sveltejs/svelte/blob/main/documentation/docs/07-misc/07-v5-migration-guide.md`
 - `https://tsdoc.org/`
 - `https://svelte.dev/docs/kit/form-actions`
+- `https://svelte.dev/tutorial/kit/event`
 - `https://svelte.dev/docs/svelte/$derived`
 - `https://hpbn.co/server-sent-events-sse/`
 - `https://eslint.org/docs/latest/rules/no-warning-comments`
@@ -171,3 +173,10 @@
 - `https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview`
 - `https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP`
 - `https://github.com/sveltejs/kit/blob/main/documentation/docs/30-advanced/20-hooks.md`
+- `https://github.com/sveltejs/kit/blob/main/documentation/docs/30-advanced/30-link-options.md`
+- `https://github.com/sveltejs/kit/blob/main/documentation/docs/40-best-practices/05-performance.md`
+- `https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/Best_practices`
+- `https://developers.cloudflare.com/workers/reference/how-the-cache-works`
+- `https://developers.cloudflare.com/cache/how-to/tiered-cache/`
+- `https://developers.cloudflare.com/argo-smart-routing/get-started/`
+- `https://developers.cloudflare.com/images/`

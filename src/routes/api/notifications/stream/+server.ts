@@ -7,20 +7,17 @@ import { resolveAccessToken } from '$lib/server/token';
 
 const allowedEventTypes = new Set(['message', 'notification']);
 
-export const GET: RequestHandler = async ({ cookies, locals, platform, request }) => {
+export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 	const session = await locals.auth();
 	const accessToken = await resolveAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	if (!accessToken) {
 		throw error(401, 'Unauthorized');
 	}
 
-	const lastEventId = request.headers.get('Last-Event-ID');
-
 	return produce(async function start({ emit, lock }) {
 		const res = await fetch(`${API_BASE_URL}/api/v1/notifications/stream`, {
 			headers: authHeaders(accessToken, {
-				Accept: 'text/event-stream',
-				...(lastEventId ? { 'Last-Event-ID': lastEventId } : {})
+				Accept: 'text/event-stream'
 			})
 		});
 

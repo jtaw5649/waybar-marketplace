@@ -9,10 +9,19 @@
 	let { src, alt = '', size = 'md', name }: Props = $props();
 
 	const initial = $derived(name ? name.charAt(0).toUpperCase() : '?');
+	const sizePx = $derived(({ sm: 24, md: 32, lg: 48, xl: 120 } as const)[size] ?? 32);
 </script>
 
 {#if src}
-	<img {src} {alt} class="avatar avatar-{size}" loading="lazy" />
+	<img
+		{src}
+		{alt}
+		class="avatar avatar-{size}"
+		width={sizePx}
+		height={sizePx}
+		loading="lazy"
+		decoding="async"
+	/>
 {:else}
 	<div class="avatar-placeholder avatar-{size}" aria-hidden="true">
 		{initial}

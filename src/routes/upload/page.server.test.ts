@@ -11,12 +11,17 @@ import { resolveAccessToken } from '$lib/server/token';
 type UploadEvent = Parameters<typeof actions.upload>[0];
 
 function createFormData(values: Record<string, string>, file: File) {
-	return {
-		get: (key: string) => {
+	const formData = new FormData();
+	for (const [key, value] of Object.entries(values)) {
+		formData.set(key, value);
+	}
+	Object.defineProperty(formData, 'get', {
+		value: (key: string) => {
 			if (key === 'package') return file;
 			return values[key] ?? null;
 		}
-	} as unknown as FormData;
+	});
+	return formData;
 }
 
 function createEvent(file: File): UploadEvent {
@@ -252,11 +257,11 @@ describe('upload page server', () => {
 
 		const result = (await actions.upload(createEventWithoutLicense(file))) as {
 			status: number;
-			data?: { message: string };
+			data?: { errors?: Record<string, string> };
 		};
 
 		expect(result.status).toBe(400);
-		expect(result.data?.message).toBe('Missing required fields');
+		expect(result.data?.errors?.license).toBeDefined();
 	});
 
 	it('does not expose backend error bodies in responses', async () => {

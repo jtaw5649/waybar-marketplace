@@ -7,8 +7,26 @@ import { toPublicSession } from '$lib/utils/sessionPublic';
 import { acceptHeaders, jsonHeaders } from '$lib/server/authHeaders';
 import { resolveAccessToken } from '$lib/server/token';
 import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
+import { parseFormData } from '$lib/server/formValidation';
+import {
+	CreateCollectionSchema,
+	UpdateCollectionSchema,
+	DeleteCollectionSchema
+} from '$lib/schemas/collection';
+
+async function fetchCollections(authHeader: HeadersInit): Promise<Collection[]> {
+	try {
+		const res = await fetch(`${API_BASE_URL}/api/v1/collections`, { headers: authHeader });
+		if (!res.ok) return [];
+		const data = await res.json();
+		return data.collections || [];
+	} catch {
+		return [];
+	}
+}
 
 export const load: PageServerLoad = async (event) => {
+	const { isDataRequest } = event;
 	const session = await event.locals.auth();
 	const accessToken = await resolveAccessToken(
 		event.cookies,
@@ -28,15 +46,13 @@ export const load: PageServerLoad = async (event) => {
 	const authHeader = acceptHeaders(accessToken);
 
 	try {
-		const [profileRes, modulesRes, collectionsRes] = await Promise.all([
+		const [profileRes, modulesRes] = await Promise.all([
 			fetch(`${API_BASE_URL}/api/v1/users/me`, { headers: authHeader }),
-			fetch(`${API_BASE_URL}/api/v1/modules/mine`, { headers: authHeader }),
-			fetch(`${API_BASE_URL}/api/v1/collections`, { headers: authHeader })
+			fetch(`${API_BASE_URL}/api/v1/modules/mine`, { headers: authHeader })
 		]);
 
 		let profile: UserProfile | null = null;
 		let modules: Module[] = [];
-		let collections: Collection[] = [];
 
 		if (profileRes.ok) {
 			profile = await profileRes.json();
@@ -47,12 +63,14 @@ export const load: PageServerLoad = async (event) => {
 			modules = data.modules || [];
 		}
 
-		if (collectionsRes.ok) {
-			const data = await collectionsRes.json();
-			collections = data.collections || [];
-		}
+		const collectionsPromise = fetchCollections(authHeader);
 
-		return { session: toPublicSession(session), profile, modules, collections };
+		return {
+			session: toPublicSession(session),
+			profile,
+			modules,
+			collections: isDataRequest ? await collectionsPromise : collectionsPromise
+		};
 	} catch {
 		return { session: toPublicSession(session), profile: null, modules: [], collections: [] };
 	}
@@ -89,37 +107,25 @@ export const actions: Actions = {
 	},
 
 	createCollection: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = await resolveAccessToken(
-			event.cookies,
-			session,
-			event.platform?.env?.AUTH_SECRET
-		);
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
-
-		if (session.error === 'RefreshTokenError') {
-			return fail(401, { message: 'Session expired' });
-		}
+		const { accessToken } = authResult;
 
 		const formData = await event.request.formData();
-		const name = formData.get('name') as string;
-		const description = formData.get('description') as string | null;
-		const visibility = (formData.get('visibility') as string) || 'private';
+		const parsed = parseFormData(formData, CreateCollectionSchema);
 
-		if (!name || name.trim().length === 0) {
-			return fail(400, { message: 'Collection name is required' });
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
 		}
+
+		const { name, description, visibility } = parsed.data;
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections`, {
 			method: 'POST',
 			headers: jsonHeaders(accessToken),
-			body: JSON.stringify({
-				name: name.trim(),
-				description: description?.trim() || null,
-				visibility
-			})
+			body: JSON.stringify({ name, description, visibility })
 		});
 
 		if (!res.ok) {
@@ -131,36 +137,27 @@ export const actions: Actions = {
 	},
 
 	updateCollection: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = await resolveAccessToken(
-			event.cookies,
-			session,
-			event.platform?.env?.AUTH_SECRET
-		);
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
-
-		if (session.error === 'RefreshTokenError') {
-			return fail(401, { message: 'Session expired' });
-		}
+		const { accessToken } = authResult;
 
 		const formData = await event.request.formData();
-		const id = formData.get('id') as string;
-		const name = formData.get('name') as string;
-		const description = formData.get('description') as string | null;
-		const visibility = formData.get('visibility') as string;
+		const parsed = parseFormData(formData, UpdateCollectionSchema);
 
-		if (!id) {
-			return fail(400, { message: 'Collection ID is required' });
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
 		}
+
+		const { id, name, description, visibility } = parsed.data;
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${id}`, {
 			method: 'PATCH',
 			headers: jsonHeaders(accessToken),
 			body: JSON.stringify({
-				name: name?.trim() || undefined,
-				description: description?.trim() || null,
+				name: name || undefined,
+				description,
 				visibility: visibility || undefined
 			})
 		});
@@ -173,26 +170,20 @@ export const actions: Actions = {
 	},
 
 	deleteCollection: async (event) => {
-		const session = await event.locals.auth();
-		const accessToken = await resolveAccessToken(
-			event.cookies,
-			session,
-			event.platform?.env?.AUTH_SECRET
-		);
-		if (!session?.user || !accessToken) {
-			return fail(401, { message: 'Unauthorized' });
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
 		}
-
-		if (session.error === 'RefreshTokenError') {
-			return fail(401, { message: 'Session expired' });
-		}
+		const { accessToken } = authResult;
 
 		const formData = await event.request.formData();
-		const id = formData.get('id') as string;
+		const parsed = parseFormData(formData, DeleteCollectionSchema);
 
-		if (!id) {
-			return fail(400, { message: 'Collection ID is required' });
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
 		}
+
+		const { id } = parsed.data;
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${id}`, {
 			method: 'DELETE',

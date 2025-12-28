@@ -31,7 +31,15 @@
 	<div class="preview-card">
 		<div class="preview-header">
 			{#if avatarUrl}
-				<img src={avatarUrl} alt="" class="preview-avatar" loading="lazy" />
+				<img
+					src={avatarUrl}
+					alt=""
+					class="preview-avatar"
+					width="48"
+					height="48"
+					loading="lazy"
+					decoding="async"
+				/>
 			{:else}
 				<div class="avatar-placeholder" aria-hidden="true">
 					{displayedName.charAt(0).toUpperCase()}

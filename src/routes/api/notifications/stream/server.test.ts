@@ -75,7 +75,7 @@ describe('notifications stream api', () => {
 		);
 	});
 
-	it('forwards Last-Event-ID when provided', async () => {
+	it('does not forward Last-Event-ID from the client', async () => {
 		const fetchMock = vi.mocked(fetch);
 		const stream = makeStream([]);
 		fetchMock.mockResolvedValueOnce(new Response(stream, { status: 200 }));
@@ -86,10 +86,10 @@ describe('notifications stream api', () => {
 
 		await GET(makeEvent(request));
 
-		expect(fetchMock).toHaveBeenCalledWith(
-			expect.stringContaining('/api/v1/notifications/stream'),
-			expect.objectContaining({
-				headers: expect.objectContaining({ 'Last-Event-ID': '10' })
+		const options = fetchMock.mock.calls[0][1] as RequestInit;
+		expect(options.headers).toEqual(
+			expect.not.objectContaining({
+				'Last-Event-ID': '10'
 			})
 		);
 	});

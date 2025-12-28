@@ -25,7 +25,8 @@ describe('image loading attributes', () => {
 	it('ensures <img> tags include a loading attribute', () => {
 		const root = path.resolve(process.cwd(), 'src');
 		const files = collectSvelteFiles(root);
-		const missing: { file: string; tag: string }[] = [];
+		const missingLoading: { file: string; tag: string }[] = [];
+		const missingDecoding: { file: string; tag: string }[] = [];
 		const imgTagRegex = /<img\b[^>]*>/g;
 
 		for (const file of files) {
@@ -33,11 +34,15 @@ describe('image loading attributes', () => {
 			const matches = content.match(imgTagRegex) ?? [];
 			for (const tag of matches) {
 				if (!/loading\s*=/.test(tag)) {
-					missing.push({ file: path.relative(root, file), tag });
+					missingLoading.push({ file: path.relative(root, file), tag });
+				}
+				if (!/decoding\s*=/.test(tag)) {
+					missingDecoding.push({ file: path.relative(root, file), tag });
 				}
 			}
 		}
 
-		expect(missing).toEqual([]);
+		expect(missingLoading).toEqual([]);
+		expect(missingDecoding).toEqual([]);
 	});
 });

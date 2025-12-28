@@ -72,6 +72,7 @@
 					src={getUrl(screenshot.r2_key)}
 					alt={screenshot.alt_text || `Screenshot ${i + 1}`}
 					loading="lazy"
+					decoding="async"
 				/>
 				<div class="bento-overlay">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -129,6 +130,7 @@
 					src={getUrl(screenshots[selectedIndex].r2_key)}
 					alt={screenshots[selectedIndex].alt_text || `Screenshot ${selectedIndex + 1}`}
 					loading="lazy"
+					decoding="async"
 				/>
 
 				{#if selectedIndex < screenshots.length - 1}

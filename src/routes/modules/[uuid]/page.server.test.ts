@@ -124,19 +124,17 @@ describe('module page server', () => {
 		const { resolveAccessToken } = await import('$lib/server/token');
 		vi.mocked(resolveAccessToken).mockResolvedValue('token');
 		const { actions } = await import('./+page.server');
+		const fileData = new Uint8Array(3 * 1024 * 1024);
 		const file = {
-			size: 3 * 1024 * 1024,
+			size: fileData.length,
 			type: 'image/png',
-			arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([1]).buffer)
+			arrayBuffer: vi.fn().mockResolvedValue(fileData.buffer)
 		} as unknown as File;
 
-		const formData = {
-			get: (key: string) => {
-				if (key === 'screenshot') return file;
-				if (key === 'alt_text') return null;
-				return null;
-			}
-		} as unknown as FormData;
+		const formData = new FormData();
+		Object.defineProperty(formData, 'get', {
+			value: (key: string) => (key === 'screenshot' ? file : null)
+		});
 
 		const event = {
 			locals: {
@@ -162,19 +160,22 @@ describe('module page server', () => {
 		const { resolveAccessToken } = await import('$lib/server/token');
 		vi.mocked(resolveAccessToken).mockResolvedValue('token');
 		const { actions } = await import('./+page.server');
+		const fileData = new Uint8Array([1, 2, 3]);
 		const file = {
-			size: 3,
+			size: fileData.length,
 			type: 'image/png',
-			arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]).buffer)
+			arrayBuffer: vi.fn().mockResolvedValue(fileData.buffer)
 		} as unknown as File;
 
-		const formData = {
-			get: (key: string) => {
+		const formData = new FormData();
+		formData.set('alt_text', 'Alt text');
+		Object.defineProperty(formData, 'get', {
+			value: (key: string) => {
 				if (key === 'screenshot') return file;
 				if (key === 'alt_text') return 'Alt text';
 				return null;
 			}
-		} as unknown as FormData;
+		});
 
 		const event = {
 			locals: {
@@ -253,6 +254,73 @@ describe('module page server', () => {
 		expect(result.session).not.toHaveProperty('accessToken');
 	});
 
+	it('returns collections from the api response', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { load } = await import('./+page.server');
+		const moduleData = {
+			uuid: 'module@test',
+			name: 'Test',
+			description: 'Test',
+			category: 'system',
+			author: 'test',
+			downloads: 0,
+			verified_author: false,
+			repo_url: 'https://example.com/test',
+			tags: []
+		};
+		const collections = [
+			{
+				id: 1,
+				user_id: 1,
+				name: 'Favorites',
+				description: null,
+				visibility: 'private',
+				module_count: 0,
+				owner: { username: 'test' },
+				created_at: '2024-01-01T00:00:00Z',
+				updated_at: '2024-01-01T00:00:00Z'
+			}
+		];
+
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({
+					user: { login: 'Test' }
+				})
+			},
+			params: { uuid: 'module@test' },
+			cookies: { get: vi.fn().mockReturnValue(null) },
+			fetch: vi.fn(async (url: string) => {
+				if (url.includes('/versions')) {
+					return { ok: true, json: async () => ({ versions: [] }) } as Response;
+				}
+				if (url.includes('/reviews')) {
+					return { ok: true, json: async () => ({ reviews: [] }) } as Response;
+				}
+				if (url.includes('/screenshots')) {
+					return { ok: true, json: async () => ({ screenshots: [] }) } as Response;
+				}
+				if (url.includes('/related')) {
+					return { ok: true, json: async () => ({ modules: [] }) } as Response;
+				}
+				return { ok: true, json: async () => ({ data: moduleData }) } as Response;
+			})
+		} as unknown as LoadEvent;
+
+		const fetchMock = vi.mocked(fetch);
+		fetchMock.mockResolvedValue({
+			ok: true,
+			json: async () => ({ version: 1, collections, total: collections.length })
+		} as Response);
+
+		const result = await load(event);
+		if (!result) throw new Error('expected result');
+
+		expect(result.collections).toBeInstanceOf(Promise);
+		await expect(result.collections).resolves.toEqual(collections);
+	});
+
 	it('fetches related modules from api', async () => {
 		const { load } = await import('./+page.server');
 		const moduleData = {
@@ -287,5 +355,75 @@ describe('module page server', () => {
 		expect(event.fetch).toHaveBeenCalledWith(
 			expect.stringContaining('/api/v1/modules/module@test/related')
 		);
+	});
+
+	it('awaits streaming data for data requests', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+		const { load } = await import('./+page.server');
+		const moduleData = {
+			uuid: 'module@test',
+			name: 'Test',
+			description: 'Test',
+			category: 'system',
+			author: 'test',
+			downloads: 0,
+			verified_author: false,
+			repo_url: 'https://example.com/test',
+			tags: []
+		};
+		const collections = [
+			{
+				id: 1,
+				user_id: 1,
+				name: 'Favorites',
+				description: null,
+				visibility: 'private',
+				module_count: 0,
+				owner: { username: 'test' },
+				created_at: '2024-01-01T00:00:00Z',
+				updated_at: '2024-01-01T00:00:00Z'
+			}
+		];
+
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({
+					user: { login: 'Test' }
+				})
+			},
+			params: { uuid: 'module@test' },
+			cookies: { get: vi.fn().mockReturnValue(null) },
+			isDataRequest: true,
+			fetch: vi.fn(async (url: string) => {
+				if (url.includes('/versions')) {
+					return { ok: true, json: async () => ({ versions: [] }) } as Response;
+				}
+				if (url.includes('/reviews')) {
+					return { ok: true, json: async () => ({ reviews: [] }) } as Response;
+				}
+				if (url.includes('/screenshots')) {
+					return { ok: true, json: async () => ({ screenshots: [] }) } as Response;
+				}
+				if (url.includes('/related')) {
+					return { ok: true, json: async () => ({ modules: [] }) } as Response;
+				}
+				return { ok: true, json: async () => ({ data: moduleData }) } as Response;
+			})
+		} as unknown as LoadEvent;
+
+		const fetchMock = vi.mocked(fetch);
+		fetchMock.mockResolvedValue({
+			ok: true,
+			json: async () => ({ version: 1, collections, total: collections.length })
+		} as Response);
+
+		const result = await load(event);
+		if (!result) throw new Error('expected result');
+
+		expect(result.reviews).toEqual([]);
+		expect(result.screenshots).toEqual([]);
+		expect(result.relatedModules).toEqual([]);
+		expect(result.collections).toEqual(collections);
 	});
 });

@@ -14,7 +14,9 @@ export const securityHeaders: Record<string, string> = {
 };
 
 export const addSecurityHeaders: Handle = async ({ event, resolve }) => {
-	const response = await resolve(event);
+	const response = await resolve(event, {
+		preload: ({ type, path }) => type === 'font' && path.startsWith('/fonts/')
+	});
 
 	for (const [key, value] of Object.entries(securityHeaders)) {
 		response.headers.set(key, value);

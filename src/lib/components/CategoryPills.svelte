@@ -12,7 +12,15 @@
 <div class="category-pills">
 	{#each categories as cat (cat.slug)}
 		<a class="category-pill" href="{baseUrl}?category={cat.slug}" style="--cat-color: {cat.color}">
-			<img class="category-pill-icon" src={cat.icon} alt="" loading="lazy" />
+			<img
+				class="category-pill-icon"
+				src={cat.icon}
+				alt=""
+				width="18"
+				height="18"
+				loading="lazy"
+				decoding="async"
+			/>
 			<span class="category-pill-name">{cat.name}</span>
 		</a>
 	{/each}

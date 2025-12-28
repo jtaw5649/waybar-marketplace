@@ -22,7 +22,15 @@
 		<div class="profile-banner"></div>
 		<div class="profile-info">
 			{#if data.profile.avatar_url}
-				<img src={data.profile.avatar_url} alt="" class="avatar" loading="lazy" />
+				<img
+					src={data.profile.avatar_url}
+					alt=""
+					class="avatar"
+					width="120"
+					height="120"
+					loading="lazy"
+					decoding="async"
+				/>
 			{:else}
 				<div class="avatar-placeholder" aria-hidden="true">
 					{data.profile.username.charAt(0).toUpperCase()}

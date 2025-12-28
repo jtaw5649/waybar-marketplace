@@ -6,6 +6,8 @@ import { API_BASE_URL } from '$lib';
 import { authHeaders, jsonHeaders } from '$lib/server/authHeaders';
 import { resolveAccessToken } from '$lib/server/token';
 import { encodeModuleUuid } from '$lib/utils/url';
+import { parseJson } from '$lib/server/formValidation';
+import { CreateReviewSchema } from '$lib/schemas/module';
 
 async function forwardReviewRequest(
 	method: 'POST' | 'PUT' | 'DELETE',
@@ -19,8 +21,18 @@ async function forwardReviewRequest(
 	if (!accessToken) {
 		error(401, 'Unauthorized');
 	}
+
+	let body: string | undefined;
+	if (method !== 'DELETE') {
+		const jsonData = await request.json();
+		const parsed = parseJson(jsonData, CreateReviewSchema);
+		if (!parsed.success) {
+			return json({ errors: parsed.errors }, { status: 400 });
+		}
+		body = JSON.stringify(parsed.data);
+	}
+
 	const headers = method === 'DELETE' ? authHeaders(accessToken) : jsonHeaders(accessToken);
-	const body = method === 'DELETE' ? undefined : JSON.stringify(await request.json());
 
 	const res = await fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/reviews`, {
 		method,

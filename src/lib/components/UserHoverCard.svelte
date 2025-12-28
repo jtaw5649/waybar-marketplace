@@ -42,6 +42,9 @@
 					alt={user.display_name || user.username}
 					class="user-avatar"
 					loading="lazy"
+					width="48"
+					height="48"
+					decoding="async"
 				/>
 			{/if}
 			<div class="user-name">

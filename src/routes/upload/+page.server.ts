@@ -10,6 +10,8 @@ import { toPublicSession } from '$lib/utils/sessionPublic';
 import { encodeModuleUuid } from '$lib/utils/url';
 import { acceptHeaders, jsonHeaders } from '$lib/server/authHeaders';
 import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
+import { parseFormData } from '$lib/server/formValidation';
+import { CreateModuleSchema } from '$lib/schemas/module';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -60,18 +62,25 @@ export const actions: Actions = {
 			}
 		}
 
-		const name = formData.get('name') as string;
-		const description = formData.get('description') as string;
-		const category = formData.get('category') as string;
-		const version = formData.get('version') as string;
-		const license = formData.get('license') as string;
-		const repoUrl = formData.get('repo_url') as string;
-		const changelog = formData.get('changelog') as string;
 		const packageFile = formData.get('package') as File;
-
-		if (!name || !description || !category || !version || !license || !packageFile) {
-			return fail(400, { message: 'Missing required fields' });
+		if (!packageFile || packageFile.size === 0) {
+			return fail(400, { message: 'Package file is required' });
 		}
+
+		const parsed = parseFormData(formData, CreateModuleSchema);
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
+		}
+
+		const {
+			name,
+			description,
+			category,
+			version,
+			license,
+			repo_url: repoUrl,
+			changelog
+		} = parsed.data;
 
 		if (!isAllowedPackageExtension(packageFile.name)) {
 			return fail(400, {

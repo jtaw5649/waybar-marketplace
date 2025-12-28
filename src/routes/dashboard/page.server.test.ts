@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { actions } from './+page.server';
+import { actions, load } from './+page.server';
 
 vi.mock('$lib/server/token', () => ({
 	getServerToken: vi.fn(),
@@ -12,6 +12,7 @@ type UpdateProfileEvent = Parameters<typeof actions.updateProfile>[0];
 type CreateCollectionEvent = Parameters<typeof actions.createCollection>[0];
 type UpdateCollectionEvent = Parameters<typeof actions.updateCollection>[0];
 type DeleteCollectionEvent = Parameters<typeof actions.deleteCollection>[0];
+type LoadEvent = Parameters<typeof load>[0];
 
 const baseEvent = {
 	locals: {
@@ -140,5 +141,140 @@ describe('dashboard page server actions', () => {
 				})
 			})
 		);
+	});
+});
+
+describe('dashboard page load', () => {
+	beforeEach(() => {
+		vi.stubGlobal('fetch', vi.fn());
+		vi.resetModules();
+		vi.mocked(resolveAccessToken).mockResolvedValue('token');
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.clearAllMocks();
+	});
+
+	it('returns collections from the API response', async () => {
+		const { load } = await import('./+page.server');
+		const collections = [
+			{
+				id: 1,
+				user_id: 1,
+				name: 'Favorites',
+				description: null,
+				visibility: 'private',
+				module_count: 0,
+				owner: { username: 'test' },
+				created_at: '2024-01-01T00:00:00Z',
+				updated_at: '2024-01-01T00:00:00Z'
+			}
+		];
+
+		const fetchMock = vi.mocked(fetch);
+		fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+			const url = typeof input === 'string' ? input : input.toString();
+			if (url.includes('/api/v1/users/me')) {
+				return {
+					ok: true,
+					json: async () => ({
+						version: 1,
+						username: 'test',
+						display_name: null,
+						bio: null,
+						website_url: null,
+						created_at: '2024-01-01T00:00:00Z'
+					})
+				} as Response;
+			}
+			if (url.includes('/api/v1/modules/mine')) {
+				return {
+					ok: true,
+					json: async () => ({ version: 1, modules: [] })
+				} as Response;
+			}
+			if (url.includes('/api/v1/collections')) {
+				return {
+					ok: true,
+					json: async () => ({ version: 1, collections, total: collections.length })
+				} as Response;
+			}
+			return { ok: false } as Response;
+		});
+
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({ user: { login: 'test' } })
+			},
+			cookies: {}
+		} as unknown as LoadEvent;
+
+		const result = await load(event);
+		if (!result) throw new Error('Expected result');
+
+		expect(result.collections).toBeInstanceOf(Promise);
+		await expect(result.collections).resolves.toEqual(collections);
+	});
+
+	it('awaits collections for data requests', async () => {
+		const { load } = await import('./+page.server');
+		const collections = [
+			{
+				id: 1,
+				user_id: 1,
+				name: 'Favorites',
+				description: null,
+				visibility: 'private',
+				module_count: 0,
+				owner: { username: 'test' },
+				created_at: '2024-01-01T00:00:00Z',
+				updated_at: '2024-01-01T00:00:00Z'
+			}
+		];
+
+		const fetchMock = vi.mocked(fetch);
+		fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+			const url = typeof input === 'string' ? input : input.toString();
+			if (url.includes('/api/v1/users/me')) {
+				return {
+					ok: true,
+					json: async () => ({
+						version: 1,
+						username: 'test',
+						display_name: null,
+						bio: null,
+						website_url: null,
+						created_at: '2024-01-01T00:00:00Z'
+					})
+				} as Response;
+			}
+			if (url.includes('/api/v1/modules/mine')) {
+				return {
+					ok: true,
+					json: async () => ({ version: 1, modules: [] })
+				} as Response;
+			}
+			if (url.includes('/api/v1/collections')) {
+				return {
+					ok: true,
+					json: async () => ({ version: 1, collections, total: collections.length })
+				} as Response;
+			}
+			return { ok: false } as Response;
+		});
+
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({ user: { login: 'test' } })
+			},
+			cookies: {},
+			isDataRequest: true
+		} as unknown as LoadEvent;
+
+		const result = await load(event);
+		if (!result) throw new Error('Expected result');
+
+		expect(result.collections).toEqual(collections);
 	});
 });
