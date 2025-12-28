@@ -15,18 +15,25 @@ export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 	}
 
 	return produce(async function start({ emit, lock }) {
+		const controller = new AbortController();
 		const res = await fetch(`${API_BASE_URL}/api/v1/notifications/stream`, {
 			headers: authHeaders(accessToken, {
 				Accept: 'text/event-stream'
-			})
+			}),
+			signal: controller.signal
 		});
 
 		if (!res.ok || !res.body) {
 			lock.set(false);
-			return;
+			controller.abort();
+			return () => controller.abort();
 		}
 
 		const reader = res.body.getReader();
+		const cleanup = () => {
+			controller.abort();
+			reader.cancel();
+		};
 		const decoder = new TextDecoder();
 		let buffer = '';
 		const emitEvents = (rawEvents: string[]) => {
@@ -72,7 +79,8 @@ export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 			buffer = events.pop() ?? '';
 
 			if (!emitEvents(events)) {
-				return;
+				cleanup();
+				return cleanup;
 			}
 		}
 
@@ -81,9 +89,11 @@ export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 		const remainingEvents = buffer.split('\n\n');
 		buffer = remainingEvents.pop() ?? '';
 		if (!emitEvents(remainingEvents)) {
-			return;
+			cleanup();
+			return cleanup;
 		}
 
 		lock.set(false);
+		return cleanup;
 	});
 };

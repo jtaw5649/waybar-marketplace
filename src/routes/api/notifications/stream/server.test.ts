@@ -3,6 +3,7 @@ import { GET } from './+server';
 import { resolveAccessToken } from '$lib/server/token';
 
 let emitSpy = vi.fn();
+let stopHandler: (() => void) | undefined;
 
 vi.mock('$lib/server/token', () => ({
 	resolveAccessToken: vi.fn()
@@ -14,11 +15,11 @@ vi.mock('sveltekit-sse', () => ({
 			start: (options: {
 				emit: typeof emitSpy;
 				lock: { set: (value: boolean) => void };
-			}) => Promise<void>
+			}) => Promise<void | (() => void)>
 		) => {
 			emitSpy = vi.fn(() => ({ error: null }));
 			const lock = { set: vi.fn() };
-			await start({ emit: emitSpy, lock });
+			stopHandler = (await start({ emit: emitSpy, lock })) ?? undefined;
 			return new Response();
 		}
 	)
@@ -65,6 +66,7 @@ const makeBinaryStream = (chunks: Uint8Array[]) => {
 describe('notifications stream api', () => {
 	beforeEach(() => {
 		emitSpy = vi.fn();
+		stopHandler = undefined;
 		vi.stubGlobal('fetch', vi.fn());
 		vi.mocked(resolveAccessToken).mockResolvedValue('token');
 	});
@@ -140,5 +142,33 @@ describe('notifications stream api', () => {
 		await GET(makeEvent());
 
 		expect(emitSpy).not.toHaveBeenCalled();
+	});
+
+	it('aborts the upstream stream when the client disconnects', async () => {
+		const fetchMock = vi.mocked(fetch);
+		const cancelSpy = vi.fn();
+		const reader = {
+			read: vi.fn().mockResolvedValue({ done: true, value: undefined }),
+			cancel: cancelSpy
+		};
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			body: {
+				getReader: () => reader
+			}
+		} as unknown as Response);
+
+		const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
+
+		await GET(makeEvent());
+
+		expect(stopHandler).toBeTypeOf('function');
+
+		stopHandler?.();
+
+		expect(abortSpy).toHaveBeenCalledTimes(1);
+		expect(cancelSpy).toHaveBeenCalledTimes(1);
+
+		abortSpy.mockRestore();
 	});
 });
