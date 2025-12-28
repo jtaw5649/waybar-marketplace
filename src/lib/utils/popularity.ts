@@ -4,7 +4,7 @@
 export interface ModuleMetrics {
 	downloads: number;
 	rating: number | null;
-	created_at: string;
+	last_updated?: string | null;
 }
 
 /**
@@ -21,7 +21,7 @@ export interface ModuleMetrics {
 export function calculatePopularityScore(module: ModuleMetrics): number {
 	const downloadScore = calculateDownloadScore(module.downloads);
 	const ratingMultiplier = calculateRatingMultiplier(module.rating);
-	const recencyBonus = calculateRecencyBonus(module.created_at);
+	const recencyBonus = calculateRecencyBonus(module.last_updated);
 
 	return downloadScore * ratingMultiplier * recencyBonus;
 }
@@ -38,7 +38,7 @@ export function calculatePopularityScore(module: ModuleMetrics): number {
 export function calculateTrendingScore(module: ModuleMetrics): number {
 	const downloadScore = calculateDownloadScore(module.downloads);
 	const ratingMultiplier = calculateRatingMultiplier(module.rating);
-	const trendingBonus = calculateTrendingBonus(module.created_at);
+	const trendingBonus = calculateTrendingBonus(module.last_updated);
 
 	return downloadScore * ratingMultiplier * trendingBonus;
 }
@@ -54,31 +54,37 @@ function calculateRatingMultiplier(rating: number | null): number {
 	return 0.7 + (rating - 1) * 0.15;
 }
 
-function calculateRecencyBonus(created_at: string): number {
-	const ageInDays = getAgeInDays(created_at);
+function calculateRecencyBonus(lastUpdated?: string | null): number {
+	if (!lastUpdated) return 1.0;
+
+	const ageInDays = getAgeInDays(lastUpdated);
 
 	const decayDays = 90;
 	const maxBonus = 0.5;
 
-	if (ageInDays >= decayDays) return 1.0;
+	if (!Number.isFinite(ageInDays) || ageInDays >= decayDays) return 1.0;
 
 	const decayFactor = 1 - ageInDays / decayDays;
 	return 1.0 + maxBonus * decayFactor;
 }
 
-function calculateTrendingBonus(created_at: string): number {
-	const ageInDays = getAgeInDays(created_at);
+function calculateTrendingBonus(lastUpdated?: string | null): number {
+	if (!lastUpdated) return 1.0;
+
+	const ageInDays = getAgeInDays(lastUpdated);
 
 	const halfLife = 7;
 	const maxMultiplier = 3.0;
 	const minMultiplier = 0.5;
 
+	if (!Number.isFinite(ageInDays)) return 1.0;
+
 	const decay = Math.pow(0.5, ageInDays / halfLife);
 	return minMultiplier + (maxMultiplier - minMultiplier) * decay;
 }
 
-function getAgeInDays(created_at: string): number {
-	const created = new Date(created_at).getTime();
+function getAgeInDays(lastUpdated: string): number {
+	const created = new Date(lastUpdated).getTime();
 	const now = Date.now();
 	const ageMs = now - created;
 	return Math.max(0, ageMs / (24 * 60 * 60 * 1000));

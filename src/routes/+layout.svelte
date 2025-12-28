@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import '../app.css';
+	import BackToTop from '$lib/components/BackToTop.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import { toggle } from '$lib/stores/commandPalette';
 	import { stars } from '$lib/stores/stars.svelte';
+	import { notificationSSE } from '$lib/stores/notificationSSE.svelte';
 	import { page } from '$app/state';
 
 	let { children }: { children: Snippet } = $props();
@@ -12,6 +14,11 @@
 	$effect(() => {
 		const session = page.data.session;
 		stars.setAuthenticated(!!session?.user);
+		if (session?.user) {
+			notificationSSE.connect();
+		} else {
+			notificationSSE.disconnect();
+		}
 	});
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -32,6 +39,7 @@
 <div class="app-wrapper">
 	{@render children()}
 </div>
+<BackToTop />
 <Toast />
 <CommandPalette session={page.data.session} isAdmin={page.data.isAdmin} />
 

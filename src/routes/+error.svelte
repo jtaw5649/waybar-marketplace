@@ -4,7 +4,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 </script>
 
-<Header session={null} />
+<Header session={page.data.session ?? null} />
 
 <main id="main-content">
 	<div class="error-container">

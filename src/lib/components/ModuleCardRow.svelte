@@ -19,7 +19,7 @@
 		verified?: boolean;
 		icon?: string;
 		delay?: number;
-		createdAt?: string;
+		lastUpdated?: string;
 	}
 
 	let {
@@ -32,13 +32,13 @@
 		verified = false,
 		icon,
 		delay = 0,
-		createdAt
+		lastUpdated
 	}: Props = $props();
 
 	const { categoryVariant, categoryColor, isNew, isStarred } = useModuleCard(() => ({
 		uuid,
 		category,
-		createdAt
+		lastUpdated
 	}));
 </script>
 
@@ -47,7 +47,15 @@
 		<div class="row-icon">
 			<div class="row-icon-frame">
 				{#if icon}
-					<img class="row-icon-image" src={icon} alt="" />
+					<img
+						class="row-icon-image"
+						src={icon}
+						alt=""
+						width="40"
+						height="40"
+						loading="lazy"
+						decoding="async"
+					/>
 				{:else}
 					<span class="row-icon-initial">{name.charAt(0).toUpperCase()}</span>
 				{/if}

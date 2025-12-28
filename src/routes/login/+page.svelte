@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { signIn, signOut } from '@auth/sveltekit/client';
+	import { signIn } from '@auth/sveltekit/client';
 	import { page } from '$app/state';
 	import type { PageData } from './$types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import { signOutWithCleanup } from '$lib/utils/sessionCleanup';
 
 	let { data }: { data: PageData } = $props();
 
@@ -15,7 +16,7 @@
 		loading = true;
 
 		if (data.session?.error === 'RefreshTokenError') {
-			await signOut({ redirect: false });
+			await signOutWithCleanup({ redirect: false });
 		}
 
 		signIn('github', { redirectTo });
@@ -30,7 +31,14 @@
 			<div class="login-icon">
 				<picture>
 					<source srcset="/branding/avatar-dark-512.png" media="(prefers-color-scheme: dark)" />
-					<img src="/branding/avatar-light-512.png" alt="Barforge avatar" width="80" height="80" />
+					<img
+						src="/branding/avatar-light-512.png"
+						alt="Barforge avatar"
+						width="80"
+						height="80"
+						loading="eager"
+						decoding="async"
+					/>
 				</picture>
 			</div>
 			<h1>Log in to Barforge</h1>

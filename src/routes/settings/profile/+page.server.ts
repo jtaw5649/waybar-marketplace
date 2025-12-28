@@ -3,6 +3,8 @@ import { fail } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import { jsonHeaders } from '$lib/server/authHeaders';
 import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
+import { parseFormData } from '$lib/server/formValidation';
+import { UpdateProfileSchema } from '$lib/schemas/user';
 
 export const actions: Actions = {
 	updateProfile: async (event) => {
@@ -13,14 +15,22 @@ export const actions: Actions = {
 		const { accessToken } = authResult;
 
 		const formData = await event.request.formData();
-		const display_name = formData.get('display_name') as string | null;
-		const bio = formData.get('bio') as string | null;
-		const website_url = formData.get('website_url') as string | null;
-		const github_url = formData.get('github_url') as string | null;
-		const twitter_url = formData.get('twitter_url') as string | null;
-		const bluesky_url = formData.get('bluesky_url') as string | null;
-		const discord_url = formData.get('discord_url') as string | null;
-		const sponsor_url = formData.get('sponsor_url') as string | null;
+		const parsed = parseFormData(formData, UpdateProfileSchema);
+
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
+		}
+
+		const {
+			display_name,
+			bio,
+			website_url,
+			github_url,
+			twitter_url,
+			bluesky_url,
+			discord_url,
+			sponsor_url
+		} = parsed.data;
 
 		const res = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
 			method: 'PATCH',

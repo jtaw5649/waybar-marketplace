@@ -29,6 +29,17 @@ interface ExportData {
 	stars: Module[];
 }
 
+const isExportModule = (value: unknown): value is Module => {
+	if (!value || typeof value !== 'object') return false;
+	const record = value as Record<string, unknown>;
+	return (
+		typeof record.uuid === 'string' &&
+		typeof record.name === 'string' &&
+		typeof record.description === 'string' &&
+		typeof record.category === 'string'
+	);
+};
+
 export const actions: Actions = {
 	exportData: async (event) => {
 		const authResult = await requireAuthenticatedAction(event);
@@ -62,7 +73,7 @@ export const actions: Actions = {
 			exportedAt: new Date().toISOString(),
 			profile: profileRes.ok ? await profileRes.json() : null,
 			modules: modulesData?.modules || [],
-			stars: normalizeStarsPayload<Module>(starsData).modules
+			stars: normalizeStarsPayload<Module>(starsData, isExportModule).modules
 		};
 
 		const resend = new Resend(resendApiKey);
@@ -96,6 +107,24 @@ export const actions: Actions = {
 		if (error) {
 			console.error('Failed to send export email:', error);
 			return fail(500, { message: 'Failed to send export email' });
+		}
+
+		return { success: true };
+	},
+	deleteAccount: async (event) => {
+		const authResult = await requireAuthenticatedAction(event);
+		if (isAuthFailure(authResult)) {
+			return authResult;
+		}
+		const { accessToken } = authResult;
+
+		const res = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+			method: 'DELETE',
+			headers: acceptHeaders(accessToken)
+		});
+
+		if (!res.ok) {
+			return fail(res.status, { message: 'Failed to delete account' });
 		}
 
 		return { success: true };

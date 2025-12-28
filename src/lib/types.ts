@@ -1,3 +1,5 @@
+import type { components } from './api-types';
+
 export type PaletteMode = 'all' | 'modules' | 'pages' | 'commands';
 
 export interface PaletteItem {
@@ -10,131 +12,29 @@ export interface PaletteItem {
 	path?: string;
 }
 
-export interface ModuleVersion {
-	major: number;
-	minor: number;
-	patch: number;
-}
+export type ModuleVersion = components['schemas']['ModuleVersion'];
+export type ModuleCategory = components['schemas']['ModuleCategory'];
+export type Module = components['schemas']['RegistryModule'];
+export type StarredModule = components['schemas']['StarredModule'];
+export type StarsResponse = components['schemas']['StarsResponse'];
 
-export interface Module {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	downloads: number;
-	rating: number | null;
-	verified_author: boolean;
-	created_at: string;
-	updated_at?: string;
-	version?: string;
-	repo_url?: string;
-	icon?: string;
-}
-
-export type UserRole = 'user' | 'moderator' | 'admin';
-
-export interface UserProfileBase {
-	id: number;
-	username: string;
-	display_name: string | null;
-	avatar_url: string | null;
-	bio: string | null;
-	website_url: string | null;
-	verified_author: boolean;
-	module_count: number;
-	created_at: string;
-}
-
-export interface UserProfile extends UserProfileBase {
-	role?: UserRole;
-	github_url?: string | null;
-	twitter_url?: string | null;
-	bluesky_url?: string | null;
-	discord_url?: string | null;
-	sponsor_url?: string | null;
-}
+export type UserRole = components['schemas']['UserRole'];
+export type UserProfile = components['schemas']['UserProfile'];
 
 export type CollectionVisibility = 'private' | 'public' | 'unlisted';
 
-export interface CollectionBase {
-	id: number;
-	name: string;
-	description: string | null;
-	visibility: CollectionVisibility;
-	module_count: number;
-	created_at: string;
-	updated_at?: string;
-}
+export type CollectionOwner = components['schemas']['CollectionOwner'];
+export type CollectionModule = components['schemas']['CollectionModule'];
+export type CollectionBase = components['schemas']['Collection'];
+export type Collection = components['schemas']['Collection'];
+export type CollectionDetail = components['schemas']['Collection'] & {
+	modules: components['schemas']['CollectionModule'][];
+};
 
-export interface Collection extends CollectionBase {
-	updated_at: string;
-}
-
-export interface CollectionOwner {
-	username: string;
-	display_name: string | null;
-	avatar_url: string | null;
-}
-
-export interface CollectionModule {
-	uuid: string;
-	name: string;
-	author: string;
-	category: string;
-	note: string | null;
-	position: number;
-	added_at: string;
-}
-
-export interface CollectionDetail extends CollectionBase {
-	modules: CollectionModule[];
-	owner: CollectionOwner;
-	updated_at: string;
-}
-
-export interface Screenshot {
-	id: number;
-	r2_key: string;
-	alt_text: string | null;
-	position: number;
-	created_at: string;
-}
-
-export interface ReviewUser {
-	username: string;
-	avatar_url: string | null;
-}
-
-export interface Review {
-	id: number;
-	rating: number;
-	title: string | null;
-	body: string | null;
-	helpful_count: number;
-	created_at: string;
-	updated_at: string | null;
-	user: ReviewUser;
-}
-
-export interface VersionHistoryEntry {
-	version: string;
-	changelog: string | null;
-	downloads: number;
-	published_at: string;
-}
-
-export interface RelatedModule {
-	uuid: string;
-	name: string;
-	author: string;
-	description: string;
-	category: string;
-	downloads: number;
-	verified_author: boolean;
-	version?: string;
-	created_at?: string;
-}
+export type Screenshot = components['schemas']['Screenshot'];
+export type ReviewUser = components['schemas']['ReviewUser'];
+export type Review = components['schemas']['Review'];
+export type VersionHistoryEntry = components['schemas']['VersionHistoryEntry'];
 
 export interface PageItem extends PaletteItem {
 	type: 'page';
@@ -146,24 +46,71 @@ export interface CommandItem extends PaletteItem {
 	action: () => void;
 }
 
-export interface LandingStats {
-	total_modules: number;
-	total_downloads: number;
-	total_authors: number;
+export type LandingStats = components['schemas']['PublicStats'];
+export type LandingInstallMethod = components['schemas']['LandingInstallMethod'];
+export type LandingData = components['schemas']['LandingData'];
+export type LandingResponse = components['schemas']['ApiVersion'] &
+	components['schemas']['LandingData'];
+
+export type NotificationType = 'downloads' | 'comments' | 'stars' | 'updates' | 'announcements';
+
+export type NotificationStatus = 'unread' | 'read' | 'done';
+
+export interface NotificationPreference {
+	type: NotificationType;
+	email: boolean;
+	inApp: boolean;
 }
 
-export interface LandingInstallMethod {
+export interface Notification {
 	id: string;
-	label: string;
-	description: string;
-	commands: string[];
+	type: NotificationType;
+	title: string;
+	message: string;
+	link?: string;
+	status: NotificationStatus;
+	createdAt: string;
+	readAt?: string;
 }
 
-export interface LandingData {
-	stats: LandingStats;
-	install_methods: LandingInstallMethod[];
-}
+export type NotificationIcon = 'download' | 'comment' | 'star' | 'update' | 'announce';
 
-export interface LandingResponse extends LandingData {
-	version: number;
-}
+export const NOTIFICATION_TYPES: NotificationType[] = [
+	'downloads',
+	'comments',
+	'stars',
+	'updates',
+	'announcements'
+];
+
+export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
+	downloads: 'Download milestones',
+	comments: 'New comments',
+	stars: 'New stars',
+	updates: 'Module updates',
+	announcements: 'Platform announcements'
+};
+
+export const NOTIFICATION_TYPE_DESCRIPTIONS: Record<NotificationType, string> = {
+	downloads: 'Get notified when your modules reach download milestones (100, 1k, 10k, etc.)',
+	comments: 'When someone comments on your modules',
+	stars: 'When someone stars your modules',
+	updates: 'When modules you starred release new versions',
+	announcements: 'Important updates about Barforge'
+};
+
+export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, NotificationIcon> = {
+	downloads: 'download',
+	comments: 'comment',
+	stars: 'star',
+	updates: 'update',
+	announcements: 'announce'
+};
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreference[] = [
+	{ type: 'downloads', email: false, inApp: true },
+	{ type: 'comments', email: false, inApp: true },
+	{ type: 'stars', email: false, inApp: true },
+	{ type: 'updates', email: false, inApp: true },
+	{ type: 'announcements', email: true, inApp: true }
+];

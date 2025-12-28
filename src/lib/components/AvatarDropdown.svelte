@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { signOut } from '@auth/sveltekit/client';
 	import Avatar from './Avatar.svelte';
 	import { User, LayoutDashboard, Star, Upload, Settings, LogOut } from 'lucide-svelte';
+	import { clickOutside } from '$lib/actions/clickOutside';
+	import { signOutWithCleanup } from '$lib/utils/sessionCleanup';
 
 	interface Props {
 		user: { name?: string | null; email?: string | null; image?: string | null; login?: string };
@@ -11,7 +11,6 @@
 	let { user }: Props = $props();
 
 	let isOpen = $state(false);
-	let dropdownRef = $state<HTMLDivElement | null>(null);
 	let triggerRef = $state<HTMLButtonElement | null>(null);
 
 	function toggle() {
@@ -22,17 +21,6 @@
 		isOpen = false;
 	}
 
-	function handleClickOutside(event: MouseEvent) {
-		if (
-			dropdownRef &&
-			triggerRef &&
-			!dropdownRef.contains(event.target as Node) &&
-			!triggerRef.contains(event.target as Node)
-		) {
-			close();
-		}
-	}
-
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
 			close();
@@ -40,14 +28,9 @@
 		}
 	}
 
-	onMount(() => {
-		document.addEventListener('click', handleClickOutside);
-		return () => document.removeEventListener('click', handleClickOutside);
-	});
-
-	function handleLogOut() {
+	async function handleLogOut() {
 		close();
-		signOut();
+		await signOutWithCleanup();
 	}
 
 	const username = $derived(user.login || user.name || 'User');
@@ -55,7 +38,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="avatar-dropdown">
+<div class="avatar-dropdown" use:clickOutside={{ handler: () => isOpen && close() }}>
 	<button
 		bind:this={triggerRef}
 		class="avatar-trigger"
@@ -68,7 +51,7 @@
 	</button>
 
 	{#if isOpen}
-		<div bind:this={dropdownRef} class="dropdown-menu" role="menu">
+		<div class="dropdown-menu" role="menu">
 			<div class="dropdown-header">
 				<Avatar src={user.image ?? undefined} name={user.name ?? 'U'} size="lg" />
 				<div class="dropdown-header-text">

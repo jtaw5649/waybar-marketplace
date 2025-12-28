@@ -2,8 +2,9 @@
 	import type { PageData, ActionData } from './$types';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
-	import { signOut } from '@auth/sveltekit/client';
+	import { signOutWithCleanup } from '$lib/utils/sessionCleanup';
 	import { enhance } from '$app/forms';
+	import { handleExportResult } from './exportEnhance';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -16,31 +17,6 @@
 	let requiredConfirmation = $derived(data.session?.user?.login || 'delete');
 
 	let canDelete = $derived(deleteConfirmation === requiredConfirmation);
-
-	$effect(() => {
-		if (form?.success) {
-			toast.success('Your data export has been sent to your email.');
-			showExportModal = false;
-		} else if (form?.message) {
-			toast.error(form.message);
-		}
-	});
-
-	async function handleDeleteAccount() {
-		if (!canDelete) return;
-
-		deleting = true;
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			toast.success('Account scheduled for deletion. You will be logged out.');
-			showDeleteModal = false;
-			await signOut({ redirectTo: '/' });
-		} catch {
-			toast.error('Failed to delete account. Please try again.');
-		} finally {
-			deleting = false;
-		}
-	}
 </script>
 
 <svelte:head>
@@ -106,7 +82,10 @@
 				<span class="session-label">Current Session</span>
 				<span class="session-meta">Logged in via GitHub OAuth</span>
 			</div>
-			<button class="btn btn-secondary" onclick={() => signOut({ redirectTo: '/login' })}>
+			<button
+				class="btn btn-secondary"
+				onclick={() => signOutWithCleanup({ redirectTo: '/login' })}
+			>
 				Log Out
 			</button>
 		</div>
@@ -141,6 +120,13 @@
 			Export Data
 		</button>
 	</div>
+	{#if form?.success}
+		<p class="export-feedback success" role="status">
+			Your data export has been sent to your email.
+		</p>
+	{:else if form?.message}
+		<p class="export-feedback error" role="alert">{form.message}</p>
+	{/if}
 </section>
 
 <section class="settings-section danger-zone">
@@ -215,9 +201,17 @@
 			class="modal-actions"
 			use:enhance={() => {
 				exporting = true;
-				return async ({ update }) => {
+				return async ({ result, update }) => {
 					exporting = false;
-					await update();
+					await handleExportResult(
+						result,
+						update,
+						() => {
+							toast.success('Your data export has been sent to your email.');
+							showExportModal = false;
+						},
+						(message) => toast.error(message)
+					);
 				};
 			}}
 		>
@@ -262,9 +256,11 @@
 					<p>Deleting your account will:</p>
 					<ul>
 						<li>Remove your profile and all personal data</li>
-						<li>Delete all your modules from the marketplace</li>
-						<li>Remove your collections and stars</li>
-						<li>Delete your comments and reviews</li>
+						<li>Remove your sessions, collections, and stars</li>
+						<li>Delete your reviews and notifications</li>
+						<li>
+							Public modules may remain in the registry with attribution anonymized where feasible
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -282,13 +278,37 @@
 				/>
 			</div>
 		</div>
-		<div class="modal-actions">
-			<button class="btn btn-secondary" onclick={() => (showDeleteModal = false)}>Cancel</button>
-			<button
-				class="btn btn-danger"
-				onclick={handleDeleteAccount}
-				disabled={!canDelete || deleting}
-			>
+		<form
+			method="POST"
+			action="?/deleteAccount"
+			class="modal-actions"
+			use:enhance={() => {
+				deleting = true;
+				return async ({ result, update }) => {
+					deleting = false;
+					await update();
+					if (result.type === 'success') {
+						toast.success('Account deleted. You will be logged out.');
+						showDeleteModal = false;
+						await signOutWithCleanup({ redirectTo: '/' });
+						return;
+					}
+					if (result.type === 'failure') {
+						const message =
+							typeof result.data?.message === 'string'
+								? result.data.message
+								: 'Failed to delete account.';
+						toast.error(message);
+						return;
+					}
+					toast.error('Failed to delete account.');
+				};
+			}}
+		>
+			<button type="button" class="btn btn-secondary" onclick={() => (showDeleteModal = false)}>
+				Cancel
+			</button>
+			<button type="submit" class="btn btn-danger" disabled={!canDelete || deleting}>
 				{#if deleting}
 					<span class="spinner"></span>
 					Deleting...
@@ -296,7 +316,7 @@
 					Delete My Account
 				{/if}
 			</button>
-		</div>
+		</form>
 	</Modal>
 {/if}
 
@@ -520,6 +540,19 @@
 	.export-action-description {
 		font-size: var(--font-size-sm);
 		color: var(--color-text-muted);
+	}
+
+	.export-feedback {
+		margin-top: var(--space-sm);
+		font-size: var(--font-size-sm);
+	}
+
+	.export-feedback.success {
+		color: var(--color-success);
+	}
+
+	.export-feedback.error {
+		color: var(--color-error);
 	}
 
 	.btn {

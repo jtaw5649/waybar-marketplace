@@ -2,9 +2,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 
-vi.mock('@auth/sveltekit/client', () => ({ signOut: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+	signOutWithCleanup: vi.fn()
+}));
 
-import { signOut } from '@auth/sveltekit/client';
+vi.mock('$lib/utils/sessionCleanup', () => ({
+	signOutWithCleanup: mocks.signOutWithCleanup
+}));
 import AvatarDropdown from './AvatarDropdown.svelte';
 
 const user = { name: 'Nova', email: 'nova@example.com', image: 'https://example.com/avatar.png' };
@@ -49,7 +53,7 @@ describe('AvatarDropdown', () => {
 
 		const logOutButton = screen.getByRole('menuitem', { name: /log out/i });
 		await fireEvent.click(logOutButton);
-		expect(signOut).toHaveBeenCalled();
+		expect(mocks.signOutWithCleanup).toHaveBeenCalled();
 	});
 
 	it('shows large avatar next to name in dropdown header', async () => {

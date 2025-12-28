@@ -136,6 +136,8 @@
 										class="repo-tech-local-icon"
 										width="14"
 										height="14"
+										loading="lazy"
+										decoding="async"
 									/>
 								{/if}
 							{/each}
@@ -160,7 +162,15 @@
 							<Icon name={tech.icon} size={16} />
 						</span>
 					{:else if tech.localIcon}
-						<img src={tech.localIcon} alt="" class="tech-local-icon" width="16" height="16" />
+						<img
+							src={tech.localIcon}
+							alt=""
+							class="tech-local-icon"
+							width="16"
+							height="16"
+							loading="lazy"
+							decoding="async"
+						/>
 					{/if}
 					<span class="tech-name">{tech.name}</span>
 				</div>

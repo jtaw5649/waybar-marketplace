@@ -37,6 +37,12 @@ export default ts.config(
 		}
 	},
 	{
+		files: ['src/lib/components/Icon.svelte'],
+		rules: {
+			'svelte/no-at-html-tags': 'off'
+		}
+	},
+	{
 		ignores: ['build/', '.svelte-kit/', 'dist/']
 	}
 );

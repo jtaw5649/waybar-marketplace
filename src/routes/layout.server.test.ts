@@ -83,10 +83,10 @@ describe('root layout server', () => {
 		const { resolveAccessToken } = await import('$lib/server/token');
 		vi.mocked(resolveAccessToken).mockResolvedValue('valid-token');
 
-		global.fetch = vi.fn().mockResolvedValue({
-			ok: true,
-			json: () => Promise.resolve({ role: 'admin' })
-		});
+		global.fetch = vi
+			.fn()
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ role: 'admin' }) });
 
 		const event = {
 			locals: {
@@ -109,10 +109,10 @@ describe('root layout server', () => {
 		const { resolveAccessToken } = await import('$lib/server/token');
 		vi.mocked(resolveAccessToken).mockResolvedValue('valid-token');
 
-		global.fetch = vi.fn().mockResolvedValue({
-			ok: true,
-			json: () => Promise.resolve({ role: 'moderator' })
-		});
+		global.fetch = vi
+			.fn()
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ role: 'moderator' }) });
 
 		const event = {
 			locals: {
@@ -135,10 +135,10 @@ describe('root layout server', () => {
 		const { resolveAccessToken } = await import('$lib/server/token');
 		vi.mocked(resolveAccessToken).mockResolvedValue('valid-token');
 
-		global.fetch = vi.fn().mockResolvedValue({
-			ok: true,
-			json: () => Promise.resolve({ role: 'user' })
-		});
+		global.fetch = vi
+			.fn()
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ role: 'user' }) });
 
 		const event = {
 			locals: {
@@ -155,5 +155,67 @@ describe('root layout server', () => {
 		expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/users/me'), {
 			headers: { Accept: 'application/json', Authorization: 'Bearer valid-token' }
 		});
+	});
+
+	it('syncs auth before fetching profile when cache is missing', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('valid-token');
+
+		global.fetch = vi
+			.fn()
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ role: 'user' }) });
+
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({
+					user: { name: 'User' }
+				})
+			},
+			cookies: mockCookies()
+		} as unknown as LoadEvent;
+
+		await load(event);
+
+		expect(global.fetch).toHaveBeenNthCalledWith(
+			1,
+			expect.stringContaining('/api/v1/auth/sync'),
+			expect.objectContaining({
+				method: 'POST',
+				headers: { Accept: 'application/json', Authorization: 'Bearer valid-token' }
+			})
+		);
+		expect(global.fetch).toHaveBeenNthCalledWith(
+			2,
+			expect.stringContaining('/api/v1/users/me'),
+			expect.objectContaining({
+				headers: { Accept: 'application/json', Authorization: 'Bearer valid-token' }
+			})
+		);
+	});
+
+	it('does not set profile_cache cookie', async () => {
+		const { resolveAccessToken } = await import('$lib/server/token');
+		vi.mocked(resolveAccessToken).mockResolvedValue('valid-token');
+
+		global.fetch = vi
+			.fn()
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ role: 'user' }) });
+
+		const cookies = mockCookies();
+		const event = {
+			locals: {
+				auth: vi.fn().mockResolvedValue({
+					user: { name: 'User' }
+				})
+			},
+			cookies,
+			url: new URL('https://example.com')
+		} as unknown as LoadEvent;
+
+		await load(event);
+
+		expect(cookies.set).not.toHaveBeenCalled();
 	});
 });

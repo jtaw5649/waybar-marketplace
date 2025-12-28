@@ -3,7 +3,10 @@ export type StarsPayload<T> = {
 	total: number;
 };
 
-export function normalizeStarsPayload<T>(payload: unknown): StarsPayload<T> {
+export function normalizeStarsPayload<T>(
+	payload: unknown,
+	isModule: (value: unknown) => value is T
+): StarsPayload<T> {
 	const empty: StarsPayload<T> = { modules: [], total: 0 };
 	if (!payload || typeof payload !== 'object') return empty;
 	const root = payload as Record<string, unknown>;
@@ -13,7 +16,7 @@ export function normalizeStarsPayload<T>(payload: unknown): StarsPayload<T> {
 	const total = (data?.total ?? root.total) as unknown;
 
 	return {
-		modules: Array.isArray(modules) ? (modules as T[]) : [],
+		modules: Array.isArray(modules) ? modules.filter(isModule) : [],
 		total: typeof total === 'number' ? total : 0
 	};
 }

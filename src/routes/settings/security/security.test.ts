@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import type { Module } from '$lib/types';
 
 const baseData = {
@@ -46,10 +46,34 @@ describe('Security settings page', () => {
 		expect(screen.getByRole('button', { name: /delete account/i })).toBeTruthy();
 	});
 
+	it('describes deletion impact on public modules', async () => {
+		const { default: Page } = await import('./+page.svelte');
+		render(Page, { data: baseData, form: null });
+
+		await fireEvent.click(screen.getByRole('button', { name: /delete account/i }));
+
+		expect(screen.getByText(/public modules may remain/i)).toBeTruthy();
+		expect(screen.getByText(/anonym/i)).toBeTruthy();
+	});
+
 	it('shows disconnect option for connected accounts', async () => {
 		const { default: Page } = await import('./+page.svelte');
 		render(Page, { data: baseData, form: null });
 
 		expect(screen.getByRole('button', { name: /log out/i })).toBeTruthy();
+	});
+
+	it('renders export success feedback from form data', async () => {
+		const { default: Page } = await import('./+page.svelte');
+		render(Page, { data: baseData, form: { success: true } });
+
+		expect(screen.getByText(/data export has been sent/i)).toBeTruthy();
+	});
+
+	it('renders export error feedback from form data', async () => {
+		const { default: Page } = await import('./+page.svelte');
+		render(Page, { data: baseData, form: { message: 'Export failed' } });
+
+		expect(screen.getByText(/export failed/i)).toBeTruthy();
 	});
 });

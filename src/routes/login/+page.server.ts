@@ -6,7 +6,11 @@ import { resolveAccessToken } from '$lib/server/token';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
-	const accessToken = await resolveAccessToken(event.cookies, session);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		session,
+		event.platform?.env?.AUTH_SECRET
+	);
 	const validation = validateSession(session, !!accessToken);
 
 	if (session?.user && validation.isValid) {

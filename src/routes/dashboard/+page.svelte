@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
+	import type { Collection } from '$lib/types';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -10,6 +11,7 @@
 	import ProfileCompleteness from '$lib/components/ProfileCompleteness.svelte';
 	import ProfilePreviewCard from '$lib/components/ProfilePreviewCard.svelte';
 	import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
+	import Skeleton from '$lib/components/Skeleton.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { validateSocialUrl } from '$lib/utils/socialLinks';
 	import { getDisplayName, getProfileUsername } from '$lib/utils/displayName';
@@ -34,7 +36,22 @@
 
 	let profile = $derived(data.profile);
 	let modules = $derived(data.modules || []);
-	let collections = $derived(data.collections || []);
+	let collections = $state<Collection[]>([]);
+	let collectionsLoading = $state(true);
+
+	$effect(() => {
+		const collectionsData = data.collections;
+		if (collectionsData instanceof Promise) {
+			collectionsLoading = true;
+			collectionsData.then((c) => {
+				collections = c;
+				collectionsLoading = false;
+			});
+		} else {
+			collections = collectionsData || [];
+			collectionsLoading = false;
+		}
+	});
 
 	let profileData = $derived({
 		display_name: displayName || null,
@@ -68,7 +85,7 @@
 	let selectedCollection: {
 		id: number;
 		name: string;
-		description: string | null;
+		description?: string | null;
 		visibility: string;
 	} | null = $state(null);
 	let newCollectionName = $state('');
@@ -82,7 +99,7 @@
 		websiteUrl = data.profile?.website_url || '';
 	});
 
-	function formatVersion(v: string | undefined): string {
+	function formatVersion(v: string | null | undefined): string {
 		return v || '0.0.0';
 	}
 
@@ -177,7 +194,15 @@
 			<aside class="sidebar">
 				<div class="user-card">
 					{#if data.session.user.image}
-						<img src={data.session.user.image} alt="" class="avatar" />
+						<img
+							src={data.session.user.image}
+							alt=""
+							class="avatar"
+							width="48"
+							height="48"
+							loading="lazy"
+							decoding="async"
+						/>
 					{:else}
 						<div class="avatar-placeholder">
 							{data.session.user.name?.charAt(0).toUpperCase() || 'U'}
@@ -371,7 +396,20 @@
 						</button>
 					</div>
 
-					{#if collections.length === 0}
+					{#if collectionsLoading}
+						<div class="collections-skeleton">
+							{#each [1, 2, 3] as _, index (index)}
+								<div class="collection-skeleton-row">
+									<div class="collection-skeleton-info">
+										<Skeleton variant="text" width="180px" height="1.25rem" />
+										<Skeleton variant="text" width="100%" />
+										<Skeleton variant="text" width="80px" />
+									</div>
+									<Skeleton variant="button" />
+								</div>
+							{/each}
+						</div>
+					{:else if collections.length === 0}
 						<div class="empty-state">
 							<div class="empty-icon">
 								<svg
@@ -549,6 +587,7 @@
 										type="text"
 										id="displayName"
 										name="display_name"
+										autocomplete="name"
 										bind:value={displayName}
 										placeholder="Your display name"
 										maxlength="50"
@@ -588,6 +627,7 @@
 										type="url"
 										id="websiteUrl"
 										name="website_url"
+										autocomplete="url"
 										bind:value={websiteUrl}
 										placeholder="https://example.com"
 										aria-describedby="websiteUrl-help"
@@ -601,6 +641,7 @@
 										type="url"
 										id="githubUrl"
 										name="github_url"
+										autocomplete="url"
 										bind:value={githubUrl}
 										placeholder="https://github.com/username"
 										aria-describedby="githubUrl-help"
@@ -622,6 +663,7 @@
 										type="url"
 										id="twitterUrl"
 										name="twitter_url"
+										autocomplete="url"
 										bind:value={twitterUrl}
 										placeholder="https://x.com/username"
 										aria-describedby="twitterUrl-help"
@@ -658,6 +700,7 @@
 										type="url"
 										id="sponsorUrl"
 										name="sponsor_url"
+										autocomplete="url"
 										bind:value={sponsorUrl}
 										placeholder="https://ko-fi.com/username"
 										aria-describedby="sponsorUrl-help"
@@ -773,6 +816,7 @@
 					type="text"
 					id="collection-name"
 					name="name"
+					autocomplete="off"
 					bind:value={newCollectionName}
 					placeholder="My Favorites"
 					required
@@ -842,6 +886,7 @@
 					type="text"
 					id="edit-collection-name"
 					name="name"
+					autocomplete="off"
 					bind:value={newCollectionName}
 					placeholder="My Favorites"
 					required
@@ -1465,6 +1510,29 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-md);
+	}
+
+	.collections-skeleton {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.collection-skeleton-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		padding: var(--space-lg);
+		background-color: var(--color-bg-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+	}
+
+	.collection-skeleton-info {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
 	}
 
 	.collection-row {

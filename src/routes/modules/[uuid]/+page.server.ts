@@ -1,12 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import type {
-	Module,
-	Review,
-	VersionHistoryEntry,
-	CollectionBase,
-	Screenshot,
-	RelatedModule
-} from '$lib/types';
+import type { Module, Review, VersionHistoryEntry, CollectionBase, Screenshot } from '$lib/types';
 import { error, fail } from '@sveltejs/kit';
 import { API_BASE_URL } from '$lib';
 import { normalizeUsername } from '$lib/utils/username';
@@ -15,18 +8,62 @@ import { encodeModuleUuid } from '$lib/utils/url';
 import { acceptHeaders, jsonHeaders } from '$lib/server/authHeaders';
 import { resolveAccessToken } from '$lib/server/token';
 import { requireAuthenticatedAction, isAuthFailure } from '$lib/server/authAction';
+import { parseFormData } from '$lib/server/formValidation';
+import {
+	AddToCollectionSchema,
+	UploadScreenshotSchema,
+	DeleteScreenshotSchema
+} from '$lib/schemas/module';
+
+async function fetchReviews(fetchFn: typeof fetch, uuid: string): Promise<Review[]> {
+	const res = await fetchFn(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/reviews`);
+	if (!res.ok) return [];
+	const data = await res.json();
+	return data.data?.reviews || data.reviews || [];
+}
+
+async function fetchScreenshots(fetchFn: typeof fetch, uuid: string): Promise<Screenshot[]> {
+	const res = await fetchFn(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots`);
+	if (!res.ok) return [];
+	const data = await res.json();
+	return data.data?.screenshots || data.screenshots || [];
+}
+
+async function fetchRelatedModules(fetchFn: typeof fetch, uuid: string): Promise<Module[]> {
+	const res = await fetchFn(
+		`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/related?limit=6`
+	);
+	if (!res.ok) return [];
+	const data = await res.json();
+	return data.data?.modules || data.modules || [];
+}
+
+async function fetchCollections(accessToken: string): Promise<CollectionBase[]> {
+	try {
+		const res = await fetch(`${API_BASE_URL}/api/v1/collections`, {
+			headers: acceptHeaders(accessToken)
+		});
+		if (!res.ok) return [];
+		const data = await res.json();
+		return data.collections || [];
+	} catch {
+		return [];
+	}
+}
 
 export const load: PageServerLoad = async (event) => {
+	const { isDataRequest } = event;
 	const session = await event.locals.auth();
 	const uuid = event.params.uuid;
-	const accessToken = await resolveAccessToken(event.cookies);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		session,
+		event.platform?.env?.AUTH_SECRET
+	);
 
-	const [moduleRes, reviewsRes, versionsRes, screenshotsRes, relatedRes] = await Promise.all([
+	const [moduleRes, versionsRes] = await Promise.all([
 		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/reviews`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/versions`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots`),
-		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/related?limit=6`)
+		event.fetch(`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/versions`)
 	]);
 
 	if (!moduleRes.ok) {
@@ -36,44 +73,16 @@ export const load: PageServerLoad = async (event) => {
 	const moduleData = await moduleRes.json();
 	const module: Module = moduleData.data || moduleData;
 
-	let reviews: Review[] = [];
-	if (reviewsRes.ok) {
-		const reviewsData = await reviewsRes.json();
-		reviews = reviewsData.data?.reviews || reviewsData.reviews || [];
-	}
-
 	let versions: VersionHistoryEntry[] = [];
 	if (versionsRes.ok) {
 		const versionsData = await versionsRes.json();
 		versions = versionsData.data?.versions || versionsData.versions || [];
 	}
 
-	let screenshots: Screenshot[] = [];
-	if (screenshotsRes.ok) {
-		const screenshotsData = await screenshotsRes.json();
-		screenshots = screenshotsData.data?.screenshots || screenshotsData.screenshots || [];
-	}
-
-	let relatedModules: RelatedModule[] = [];
-	if (relatedRes.ok) {
-		const relatedData = await relatedRes.json();
-		relatedModules = relatedData.data?.modules || relatedData.modules || [];
-	}
-
-	let collections: CollectionBase[] = [];
-	if (accessToken) {
-		try {
-			const collectionsRes = await fetch(`${API_BASE_URL}/api/v1/collections`, {
-				headers: acceptHeaders(accessToken)
-			});
-			if (collectionsRes.ok) {
-				const collectionsData = await collectionsRes.json();
-				collections = collectionsData.collections || [];
-			}
-		} catch (e) {
-			console.error('Failed to fetch collections:', e);
-		}
-	}
+	const reviewsPromise = fetchReviews(event.fetch, uuid);
+	const screenshotsPromise = fetchScreenshots(event.fetch, uuid);
+	const relatedPromise = fetchRelatedModules(event.fetch, uuid);
+	const collectionsPromise = accessToken ? fetchCollections(accessToken) : Promise.resolve([]);
 
 	const isOwner = normalizeUsername(session?.user?.login) === module.author;
 
@@ -81,12 +90,12 @@ export const load: PageServerLoad = async (event) => {
 		session: toPublicSession(session),
 		uuid: module.uuid,
 		module,
-		reviews,
 		versions,
-		screenshots,
-		collections,
-		relatedModules,
-		isOwner
+		isOwner,
+		reviews: isDataRequest ? await reviewsPromise : reviewsPromise,
+		screenshots: isDataRequest ? await screenshotsPromise : screenshotsPromise,
+		relatedModules: isDataRequest ? await relatedPromise : relatedPromise,
+		collections: isDataRequest ? await collectionsPromise : collectionsPromise
 	};
 };
 
@@ -100,14 +109,15 @@ export const actions: Actions = {
 
 		const uuid = event.params.uuid;
 		const formData = await event.request.formData();
-		const collectionId = formData.get('collection_id') as string;
-		const note = formData.get('note') as string | null;
+		const parsed = parseFormData(formData, AddToCollectionSchema);
 
-		if (!collectionId) {
-			return fail(400, { message: 'Collection ID is required' });
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
 		}
 
-		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${collectionId}/modules`, {
+		const { collection_id, note } = parsed.data;
+
+		const res = await fetch(`${API_BASE_URL}/api/v1/collections/${collection_id}/modules`, {
 			method: 'POST',
 			headers: jsonHeaders(accessToken),
 			body: JSON.stringify({
@@ -137,7 +147,6 @@ export const actions: Actions = {
 		const uuid = event.params.uuid;
 		const formData = await event.request.formData();
 		const file = formData.get('screenshot') as File | null;
-		const altText = formData.get('alt_text') as string | null;
 
 		if (!file || file.size === 0) {
 			return fail(400, { message: 'No file provided' });
@@ -153,10 +162,17 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid file type. Use PNG, JPG, or WebP' });
 		}
 
+		const parsed = parseFormData(formData, UploadScreenshotSchema);
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
+		}
+
+		const { alt_text } = parsed.data;
+
 		const endpoint = new URL(
 			`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots`
 		);
-		const trimmedAlt = altText?.trim();
+		const trimmedAlt = alt_text?.trim();
 		if (trimmedAlt) {
 			endpoint.searchParams.set('alt_text', trimmedAlt);
 		}
@@ -187,14 +203,16 @@ export const actions: Actions = {
 
 		const uuid = event.params.uuid;
 		const formData = await event.request.formData();
-		const screenshotId = formData.get('screenshot_id') as string;
+		const parsed = parseFormData(formData, DeleteScreenshotSchema);
 
-		if (!screenshotId) {
-			return fail(400, { message: 'Screenshot ID is required' });
+		if (!parsed.success) {
+			return fail(400, { errors: parsed.errors });
 		}
 
+		const { screenshot_id } = parsed.data;
+
 		const res = await fetch(
-			`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots/${screenshotId}`,
+			`${API_BASE_URL}/api/v1/modules/${encodeModuleUuid(uuid)}/screenshots/${screenshot_id}`,
 			{
 				method: 'DELETE',
 				headers: acceptHeaders(accessToken)

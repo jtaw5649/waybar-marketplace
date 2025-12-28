@@ -7,12 +7,31 @@ const pageState = vi.hoisted(() => ({
 	url: { pathname: '/', search: '' }
 }));
 
+const mockNotificationStore = vi.hoisted(() => ({
+	notifications: [] as {
+		id: string;
+		type: string;
+		title: string;
+		message: string;
+		status: string;
+		createdAt: string;
+	}[],
+	unreadCount: 0,
+	markRead: vi.fn(),
+	markAllRead: vi.fn(),
+	markDone: vi.fn(),
+	reset: vi.fn()
+}));
+
 vi.mock('$app/environment', () => ({ browser: false }));
 vi.mock('$app/state', () => ({
 	page: pageState
 }));
-vi.mock('@auth/sveltekit/client', () => ({ signOut: vi.fn() }));
 vi.mock('$lib/stores/commandPalette', () => ({ open: vi.fn() }));
+vi.mock('$lib/stores/notifications.svelte', () => ({
+	notificationStore: mockNotificationStore
+}));
+vi.mock('$lib/utils/sessionCleanup', () => ({ signOutWithCleanup: vi.fn() }));
 import Header from './Header.svelte';
 
 describe('Header', () => {
@@ -123,5 +142,15 @@ describe('Header', () => {
 		render(Header, { session: null });
 		const logoMark = document.querySelector('.logo-mark');
 		expect(logoMark).toBeTruthy();
+	});
+
+	it('shows notification center when signed in', () => {
+		const session = {
+			user: { name: 'Nova', image: 'https://example.com/avatar.png' }
+		} as Session;
+
+		render(Header, { session });
+
+		expect(screen.getByRole('button', { name: /notifications/i })).toBeTruthy();
 	});
 });

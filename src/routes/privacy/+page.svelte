@@ -20,7 +20,7 @@
 		<article class="tui-panel">
 			<header class="tui-panel-header">
 				<span class="tui-panel-title">Privacy Policy</span>
-				<span class="tui-panel-status">Effective: December 25, 2025</span>
+				<span class="tui-panel-status">Effective: December 27, 2025</span>
 			</header>
 			<div class="tui-panel-body">
 				<section>
@@ -73,8 +73,10 @@
 					<h2>6. Data Retention</h2>
 					<p>
 						We keep account data while your account is active. Public contributions may remain
-						visible to preserve registry history. You can request deletion of your account or
-						content, and we will process reasonable requests subject to legal obligations.
+						visible to preserve registry history. If you request account deletion, we will remove or
+						anonymize personal data where feasible, but public contributions may remain available.
+						You can request deletion of your account or content, and we will process reasonable
+						requests subject to legal obligations.
 					</p>
 				</section>
 

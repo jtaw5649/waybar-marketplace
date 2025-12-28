@@ -2,19 +2,13 @@
 	import { Star } from 'lucide-svelte';
 	import { stars } from '$lib/stores/stars.svelte';
 	import { normalizeStarsPayload } from '$lib/utils/starsResponse';
+	import { isStarredModule } from '$lib/utils/moduleGuards';
 	import { encodeModuleUuid } from '$lib/utils/url';
 	import { fly, fade } from 'svelte/transition';
-	import { onMount } from 'svelte';
-
-	interface StarredModule {
-		uuid: string;
-		name: string;
-		icon_url?: string;
-		author_username: string;
-	}
+	import { clickOutside } from '$lib/actions/clickOutside';
+	import type { StarredModule } from '$lib/types';
 
 	let isOpen = $state(false);
-	let dropdownRef = $state<HTMLDivElement | null>(null);
 	let triggerRef = $state<HTMLButtonElement | null>(null);
 	let recentStars = $state<StarredModule[]>([]);
 	let loading = $state(false);
@@ -33,7 +27,7 @@
 		try {
 			const res = await fetch('/api/stars');
 			if (res.ok) {
-				const payload = normalizeStarsPayload<StarredModule>(await res.json());
+				const payload = normalizeStarsPayload<StarredModule>(await res.json(), isStarredModule);
 				recentStars = payload.modules.slice(0, 5);
 			}
 		} catch {
@@ -54,33 +48,17 @@
 		isOpen = false;
 	}
 
-	function handleClickOutside(event: MouseEvent) {
-		if (
-			dropdownRef &&
-			triggerRef &&
-			!dropdownRef.contains(event.target as Node) &&
-			!triggerRef.contains(event.target as Node)
-		) {
-			close();
-		}
-	}
-
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
 			close();
 			triggerRef?.focus();
 		}
 	}
-
-	onMount(() => {
-		document.addEventListener('click', handleClickOutside);
-		return () => document.removeEventListener('click', handleClickOutside);
-	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="stars-dropdown">
+<div class="stars-dropdown" use:clickOutside={{ handler: () => isOpen && close() }}>
 	<button
 		bind:this={triggerRef}
 		class="trigger"
@@ -100,7 +78,6 @@
 
 	{#if isOpen}
 		<div
-			bind:this={dropdownRef}
 			class="dropdown"
 			in:fly={{ y: -10, duration: 200 }}
 			out:fade={{ duration: 100 }}
@@ -119,8 +96,16 @@
 				{:else if recentStars.length > 0}
 					{#each recentStars as module (module.uuid)}
 						<a href="/modules/{encodeModuleUuid(module.uuid)}" class="star-item" onclick={close}>
-							{#if module.icon_url}
-								<img src={module.icon_url} alt="" class="item-icon" />
+							{#if module.icon}
+								<img
+									src={module.icon}
+									alt=""
+									class="item-icon"
+									width="32"
+									height="32"
+									loading="lazy"
+									decoding="async"
+								/>
 							{:else}
 								<div class="item-icon placeholder">
 									{module.name.charAt(0).toUpperCase()}
@@ -128,7 +113,7 @@
 							{/if}
 							<div class="item-content">
 								<span class="item-name">{module.name}</span>
-								<span class="item-author">by {module.author_username}</span>
+								<span class="item-author">by {module.author}</span>
 							</div>
 						</a>
 					{/each}

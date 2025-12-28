@@ -4,9 +4,9 @@ import { API_BASE_URL } from '$lib';
 import { acceptHeaders } from '$lib/server/authHeaders';
 import { resolveAccessToken } from '$lib/server/token';
 
-export const GET: RequestHandler = async ({ cookies, locals }) => {
+export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 	const session = await locals.auth();
-	const accessToken = await resolveAccessToken(cookies, session);
+	const accessToken = await resolveAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	if (!accessToken) {
 		return json({ data: { modules: [], total: 0 } });
 	}

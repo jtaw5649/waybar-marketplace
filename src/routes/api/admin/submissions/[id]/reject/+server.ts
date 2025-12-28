@@ -4,9 +4,9 @@ import { API_BASE_URL } from '$lib';
 import { jsonHeaders } from '$lib/server/authHeaders';
 import { requireAccessToken } from '$lib/utils/requireAccessToken';
 
-export const POST: RequestHandler = async ({ params, cookies, request, locals }) => {
+export const POST: RequestHandler = async ({ params, cookies, request, locals, platform }) => {
 	const session = await locals.auth();
-	const accessToken = await requireAccessToken(cookies, session);
+	const accessToken = await requireAccessToken(cookies, session, platform?.env?.AUTH_SECRET);
 	let body: unknown;
 	try {
 		body = await request.json();

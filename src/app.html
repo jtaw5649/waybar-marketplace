@@ -2,7 +2,10 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<link rel="dns-prefetch" href="https://api.barforge.dev" />
 		<link rel="preconnect" href="https://api.barforge.dev" crossorigin />
+		<link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
+		<link rel="preconnect" href="https://challenges.cloudflare.com" crossorigin />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />
 		<link
 			rel="apple-touch-icon"
@@ -13,7 +16,7 @@
 		<meta name="description" content="Barforge - Browse, download, and share Waybar modules" />
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="tap">
+	<body data-sveltekit-preload-data="tap" data-sveltekit-preload-code="viewport">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

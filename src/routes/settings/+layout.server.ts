@@ -9,7 +9,11 @@ import { resolveAccessToken } from '$lib/server/token';
 
 export const load: LayoutServerLoad = async (event) => {
 	const session = await event.locals.auth();
-	const accessToken = await resolveAccessToken(event.cookies);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		session,
+		event.platform?.env?.AUTH_SECRET
+	);
 	const validation = validateSession(session, !!accessToken);
 
 	if (!session?.user || validation.shouldReauth || !accessToken) {

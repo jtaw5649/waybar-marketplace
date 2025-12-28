@@ -11,6 +11,7 @@
 	import ViewToggle from '$lib/components/ViewToggle.svelte';
 	import { Search } from 'lucide-svelte';
 	import { calculatePopularityScore, calculateTrendingScore } from '$lib/utils/popularity';
+	import { sortModulesByScore } from '$lib/utils/moduleSorting';
 	import { getBrowseCategories } from '$lib/constants/categories';
 	import { viewMode } from '$lib/stores/viewMode';
 	import { sidebarCollapsed } from '$lib/stores/sidebar';
@@ -53,6 +54,14 @@
 	);
 	const hasActiveFilters = $derived(selectedCategory || searchQuery || selectedSort !== 'popular');
 
+	const getModuleMetrics = (module: Module) => ({
+		downloads: module.downloads,
+		rating: module.rating ?? null,
+		last_updated: module.last_updated
+	});
+
+	const getLastUpdatedTime = (module: Module) => new Date(module.last_updated ?? 0).getTime();
+
 	function clearAllFilters() {
 		searchQuery = '';
 		selectedCategory = '';
@@ -93,16 +102,20 @@
 
 		switch (selectedSort) {
 			case 'popular':
-				result.sort((a, b) => calculatePopularityScore(b) - calculatePopularityScore(a));
+				result = sortModulesByScore(result, (module) =>
+					calculatePopularityScore(getModuleMetrics(module))
+				);
 				break;
 			case 'trending':
-				result.sort((a, b) => calculateTrendingScore(b) - calculateTrendingScore(a));
+				result = sortModulesByScore(result, (module) =>
+					calculateTrendingScore(getModuleMetrics(module))
+				);
 				break;
 			case 'downloads':
 				result.sort((a, b) => b.downloads - a.downloads);
 				break;
 			case 'recent':
-				result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+				result.sort((a, b) => getLastUpdatedTime(b) - getLastUpdatedTime(a));
 				break;
 			case 'alpha':
 				result.sort((a, b) => a.name.localeCompare(b.name));
@@ -200,6 +213,7 @@
 							type="text"
 							class="filter-input"
 							placeholder="Filter modules..."
+							autocomplete="off"
 							bind:value={searchQuery}
 							oninput={() => {
 								currentPage = 1;
@@ -409,8 +423,8 @@
 									category={module.category}
 									downloads={module.downloads}
 									verified={module.verified_author}
-									version={module.version}
-									createdAt={module.created_at}
+									version={module.version ?? undefined}
+									lastUpdated={module.last_updated ?? undefined}
 									delay={i * 30}
 								/>
 							{:else}
@@ -422,8 +436,8 @@
 									category={module.category}
 									downloads={module.downloads}
 									verified={module.verified_author}
-									version={module.version}
-									createdAt={module.created_at}
+									version={module.version ?? undefined}
+									lastUpdated={module.last_updated ?? undefined}
 									delay={i * 15}
 								/>
 							{/if}

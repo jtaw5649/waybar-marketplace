@@ -10,7 +10,7 @@
 
 	interface Props {
 		screenshots: Screenshot[];
-		getUrl: (r2Key: string) => string;
+		getUrl: (r2Key: string, width?: number) => string;
 		isOwner?: boolean;
 		onDelete?: (id: number) => void;
 	}
@@ -21,6 +21,11 @@
 	let dialogRef: HTMLDialogElement;
 
 	const gridSpans = ['span-large', 'span-medium', 'span-medium', 'span-small', 'span-small'];
+	const gridWidths: Record<string, number> = {
+		'span-large': 960,
+		'span-medium': 720,
+		'span-small': 480
+	};
 
 	function openDialog(index: number) {
 		selectedIndex = index;
@@ -69,9 +74,10 @@
 				aria-label={screenshot.alt_text || `View screenshot ${i + 1}`}
 			>
 				<img
-					src={getUrl(screenshot.r2_key)}
+					src={getUrl(screenshot.r2_key, gridWidths[gridSpans[i] || 'span-small'] ?? 480)}
 					alt={screenshot.alt_text || `Screenshot ${i + 1}`}
 					loading="lazy"
+					decoding="async"
 				/>
 				<div class="bento-overlay">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -126,8 +132,10 @@
 				{/if}
 
 				<img
-					src={getUrl(screenshots[selectedIndex].r2_key)}
+					src={getUrl(screenshots[selectedIndex].r2_key, 1400)}
 					alt={screenshots[selectedIndex].alt_text || `Screenshot ${selectedIndex + 1}`}
+					loading="lazy"
+					decoding="async"
 				/>
 
 				{#if selectedIndex < screenshots.length - 1}

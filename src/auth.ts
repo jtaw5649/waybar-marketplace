@@ -1,4 +1,4 @@
-import { SvelteKitAuth } from '@auth/sveltekit';
+import { SvelteKitAuth, customFetch } from '@auth/sveltekit';
 import GitHub from '@auth/sveltekit/providers/github';
 import type { JWT } from '@auth/core/jwt';
 import type { Account, Profile, Session } from '@auth/core/types';
@@ -27,11 +27,15 @@ type SessionCallbackParams = {
 	token: Token;
 };
 
-export async function authJwtCallback({
-	token,
-	account,
-	profile
-}: JwtCallbackParams): Promise<Token> {
+type RefreshConfig = {
+	clientId?: string;
+	clientSecret?: string;
+};
+
+export async function authJwtCallback(
+	{ token, account, profile }: JwtCallbackParams,
+	refreshConfig?: RefreshConfig
+): Promise<Token> {
 	if (account) {
 		const accessToken = typeof account.access_token === 'string' ? account.access_token : undefined;
 		const expiresAt = typeof account.expires_at === 'number' ? account.expires_at : undefined;
@@ -39,7 +43,7 @@ export async function authJwtCallback({
 			typeof account.refresh_token === 'string' ? account.refresh_token : undefined;
 		const login = typeof profile?.login === 'string' ? profile.login : undefined;
 
-		return {
+		const nextToken: Token = {
 			...token,
 			accessToken,
 			expiresAt,
@@ -47,6 +51,8 @@ export async function authJwtCallback({
 			login,
 			error: undefined
 		};
+
+		return nextToken;
 	}
 
 	const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -57,7 +63,8 @@ export async function authJwtCallback({
 	}
 
 	if (expiresAt && token.refreshToken) {
-		return refreshAccessToken(token);
+		const refreshed = await refreshAccessToken(token, refreshConfig);
+		return refreshed;
 	}
 
 	if (expiresAt) {
@@ -76,10 +83,37 @@ export async function authSessionCallback({ session, token }: SessionCallbackPar
 	return session;
 }
 
-export function resolveTrustHost(nodeEnv?: string, trustHostEnv?: string): boolean {
+export function resolveTrustHost(
+	nodeEnv?: string,
+	trustHostEnv?: string,
+	cfPagesEnv?: string,
+	vercelEnv?: string
+): boolean {
 	if (nodeEnv && nodeEnv !== 'production') return true;
-	if (trustHostEnv === undefined || trustHostEnv === '') return true;
-	return trustHostEnv === 'true';
+	if (trustHostEnv === 'true') return true;
+	if (cfPagesEnv || vercelEnv) return true;
+	return false;
+}
+
+export function resolveRedirectUrl(url: string, baseUrl: string): string {
+	if (url.startsWith('/')) {
+		return `${baseUrl}${url}`;
+	}
+
+	try {
+		const resolved = new URL(url);
+		if (resolved.origin === baseUrl) {
+			return url;
+		}
+	} catch {
+		return baseUrl;
+	}
+
+	return baseUrl;
+}
+
+export function githubAuthorizationParams() {
+	return { scope: 'read:user user:email' };
 }
 
 type RefreshResponse = {
@@ -100,16 +134,43 @@ export function sanitizeRefreshError(tokens: RefreshResponse): SanitizedError {
 	};
 }
 
-export const { handle, signIn, signOut } = SvelteKitAuth({
-	providers: [GitHub],
-	callbacks: {
-		jwt: authJwtCallback,
-		session: authSessionCallback
-	},
-	trustHost: resolveTrustHost(env.NODE_ENV, env.AUTH_TRUST_HOST)
+export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
+	const authSecret = event.platform?.env?.AUTH_SECRET ?? env.AUTH_SECRET;
+	const trustHostEnv = event.platform?.env?.AUTH_TRUST_HOST ?? env.AUTH_TRUST_HOST;
+	const cfPagesEnv = event.platform?.env?.CF_PAGES ?? env.CF_PAGES;
+	const vercelEnv = event.platform?.env?.VERCEL ?? env.VERCEL;
+	const githubId = event.platform?.env?.AUTH_GITHUB_ID ?? env.AUTH_GITHUB_ID ?? '';
+	const githubSecret = event.platform?.env?.AUTH_GITHUB_SECRET ?? env.AUTH_GITHUB_SECRET ?? '';
+	const authFetch = event.fetch ?? fetch;
+
+	return {
+		providers: [
+			GitHub({
+				clientId: githubId,
+				clientSecret: githubSecret,
+				authorization: { params: githubAuthorizationParams() },
+				[customFetch]: authFetch
+			})
+		],
+		callbacks: {
+			jwt: (params) => authJwtCallback(params, { clientId: githubId, clientSecret: githubSecret }),
+			session: authSessionCallback,
+			redirect: ({ url, baseUrl }) => resolveRedirectUrl(url, baseUrl)
+		},
+		secret: authSecret,
+		trustHost: resolveTrustHost(env.NODE_ENV, trustHostEnv, cfPagesEnv, vercelEnv)
+	};
 });
 
-async function refreshAccessToken(token: Token) {
+async function refreshAccessToken(token: Token, refreshConfig?: RefreshConfig) {
+	const clientId = refreshConfig?.clientId ?? env.AUTH_GITHUB_ID ?? '';
+	const clientSecret = refreshConfig?.clientSecret ?? env.AUTH_GITHUB_SECRET ?? '';
+
+	if (!clientId || !clientSecret) {
+		console.error('[AUTH] Missing GitHub OAuth credentials for token refresh.');
+		return { ...token, error: 'RefreshTokenError', accessToken: undefined };
+	}
+
 	try {
 		const response = await fetch('https://github.com/login/oauth/access_token', {
 			method: 'POST',
@@ -118,8 +179,8 @@ async function refreshAccessToken(token: Token) {
 				Accept: 'application/json'
 			},
 			body: new URLSearchParams({
-				client_id: env.AUTH_GITHUB_ID ?? '',
-				client_secret: env.AUTH_GITHUB_SECRET ?? '',
+				client_id: clientId,
+				client_secret: clientSecret,
 				grant_type: 'refresh_token',
 				refresh_token: String(token.refreshToken ?? '')
 			})

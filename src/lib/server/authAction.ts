@@ -8,7 +8,11 @@ interface AuthenticatedSession extends Session {
 
 export async function requireAuthenticatedAction(event: RequestEvent) {
 	const session = await event.locals.auth();
-	const accessToken = await resolveAccessToken(event.cookies);
+	const accessToken = await resolveAccessToken(
+		event.cookies,
+		undefined,
+		event.platform?.env?.AUTH_SECRET
+	);
 
 	if (!session?.user || !accessToken) {
 		return fail(401, { message: 'Unauthorized' });

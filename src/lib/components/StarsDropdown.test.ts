@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import type { StarredModule } from '$lib/types';
 
 const pageState = vi.hoisted(() => ({
 	url: { pathname: '/', search: '' }
@@ -9,8 +10,7 @@ const pageState = vi.hoisted(() => ({
 const mockStarsStore = vi.hoisted(() => ({
 	starred: new Set<string>(),
 	isAuthenticated: false,
-	getCachedModules: () =>
-		[] as { uuid: string; name: string; author_username: string; icon_url?: string }[]
+	getCachedModules: () => [] as StarredModule[]
 }));
 
 vi.mock('$app/state', () => ({
@@ -22,7 +22,10 @@ vi.mock('$lib/stores/stars.svelte', () => ({
 }));
 
 vi.mock('$lib/utils/starsResponse', () => ({
-	normalizeStarsPayload: <T>(data: { modules?: T[] }) => ({
+	normalizeStarsPayload: <T>(
+		data: { modules?: T[] },
+		_isModule?: (value: unknown) => value is T
+	) => ({
 		modules: data.modules || []
 	})
 }));
@@ -142,7 +145,20 @@ describe('StarsDropdown', () => {
 		global.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({
-				modules: [{ uuid: 'uuid-1', name: 'Test Module', author_username: 'testuser' }]
+				modules: [
+					{
+						uuid: 'uuid-1',
+						name: 'Test Module',
+						description: 'Test description',
+						author: 'testuser',
+						category: 'system',
+						repo_url: 'https://example.com/test',
+						downloads: 10,
+						verified_author: false,
+						tags: [],
+						starred_at: '2024-01-01T00:00:00Z'
+					}
+				]
 			})
 		});
 

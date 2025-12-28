@@ -22,6 +22,10 @@
 	import { toast } from '$lib/stores/toast.svelte';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
+	import { buildCloudflareImageUrl } from '$lib/utils/imageCdn';
+	import ModuleCardSkeleton from '$lib/components/ModuleCardSkeleton.svelte';
+	import Skeleton from '$lib/components/Skeleton.svelte';
+	import type { Review, Screenshot, Module as ModuleType, CollectionBase } from '$lib/types';
 
 	const categoryVariants: Record<
 		string,
@@ -45,7 +49,67 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let reviews = $derived(data.reviews);
+	let reviews = $state<Review[]>([]);
+	let screenshots = $state<Screenshot[]>([]);
+	let relatedModules = $state<ModuleType[]>([]);
+	let collections = $state<CollectionBase[]>([]);
+
+	let reviewsLoading = $state(true);
+	let screenshotsLoading = $state(true);
+	let relatedLoading = $state(true);
+
+	$effect(() => {
+		const reviewsData = data.reviews;
+		if (reviewsData instanceof Promise) {
+			reviewsLoading = true;
+			reviewsData.then((r) => {
+				reviews = r;
+				reviewsLoading = false;
+			});
+		} else {
+			reviews = reviewsData;
+			reviewsLoading = false;
+		}
+	});
+
+	$effect(() => {
+		const screenshotsData = data.screenshots;
+		if (screenshotsData instanceof Promise) {
+			screenshotsLoading = true;
+			screenshotsData.then((s) => {
+				screenshots = s;
+				screenshotsLoading = false;
+			});
+		} else {
+			screenshots = screenshotsData;
+			screenshotsLoading = false;
+		}
+	});
+
+	$effect(() => {
+		const relatedData = data.relatedModules;
+		if (relatedData instanceof Promise) {
+			relatedLoading = true;
+			relatedData.then((r) => {
+				relatedModules = r;
+				relatedLoading = false;
+			});
+		} else {
+			relatedModules = relatedData;
+			relatedLoading = false;
+		}
+	});
+
+	$effect(() => {
+		const collectionsData = data.collections;
+		if (collectionsData instanceof Promise) {
+			collectionsData.then((c) => {
+				collections = c;
+			});
+		} else {
+			collections = collectionsData;
+		}
+	});
 
 	let showReviewForm = $state(false);
 	let userReview = $derived.by(() => {
@@ -59,14 +123,11 @@
 	let reviewLoading = $state(false);
 	let reviewError: string | null = $state(null);
 
-	let collections = $derived(data.collections || []);
-	let relatedModules = $derived(data.relatedModules || []);
 	let showAddToCollectionModal = $state(false);
 	let selectedCollectionId = $state('');
 	let collectionNote = $state('');
 	let addingToCollection = $state(false);
 
-	let screenshots = $derived(data.screenshots || []);
 	let isOwner = $derived(data.isOwner || false);
 	let showUploadModal = $state(false);
 	let uploadingScreenshot = $state(false);
@@ -76,6 +137,7 @@
 	let moduleActionsRef: HTMLElement | null = $state(null);
 
 	const API_SCREENSHOT_BASE = $derived(`${API_BASE_URL}/screenshots/${data.uuid}`);
+	const imageCdnEnabled = $derived(API_BASE_URL === 'https://api.barforge.dev');
 
 	$effect(() => {
 		if (typeof window === 'undefined' || !moduleActionsRef) return;
@@ -100,7 +162,7 @@
 			category: data.module.category,
 			downloads: data.module.downloads,
 			verified_author: data.module.verified_author,
-			version: data.module.version
+			version: data.module.version ?? undefined
 		});
 	});
 
@@ -195,9 +257,18 @@
 		showAllVersions ? data.versions : data.versions.slice(0, INITIAL_VERSIONS_COUNT)
 	);
 
-	function getScreenshotUrl(r2Key: string): string {
+	function getScreenshotUrl(r2Key: string, width?: number): string {
 		const filename = r2Key.split('/').pop() || r2Key;
-		return `${API_SCREENSHOT_BASE}/${filename}`;
+		const url = `${API_SCREENSHOT_BASE}/${filename}`;
+		if (!width) {
+			return url;
+		}
+
+		return buildCloudflareImageUrl(
+			url,
+			{ width, quality: 80 },
+			{ enabled: imageCdnEnabled, origin: API_BASE_URL }
+		);
 	}
 
 	function handleFileSelect(event: Event) {
@@ -349,11 +420,11 @@
 			</div>
 		</div>
 
-		{#if screenshots.length > 0 || isOwner}
+		{#if screenshotsLoading || screenshots.length > 0 || isOwner}
 			<div class="screenshots-section">
 				<div class="screenshots-header">
-					<h2>Screenshots ({screenshots.length})</h2>
-					{#if isOwner && screenshots.length < 5}
+					<h2>Screenshots {screenshotsLoading ? '' : `(${screenshots.length})`}</h2>
+					{#if isOwner && !screenshotsLoading && screenshots.length < 5}
 						<button class="btn btn-secondary" onclick={() => (showUploadModal = true)}>
 							<svg
 								width="16"
@@ -372,7 +443,11 @@
 					{/if}
 				</div>
 
-				{#if screenshots.length === 0}
+				{#if screenshotsLoading}
+					<div class="screenshots-skeleton">
+						<Skeleton variant="card" />
+					</div>
+				{:else if screenshots.length === 0}
 					<div class="no-screenshots">
 						<svg
 							width="40"
@@ -458,9 +533,9 @@
 			</CollapsibleSection>
 		{/if}
 
-		<CollapsibleSection title="Reviews" count={reviews.length}>
+		<CollapsibleSection title="Reviews" count={reviewsLoading ? undefined : reviews.length}>
 			{#snippet actions()}
-				{#if data.session?.user && !showReviewForm}
+				{#if data.session?.user && !showReviewForm && !reviewsLoading}
 					<button class="btn btn-primary" onclick={() => (showReviewForm = true)}>
 						{userReview ? 'Edit Review' : 'Write Review'}
 					</button>
@@ -469,7 +544,20 @@
 				{/if}
 			{/snippet}
 
-			{#if showReviewForm}
+			{#if reviewsLoading}
+				<div class="reviews-skeleton">
+					{#each [1, 2, 3] as _, index (index)}
+						<div class="review-skeleton-card">
+							<div class="review-skeleton-header">
+								<Skeleton variant="avatar" />
+								<Skeleton variant="text" width="120px" />
+							</div>
+							<Skeleton variant="text" width="100%" />
+							<Skeleton variant="text" width="80%" />
+						</div>
+					{/each}
+				</div>
+			{:else if showReviewForm}
 				<form
 					class="review-form"
 					onsubmit={(e) => {
@@ -491,6 +579,7 @@
 						<input
 							type="text"
 							id="review-title"
+							autocomplete="off"
 							bind:value={reviewTitle}
 							placeholder="Summary of your review"
 							maxlength="100"
@@ -544,7 +633,15 @@
 							<div class="review-header">
 								<div class="review-user">
 									{#if review.user.avatar_url}
-										<img src={review.user.avatar_url} alt="" class="review-avatar" />
+										<img
+											src={review.user.avatar_url}
+											alt=""
+											class="review-avatar"
+											width="32"
+											height="32"
+											loading="lazy"
+											decoding="async"
+										/>
 									{:else}
 										<div class="review-avatar-placeholder">
 											{review.user.username.charAt(0).toUpperCase()}
@@ -613,25 +710,31 @@
 			{/if}
 		</CollapsibleSection>
 
-		{#if relatedModules.length > 0}
+		{#if relatedLoading || relatedModules.length > 0}
 			<div class="related-section">
 				<h2>Related Modules</h2>
 				<p class="related-subtitle">More modules in {data.module.category}</p>
 				<div class="related-grid">
-					{#each relatedModules as relatedModule, i (relatedModule.uuid)}
-						<ModuleCard
-							uuid={relatedModule.uuid}
-							name={relatedModule.name}
-							author={relatedModule.author}
-							description={relatedModule.description}
-							category={relatedModule.category}
-							downloads={relatedModule.downloads}
-							version={relatedModule.version}
-							verified={relatedModule.verified_author}
-							createdAt={relatedModule.created_at}
-							delay={i * 50}
-						/>
-					{/each}
+					{#if relatedLoading}
+						{#each [1, 2, 3] as _, index (index)}
+							<ModuleCardSkeleton />
+						{/each}
+					{:else}
+						{#each relatedModules as relatedModule, i (relatedModule.uuid)}
+							<ModuleCard
+								uuid={relatedModule.uuid}
+								name={relatedModule.name}
+								author={relatedModule.author}
+								description={relatedModule.description}
+								category={relatedModule.category}
+								downloads={relatedModule.downloads}
+								version={relatedModule.version ?? undefined}
+								verified={relatedModule.verified_author}
+								lastUpdated={relatedModule.last_updated ?? undefined}
+								delay={i * 50}
+							/>
+						{/each}
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -779,6 +882,7 @@
 					type="text"
 					id="alt-text"
 					name="alt_text"
+					autocomplete="off"
 					bind:value={altTextInput}
 					placeholder="Describe the screenshot for accessibility"
 					maxlength="200"
@@ -1640,5 +1744,34 @@
 			width: 100%;
 			justify-content: space-between;
 		}
+	}
+
+	/* Skeleton Loading States */
+	.screenshots-skeleton {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: var(--space-md);
+	}
+
+	.reviews-skeleton {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.review-skeleton-card {
+		background-color: var(--color-bg-elevated);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.review-skeleton-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-xs);
 	}
 </style>

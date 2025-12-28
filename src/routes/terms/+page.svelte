@@ -20,7 +20,7 @@
 		<article class="tui-panel">
 			<header class="tui-panel-header">
 				<span class="tui-panel-title">Terms of Service</span>
-				<span class="tui-panel-status">Effective: December 25, 2025</span>
+				<span class="tui-panel-status">Effective: December 27, 2025</span>
 			</header>
 			<div class="tui-panel-body">
 				<section>
@@ -45,8 +45,17 @@
 					<h2>3. Module Submissions</h2>
 					<p>
 						When you submit modules or module metadata, you keep ownership of your code. You grant
-						Barforge a non‑exclusive, worldwide license to host, cache, display, and distribute
-						submission data needed to operate the registry and related services.
+						Barforge a non‑exclusive, worldwide, royalty‑free license to host, cache, display,
+						distribute, and make reasonable modifications to submission data needed to operate the
+						registry and related services, such as indexing and compatibility or security updates.
+					</p>
+					<p>
+						You must include a valid SPDX license identifier and a license file or declaration with
+						your submission. We may reject or remove submissions without an explicit license.
+					</p>
+					<p>
+						If you request account deletion, we may continue to host public submissions to preserve
+						registry history. We will remove or anonymize personal attribution where feasible.
 					</p>
 					<p>
 						You confirm that you have the right to submit the content, and that your submission does
@@ -78,8 +87,9 @@
 					<h2>6. Intellectual Property and Licensing</h2>
 					<p>
 						Modules remain licensed by their authors. You must include an appropriate license with
-						your module. Barforge branding and UI elements are owned by their respective rights
-						holders and may not be reused without permission.
+						your module. Licenses granted to Barforge and end users continue even after account
+						deletion. Barforge branding and UI elements are owned by their respective rights holders
+						and may not be reused without permission.
 					</p>
 				</section>
 

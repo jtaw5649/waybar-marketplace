@@ -1,7 +1,9 @@
 import { browser } from '$app/environment';
 import { normalizeStarsPayload } from '$lib/utils/starsResponse';
+import { isStarredModule } from '$lib/utils/moduleGuards';
 import { encodeModuleUuid } from '$lib/utils/url';
 import { SvelteSet, SvelteMap } from 'svelte/reactivity';
+import type { StarredModule } from '$lib/types';
 
 const STORAGE_KEY = 'starred_modules';
 
@@ -26,12 +28,7 @@ function persistStars(stars: SvelteSet<string>) {
 
 const SYNC_INTERVAL_MS = 30000;
 
-interface CachedStarModule {
-	uuid: string;
-	name: string;
-	author_username: string;
-	icon_url?: string;
-}
+type CachedStarModule = StarredModule;
 
 class StarsStore {
 	starred = new SvelteSet<string>(getStoredStars());
@@ -85,7 +82,7 @@ class StarsStore {
 			const res = await fetch('/api/stars');
 			if (res.ok) {
 				const data = await res.json();
-				const payload = normalizeStarsPayload<CachedStarModule>(data);
+				const payload = normalizeStarsPayload<CachedStarModule>(data, isStarredModule);
 				const serverStars = new Set<string>(payload.modules.map((m) => m.uuid));
 
 				this.cachedModules = payload.modules;
@@ -181,6 +178,20 @@ class StarsStore {
 		this.isAuthenticated = value;
 		if (value && !wasAuthenticated && browser) {
 			this.syncWithServer();
+		}
+	}
+
+	clearLocalState() {
+		this.starred.clear();
+		this.starCounts.clear();
+		this.cachedModules = [];
+		this.pendingUploads.clear();
+		this.pendingSync = null;
+		this.lastSyncTime = 0;
+		this.syncing = false;
+		this.isAuthenticated = false;
+		if (browser) {
+			localStorage.removeItem(STORAGE_KEY);
 		}
 	}
 }
