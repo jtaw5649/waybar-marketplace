@@ -1,10 +1,23 @@
 export const OFFLINE_URL = '/offline.html';
 
 const CACHEABLE_PREFIXES = ['/_app/immutable/', '/fonts/', '/branding/', '/screenshots/'] as const;
+const WELL_KNOWN_PREFIX = '/.well-known/';
+
+const shouldPrecachePath = (path: string): boolean => {
+	if (path === '/.well-known') {
+		return true;
+	}
+
+	if (path.startsWith(WELL_KNOWN_PREFIX)) {
+		return true;
+	}
+
+	return !path.startsWith('/.');
+};
 
 export const buildPrecacheList = (build: string[], files: string[]): string[] => {
 	const combined = [...build, ...files, OFFLINE_URL];
-	return Array.from(new Set(combined));
+	return Array.from(new Set(combined.filter(shouldPrecachePath)));
 };
 
 export const isCacheablePath = (path: string): boolean => {

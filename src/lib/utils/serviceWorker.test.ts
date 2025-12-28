@@ -20,6 +20,16 @@ describe('service worker helpers', () => {
 		expect(new Set(list).size).toBe(list.length);
 	});
 
+	it('skips dotfiles except for well-known assets when precaching', () => {
+		const list = buildPrecacheList(
+			['/app.js'],
+			['/.gitkeep', '/.well-known/appspecific/com.chrome.devtools.json']
+		);
+
+		expect(list).toContain('/.well-known/appspecific/com.chrome.devtools.json');
+		expect(list).not.toContain('/.gitkeep');
+	});
+
 	it('detects cacheable asset paths', () => {
 		expect(isCacheablePath('/_app/immutable/entry.js')).toBe(true);
 		expect(isCacheablePath('/fonts/space-grotesk-500.ttf')).toBe(true);
