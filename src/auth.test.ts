@@ -77,10 +77,7 @@ describe('authJwtCallback', () => {
 		});
 		vi.stubGlobal('fetch', fetchMock);
 
-		await authJwtCallback(
-			{ token },
-			{ clientId: 'platform-id', clientSecret: 'platform-secret' }
-		);
+		await authJwtCallback({ token }, { clientId: 'platform-id', clientSecret: 'platform-secret' });
 
 		const body = fetchMock.mock.calls[0]?.[1]?.body;
 		const params =
