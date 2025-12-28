@@ -27,11 +27,15 @@ type SessionCallbackParams = {
 	token: Token;
 };
 
-export async function authJwtCallback({
-	token,
-	account,
-	profile
-}: JwtCallbackParams): Promise<Token> {
+type RefreshConfig = {
+	clientId?: string;
+	clientSecret?: string;
+};
+
+export async function authJwtCallback(
+	{ token, account, profile }: JwtCallbackParams,
+	refreshConfig?: RefreshConfig
+): Promise<Token> {
 	if (account) {
 		const accessToken = typeof account.access_token === 'string' ? account.access_token : undefined;
 		const expiresAt = typeof account.expires_at === 'number' ? account.expires_at : undefined;
@@ -59,7 +63,7 @@ export async function authJwtCallback({
 	}
 
 	if (expiresAt && token.refreshToken) {
-		const refreshed = await refreshAccessToken(token);
+		const refreshed = await refreshAccessToken(token, refreshConfig);
 		return refreshed;
 	}
 
@@ -147,7 +151,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 			})
 		],
 		callbacks: {
-			jwt: authJwtCallback,
+			jwt: (params) => authJwtCallback(params, { clientId: githubId, clientSecret: githubSecret }),
 			session: authSessionCallback,
 			redirect: ({ url, baseUrl }) => resolveRedirectUrl(url, baseUrl)
 		},
@@ -156,7 +160,15 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 	};
 });
 
-async function refreshAccessToken(token: Token) {
+async function refreshAccessToken(token: Token, refreshConfig?: RefreshConfig) {
+	const clientId = refreshConfig?.clientId ?? env.AUTH_GITHUB_ID ?? '';
+	const clientSecret = refreshConfig?.clientSecret ?? env.AUTH_GITHUB_SECRET ?? '';
+
+	if (!clientId || !clientSecret) {
+		console.error('[AUTH] Missing GitHub OAuth credentials for token refresh.');
+		return { ...token, error: 'RefreshTokenError', accessToken: undefined };
+	}
+
 	try {
 		const response = await fetch('https://github.com/login/oauth/access_token', {
 			method: 'POST',
@@ -165,8 +177,8 @@ async function refreshAccessToken(token: Token) {
 				Accept: 'application/json'
 			},
 			body: new URLSearchParams({
-				client_id: env.AUTH_GITHUB_ID ?? '',
-				client_secret: env.AUTH_GITHUB_SECRET ?? '',
+				client_id: clientId,
+				client_secret: clientSecret,
 				grant_type: 'refresh_token',
 				refresh_token: String(token.refreshToken ?? '')
 			})

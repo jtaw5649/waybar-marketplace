@@ -15,10 +15,9 @@ const localStorageMock = (() => {
 	};
 })();
 
-vi.stubGlobal('localStorage', localStorageMock);
-
 describe('NotificationStore', () => {
 	beforeEach(() => {
+		vi.stubGlobal('localStorage', localStorageMock);
 		notificationStore.reset();
 		localStorageMock.clear();
 	});
@@ -66,6 +65,25 @@ describe('NotificationStore', () => {
 
 		notificationStore.markAllRead();
 		expect(notificationStore.unreadCount).toBe(0);
+	});
+
+	it('marks all notifications as read and persists to the server', async () => {
+		notificationStore.addLocalNotification({ type: 'stars', title: 'Star 1', message: 'msg' });
+		notificationStore.addLocalNotification({ type: 'updates', title: 'Update 1', message: 'msg' });
+		expect(notificationStore.unreadCount).toBe(2);
+
+		const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+		vi.stubGlobal('fetch', fetchMock);
+
+		await notificationStore.markAllReadWithSync();
+
+		expect(notificationStore.unreadCount).toBe(0);
+		expect(fetchMock).toHaveBeenCalledWith(
+			'/api/notifications/mark-all-read',
+			expect.objectContaining({ method: 'POST' })
+		);
+
+		vi.unstubAllGlobals();
 	});
 
 	it('marks notification as done (archived)', () => {

@@ -125,6 +125,11 @@ class NotificationStore {
 		);
 	}
 
+	async markAllReadWithSync() {
+		this.markAllRead();
+		await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+	}
+
 	ingestApiNotification(notification: ApiNotification) {
 		const mapped = mapNotification(notification);
 		if (this.notifications.some((n) => n.id === mapped.id)) {

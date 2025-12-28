@@ -60,6 +60,35 @@ describe('authJwtCallback', () => {
 		expect(loggedArg).not.toHaveProperty('refresh_token');
 	});
 
+	it('uses provided GitHub client credentials when refreshing tokens', async () => {
+		const token = {
+			accessToken: 'old-token',
+			expiresAt: Math.floor(Date.now() / 1000) - 100,
+			refreshToken: 'refresh-token'
+		};
+
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({
+				access_token: 'new-token',
+				expires_in: 3600,
+				refresh_token: 'new-refresh'
+			})
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		await authJwtCallback(
+			{ token },
+			{ clientId: 'platform-id', clientSecret: 'platform-secret' }
+		);
+
+		const body = fetchMock.mock.calls[0]?.[1]?.body;
+		const params =
+			body instanceof URLSearchParams ? body : new URLSearchParams(body ? String(body) : '');
+		expect(params.get('client_id')).toBe('platform-id');
+		expect(params.get('client_secret')).toBe('platform-secret');
+	});
+
 	it('does not sync the user on sign-in', async () => {
 		const token = {};
 		const account = { access_token: 'token' } as Account;

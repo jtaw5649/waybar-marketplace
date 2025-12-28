@@ -34,7 +34,7 @@
 			<div class="dropdown-header">
 				<span class="dropdown-title">Notifications</span>
 				{#if notificationStore.unreadCount > 0}
-					<button class="mark-all-read" onclick={() => notificationStore.markAllRead()}>
+					<button class="mark-all-read" onclick={() => notificationStore.markAllReadWithSync()}>
 						Mark all as read
 					</button>
 				{/if}

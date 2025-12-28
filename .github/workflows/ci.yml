@@ -76,6 +76,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/checkout@v6
+        with:
+          repository: jtaw5649/barforge-registry-api
+          token: ${{ secrets.BARFORGE_REGISTRY_API_TOKEN }}
+          path: barforge-registry-api
+          fetch-depth: 1
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -85,7 +92,7 @@ jobs:
 
       - run: npm run api:types:check
         env:
-          OPENAPI_SPEC_PATH: https://raw.githubusercontent.com/jtaw5649/barforge-registry-api/master/docs/openapi.yaml
+          OPENAPI_SPEC_PATH: barforge-registry-api/docs/openapi.yaml
 
   lint:
     name: Lint

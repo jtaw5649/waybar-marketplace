@@ -14,6 +14,7 @@ const mockNotificationStore = vi.hoisted(() => ({
 	unreadCount: 0,
 	markRead: vi.fn(),
 	markAllRead: vi.fn(),
+	markAllReadWithSync: vi.fn(),
 	markDone: vi.fn(),
 	syncWithServer: vi.fn(),
 	reset: vi.fn()
@@ -103,5 +104,29 @@ describe('NotificationCenter', () => {
 		await fireEvent.click(button);
 
 		expect(button.classList.contains('active')).toBe(true);
+	});
+
+	it('marks all notifications read when clicking the action', async () => {
+		mockNotificationStore.unreadCount = 2;
+		mockNotificationStore.notifications = [
+			{
+				id: '1',
+				type: 'comments',
+				title: 'New comment',
+				message: 'Message',
+				status: 'unread',
+				createdAt: new Date().toISOString()
+			}
+		];
+
+		render(NotificationCenter);
+
+		const button = screen.getByRole('button', { name: /notifications/i });
+		await fireEvent.click(button);
+
+		const markAll = screen.getByRole('button', { name: /mark all as read/i });
+		await fireEvent.click(markAll);
+
+		expect(mockNotificationStore.markAllReadWithSync).toHaveBeenCalled();
 	});
 });
