@@ -160,7 +160,7 @@
 			<span class="tui-panel-title">[ NAVIGATION ]</span>
 		</div>
 		<div class="tui-panel-body nav-body">
-			<a href="/modules" class="nav-card">
+			<a href="/modules" class="nav-card" data-sveltekit-preload-data="hover">
 				<div class="nav-card-icon"><Package size={20} /></div>
 				<div class="nav-card-content">
 					<span class="nav-card-title">Browse Modules</span>
@@ -172,7 +172,7 @@
 					<ChevronRight size={20} />
 				</div>
 			</a>
-			<a href="/upload" class="nav-card">
+			<a href="/upload" class="nav-card" data-sveltekit-preload-data="hover">
 				<div class="nav-card-icon"><Icon name="simple-icons:github" size={20} /></div>
 				<div class="nav-card-content">
 					<span class="nav-card-title">Publish a Module</span>

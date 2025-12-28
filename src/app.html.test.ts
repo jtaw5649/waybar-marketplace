@@ -6,7 +6,7 @@ describe('app.html resource hints', () => {
 	it('uses aggressive link preloading defaults', () => {
 		const appHtml = readFileSync(path.resolve(process.cwd(), 'src/app.html'), 'utf8');
 
-		expect(appHtml).toContain('data-sveltekit-preload-data="hover"');
+		expect(appHtml).toContain('data-sveltekit-preload-data="tap"');
 		expect(appHtml).toContain('data-sveltekit-preload-code="viewport"');
 	});
 

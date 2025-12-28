@@ -66,7 +66,13 @@
 		</a>
 
 		<nav class="nav-links" aria-label="Main navigation">
-			<a href="/modules" class:active={page.url.pathname.startsWith('/modules')}>Modules</a>
+			<a
+				href="/modules"
+				class:active={page.url.pathname.startsWith('/modules')}
+				data-sveltekit-preload-data="hover"
+			>
+				Modules
+			</a>
 			{#if session?.user}
 				<a href="/dashboard" class:active={page.url.pathname === '/dashboard'}>Dashboard</a>
 			{/if}
@@ -125,7 +131,14 @@
 	{#if mobileMenuOpen}
 		<div class="mobile-menu-backdrop" onclick={closeMobileMenu} aria-hidden="true"></div>
 		<nav id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation">
-			<a href="/modules" class="mobile-link" onclick={closeMobileMenu}>Modules</a>
+			<a
+				href="/modules"
+				class="mobile-link"
+				onclick={closeMobileMenu}
+				data-sveltekit-preload-data="hover"
+			>
+				Modules
+			</a>
 			{#if session?.user}
 				<a href="/dashboard" class="mobile-link" onclick={closeMobileMenu}>Dashboard</a>
 				<div class="mobile-divider"></div>

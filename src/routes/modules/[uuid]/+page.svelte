@@ -22,6 +22,7 @@
 	import { toast } from '$lib/stores/toast.svelte';
 	import { recentlyViewed } from '$lib/stores/recentlyViewed';
 	import { formatDownloads } from '$lib/utils/formatDownloads';
+	import { buildCloudflareImageUrl } from '$lib/utils/imageCdn';
 	import ModuleCardSkeleton from '$lib/components/ModuleCardSkeleton.svelte';
 	import Skeleton from '$lib/components/Skeleton.svelte';
 	import type { Review, Screenshot, Module as ModuleType, CollectionBase } from '$lib/types';
@@ -136,6 +137,7 @@
 	let moduleActionsRef: HTMLElement | null = $state(null);
 
 	const API_SCREENSHOT_BASE = $derived(`${API_BASE_URL}/screenshots/${data.uuid}`);
+	const imageCdnEnabled = $derived(API_BASE_URL === 'https://api.barforge.dev');
 
 	$effect(() => {
 		if (typeof window === 'undefined' || !moduleActionsRef) return;
@@ -255,9 +257,18 @@
 		showAllVersions ? data.versions : data.versions.slice(0, INITIAL_VERSIONS_COUNT)
 	);
 
-	function getScreenshotUrl(r2Key: string): string {
+	function getScreenshotUrl(r2Key: string, width?: number): string {
 		const filename = r2Key.split('/').pop() || r2Key;
-		return `${API_SCREENSHOT_BASE}/${filename}`;
+		const url = `${API_SCREENSHOT_BASE}/${filename}`;
+		if (!width) {
+			return url;
+		}
+
+		return buildCloudflareImageUrl(
+			url,
+			{ width, quality: 80 },
+			{ enabled: imageCdnEnabled, origin: API_BASE_URL }
+		);
 	}
 
 	function handleFileSelect(event: Event) {
