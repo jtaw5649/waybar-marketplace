@@ -48,6 +48,20 @@ const makeStream = (chunks: string[]) => {
 	});
 };
 
+const makeBinaryStream = (chunks: Uint8Array[]) => {
+	let index = 0;
+	return new ReadableStream<Uint8Array>({
+		pull(controller) {
+			if (index >= chunks.length) {
+				controller.close();
+				return;
+			}
+			controller.enqueue(chunks[index]);
+			index += 1;
+		}
+	});
+};
+
 describe('notifications stream api', () => {
 	beforeEach(() => {
 		emitSpy = vi.fn();
@@ -102,6 +116,20 @@ describe('notifications stream api', () => {
 		await GET(makeEvent());
 
 		expect(emitSpy).toHaveBeenCalledWith('notification', 'hello');
+	});
+
+	it('preserves UTF-8 characters split across chunks', async () => {
+		const fetchMock = vi.mocked(fetch);
+		const encoder = new TextEncoder();
+		const prefix = encoder.encode('event: notification\ndata: ');
+		const emoji = encoder.encode('🔥');
+		const suffix = encoder.encode('\n\n');
+		const stream = makeBinaryStream([prefix, emoji.slice(0, 2), emoji.slice(2), suffix]);
+		fetchMock.mockResolvedValueOnce(new Response(stream, { status: 200 }));
+
+		await GET(makeEvent());
+
+		expect(emitSpy).toHaveBeenCalledWith('notification', '🔥');
 	});
 
 	it('ignores unknown SSE event types', async () => {

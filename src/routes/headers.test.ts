@@ -4,7 +4,7 @@ import path from 'node:path';
 
 describe('static headers', () => {
 	it('defines long-lived caching for immutable assets', () => {
-		const headers = readFileSync(path.resolve(process.cwd(), 'static/_headers'), 'utf8');
+		const headers = readFileSync(path.resolve(process.cwd(), '_headers'), 'utf8');
 
 		expect(headers).toContain('/_app/immutable/*');
 		expect(headers).toContain('Cache-Control: public, max-age=31536000, immutable');
@@ -13,7 +13,7 @@ describe('static headers', () => {
 	});
 
 	it('defines shorter caching for screenshots', () => {
-		const headers = readFileSync(path.resolve(process.cwd(), 'static/_headers'), 'utf8');
+		const headers = readFileSync(path.resolve(process.cwd(), '_headers'), 'utf8');
 
 		expect(headers).toContain('/screenshots/*');
 		expect(headers).toContain(

@@ -10,9 +10,11 @@ const mockNotificationStore = vi.hoisted(() => ({
 		message: string;
 		status: string;
 		createdAt: string;
+		link?: string;
 	}[],
 	unreadCount: 0,
 	markRead: vi.fn(),
+	markReadWithSync: vi.fn(),
 	markAllRead: vi.fn(),
 	markAllReadWithSync: vi.fn(),
 	markDone: vi.fn(),
@@ -24,6 +26,11 @@ vi.mock('$lib/stores/notifications.svelte', () => ({
 	notificationStore: mockNotificationStore
 }));
 
+vi.mock('$app/navigation', () => ({
+	goto: vi.fn()
+}));
+
+import { goto } from '$app/navigation';
 import NotificationCenter from './NotificationCenter.svelte';
 
 describe('NotificationCenter', () => {
@@ -115,7 +122,8 @@ describe('NotificationCenter', () => {
 				title: 'New comment',
 				message: 'Message',
 				status: 'unread',
-				createdAt: new Date().toISOString()
+				createdAt: new Date().toISOString(),
+				link: '/modules/test'
 			}
 		];
 
@@ -128,5 +136,31 @@ describe('NotificationCenter', () => {
 		await fireEvent.click(markAll);
 
 		expect(mockNotificationStore.markAllReadWithSync).toHaveBeenCalled();
+	});
+
+	it('marks notifications read and navigates when clicked', async () => {
+		mockNotificationStore.unreadCount = 1;
+		mockNotificationStore.notifications = [
+			{
+				id: '99',
+				type: 'comments',
+				title: 'New comment',
+				message: 'Message',
+				status: 'unread',
+				createdAt: new Date().toISOString(),
+				link: '/modules/test'
+			}
+		];
+
+		render(NotificationCenter);
+
+		const button = screen.getByRole('button', { name: /notifications/i });
+		await fireEvent.click(button);
+
+		const notification = screen.getByRole('button', { name: /new comment/i });
+		await fireEvent.click(notification);
+
+		expect(mockNotificationStore.markReadWithSync).toHaveBeenCalledWith('99');
+		expect(vi.mocked(goto)).toHaveBeenCalledWith('/modules/test');
 	});
 });

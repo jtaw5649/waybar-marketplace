@@ -2,6 +2,8 @@
 	import { Bell } from 'lucide-svelte';
 	import { notificationStore } from '$lib/stores/notifications.svelte';
 	import { clickOutside } from '$lib/actions/clickOutside';
+	import { goto } from '$app/navigation';
+	import type { Notification } from '$lib/types';
 
 	let isOpen = $state(false);
 
@@ -9,6 +11,13 @@
 		isOpen = !isOpen;
 		if (isOpen) {
 			notificationStore.syncWithServer();
+		}
+	}
+
+	function handleNotificationClick(notification: Notification) {
+		void notificationStore.markReadWithSync(notification.id);
+		if (notification.link) {
+			void goto(notification.link);
 		}
 	}
 </script>
@@ -49,10 +58,16 @@
 					<ul class="notification-list">
 						{#each notificationStore.notifications.filter((n) => n.status !== 'done') as notification (notification.id)}
 							<li class="notification-item" class:unread={notification.status === 'unread'}>
-								<div class="notification-body">
-									<span class="notification-title">{notification.title}</span>
-									<span class="notification-message">{notification.message}</span>
-								</div>
+								<button
+									type="button"
+									class="notification-button"
+									onclick={() => handleNotificationClick(notification)}
+								>
+									<div class="notification-body">
+										<span class="notification-title">{notification.title}</span>
+										<span class="notification-message">{notification.message}</span>
+									</div>
+								</button>
 							</li>
 						{/each}
 					</ul>
@@ -173,13 +188,21 @@
 	}
 
 	.notification-item {
-		padding: var(--space-md);
 		border-bottom: 1px solid var(--color-border);
+	}
+
+	.notification-button {
+		width: 100%;
+		padding: var(--space-md);
+		background: none;
+		border: none;
+		color: inherit;
 		cursor: pointer;
+		text-align: left;
 		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
-	.notification-item:hover {
+	.notification-button:hover {
 		background-color: var(--color-bg-elevated);
 	}
 

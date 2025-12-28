@@ -5,6 +5,7 @@ import type {
 	NotificationPreference
 } from '$lib/types';
 import { DEFAULT_NOTIFICATION_PREFERENCES } from '$lib/types';
+import { toast } from '$lib/stores/toast.svelte';
 
 type ApiNotification = {
 	id: number;
@@ -126,8 +127,17 @@ class NotificationStore {
 	}
 
 	async markAllReadWithSync() {
+		const previous = this.notifications;
 		this.markAllRead();
-		await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+		try {
+			const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+			if (!res.ok) {
+				throw new Error('Failed to mark all notifications as read');
+			}
+		} catch {
+			this.notifications = previous;
+			toast.error('Failed to mark all notifications as read.');
+		}
 	}
 
 	ingestApiNotification(notification: ApiNotification) {
@@ -185,8 +195,17 @@ class NotificationStore {
 	}
 
 	async markReadWithSync(id: string) {
+		const previous = this.notifications;
 		this.markRead(id);
-		await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+		try {
+			const res = await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+			if (!res.ok) {
+				throw new Error('Failed to mark notification as read');
+			}
+		} catch {
+			this.notifications = previous;
+			toast.error('Failed to mark notification as read.');
+		}
 	}
 }
 

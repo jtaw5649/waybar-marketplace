@@ -12,6 +12,11 @@ class NotificationSSE {
 		this.source = new EventSource('/api/notifications/stream');
 		this.connected = true;
 
+		this.source.addEventListener('open', () => {
+			this.connected = true;
+			this.lastError = null;
+		});
+
 		this.source.addEventListener('notification', (event) => {
 			if (typeof event.data !== 'string') return;
 			try {
@@ -25,6 +30,7 @@ class NotificationSSE {
 
 		this.source.addEventListener('error', () => {
 			this.connected = false;
+			this.lastError = 'Connection lost';
 		});
 	}
 

@@ -29,17 +29,8 @@ export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 		const reader = res.body.getReader();
 		const decoder = new TextDecoder();
 		let buffer = '';
-
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
-
-			buffer += decoder.decode(value);
-			buffer = buffer.replace(/\r\n/g, '\n');
-			const events = buffer.split('\n\n');
-			buffer = events.pop() ?? '';
-
-			for (const rawEvent of events) {
+		const emitEvents = (rawEvents: string[]) => {
+			for (const rawEvent of rawEvents) {
 				const lines = rawEvent.split('\n');
 				let eventType = 'message';
 				const dataLines: string[] = [];
@@ -63,10 +54,34 @@ export const GET: RequestHandler = async ({ cookies, locals, platform }) => {
 					const { error: emitError } = emit(eventType, data);
 					if (emitError) {
 						lock.set(false);
-						return;
+						return false;
 					}
 				}
 			}
+
+			return true;
+		};
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+			buffer = buffer.replace(/\r\n/g, '\n');
+			const events = buffer.split('\n\n');
+			buffer = events.pop() ?? '';
+
+			if (!emitEvents(events)) {
+				return;
+			}
+		}
+
+		buffer += decoder.decode();
+		buffer = buffer.replace(/\r\n/g, '\n');
+		const remainingEvents = buffer.split('\n\n');
+		buffer = remainingEvents.pop() ?? '';
+		if (!emitEvents(remainingEvents)) {
+			return;
 		}
 
 		lock.set(false);

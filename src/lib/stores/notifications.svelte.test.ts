@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { notificationStore } from './notifications.svelte';
 import { DEFAULT_NOTIFICATION_PREFERENCES } from '$lib/types';
+import { toast } from '$lib/stores/toast.svelte';
 
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};
@@ -19,6 +20,7 @@ describe('NotificationStore', () => {
 	beforeEach(() => {
 		vi.stubGlobal('localStorage', localStorageMock);
 		notificationStore.reset();
+		toast.reset();
 		localStorageMock.clear();
 	});
 
@@ -81,6 +83,24 @@ describe('NotificationStore', () => {
 		expect(fetchMock).toHaveBeenCalledWith(
 			'/api/notifications/mark-all-read',
 			expect.objectContaining({ method: 'POST' })
+		);
+
+		vi.unstubAllGlobals();
+	});
+
+	it('restores notifications and toasts on markAllReadWithSync failure', async () => {
+		notificationStore.addLocalNotification({ type: 'stars', title: 'Star 1', message: 'msg' });
+		notificationStore.addLocalNotification({ type: 'updates', title: 'Update 1', message: 'msg' });
+		expect(notificationStore.unreadCount).toBe(2);
+
+		const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+		vi.stubGlobal('fetch', fetchMock);
+
+		await notificationStore.markAllReadWithSync();
+
+		expect(notificationStore.unreadCount).toBe(2);
+		expect(toast.messages[toast.messages.length - 1]?.message).toBe(
+			'Failed to mark all notifications as read.'
 		);
 
 		vi.unstubAllGlobals();
@@ -255,6 +275,25 @@ describe('NotificationStore', () => {
 		expect(fetchMock).toHaveBeenCalledWith(
 			expect.stringContaining(`/api/notifications/${id}/read`),
 			expect.objectContaining({ method: 'PATCH' })
+		);
+
+		vi.unstubAllGlobals();
+	});
+
+	it('restores notification state and toasts on markReadWithSync failure', async () => {
+		const id = notificationStore.addLocalNotification({
+			type: 'stars',
+			title: 'New Star',
+			message: 'msg'
+		});
+		const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+		vi.stubGlobal('fetch', fetchMock);
+
+		await notificationStore.markReadWithSync(id);
+
+		expect(notificationStore.notifications[0].status).toBe('unread');
+		expect(toast.messages[toast.messages.length - 1]?.message).toBe(
+			'Failed to mark notification as read.'
 		);
 
 		vi.unstubAllGlobals();

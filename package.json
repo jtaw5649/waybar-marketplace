@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "svelte-kit sync && vite build",
 		"preview": "vite preview",
 		"api:types": "node scripts/generate-api-types.mjs",
 		"api:types:check": "npm run api:types && git diff --exit-code src/lib/api-types.ts",
@@ -39,8 +39,7 @@
 	"dependencies": {
 		"@auth/core": "^0.38.0",
 		"@auth/sveltekit": "^1.11.1",
-		"@iconify-json/simple-icons": "^1.2.63",
-		"@iconify/svelte": "^5.1.0",
+		"@iconify/icons-simple-icons": "^1.2.74",
 		"@leeoniya/ufuzzy": "^1.0.19",
 		"isomorphic-dompurify": "^2.34.0",
 		"lucide-svelte": "^0.562.0",

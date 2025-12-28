@@ -1,4 +1,4 @@
-import { SvelteKitAuth } from '@auth/sveltekit';
+import { SvelteKitAuth, customFetch } from '@auth/sveltekit';
 import GitHub from '@auth/sveltekit/providers/github';
 import type { JWT } from '@auth/core/jwt';
 import type { Account, Profile, Session } from '@auth/core/types';
@@ -141,13 +141,15 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 	const vercelEnv = event.platform?.env?.VERCEL ?? env.VERCEL;
 	const githubId = event.platform?.env?.AUTH_GITHUB_ID ?? env.AUTH_GITHUB_ID ?? '';
 	const githubSecret = event.platform?.env?.AUTH_GITHUB_SECRET ?? env.AUTH_GITHUB_SECRET ?? '';
+	const authFetch = event.fetch ?? fetch;
 
 	return {
 		providers: [
 			GitHub({
 				clientId: githubId,
 				clientSecret: githubSecret,
-				authorization: { params: githubAuthorizationParams() }
+				authorization: { params: githubAuthorizationParams() },
+				[customFetch]: authFetch
 			})
 		],
 		callbacks: {

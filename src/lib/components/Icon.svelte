@@ -1,8 +1,27 @@
 <script lang="ts">
-	import Icon, { addCollection } from '@iconify/svelte';
-	import { icons as simpleIcons } from '@iconify-json/simple-icons';
+	import github from '@iconify/icons-simple-icons/github';
+	import svelte from '@iconify/icons-simple-icons/svelte';
+	import typescript from '@iconify/icons-simple-icons/typescript';
+	import cloudflare from '@iconify/icons-simple-icons/cloudflare';
+	import rust from '@iconify/icons-simple-icons/rust';
+	import gnubash from '@iconify/icons-simple-icons/gnubash';
+	import archlinux from '@iconify/icons-simple-icons/archlinux';
 
-	addCollection(simpleIcons);
+	type IconData = {
+		body: string;
+		width?: number;
+		height?: number;
+	};
+
+	const simpleIconMap: Record<string, IconData> = {
+		'simple-icons:github': github,
+		'simple-icons:svelte': svelte,
+		'simple-icons:typescript': typescript,
+		'simple-icons:cloudflare': cloudflare,
+		'simple-icons:rust': rust,
+		'simple-icons:gnubash': gnubash,
+		'simple-icons:archlinux': archlinux
+	};
 
 	let {
 		name,
@@ -15,6 +34,8 @@
 		class?: string;
 		ariaLabel?: string;
 	} = $props();
+
+	const iconData = $derived(simpleIconMap[name]);
 </script>
 
 {#if name === 'logo'}
@@ -51,13 +72,18 @@
 			stroke-width="32"
 		/>
 	</svg>
-{:else}
-	<Icon
-		icon={name}
+{:else if iconData}
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		viewBox={`0 0 ${iconData.width ?? 24} ${iconData.height ?? 24}`}
 		width={size}
 		height={size}
 		class={className}
 		aria-label={ariaLabel}
 		aria-hidden={ariaLabel ? 'false' : 'true'}
-	/>
+	>
+		{@html iconData.body}
+	</svg>
+{:else}
+	<span class={className} aria-hidden="true"></span>
 {/if}

@@ -92,6 +92,22 @@ describe('notificationSSE store', () => {
 		expect(notificationSSE.lastError).toBe('Invalid notification payload');
 	});
 
+	it('tracks connection errors and recovers on open', () => {
+		notificationSSE.connect();
+
+		const errorHandler = FakeEventSource.lastInstance?.listeners.get('error');
+		errorHandler?.({} as MessageEvent);
+
+		expect(notificationSSE.connected).toBe(false);
+		expect(notificationSSE.lastError).toBe('Connection lost');
+
+		const openHandler = FakeEventSource.lastInstance?.listeners.get('open');
+		openHandler?.({} as MessageEvent);
+
+		expect(notificationSSE.connected).toBe(true);
+		expect(notificationSSE.lastError).toBeNull();
+	});
+
 	it('noops when EventSource is unavailable', () => {
 		vi.unstubAllGlobals();
 		delete (globalThis as { EventSource?: typeof EventSource }).EventSource;
